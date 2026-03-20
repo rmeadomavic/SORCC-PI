@@ -1,0 +1,544 @@
+/* SORCC RF Survey Dashboard — Military-functional design */
+
+:root {
+    --sorcc-green: #4a7c3f;
+    --sorcc-green-dark: #3a6231;
+    --sorcc-green-light: #5a9c4f;
+    --bg-dark: #1a1a1a;
+    --bg-panel: #2a2a2a;
+    --bg-input: #333;
+    --text-primary: #e0e0e0;
+    --text-secondary: #999;
+    --text-bright: #fff;
+    --border: #444;
+    --signal-cold: #e74c3c;
+    --signal-warm: #f39c12;
+    --signal-hot: #2ecc71;
+    --danger: #e74c3c;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+
+header {
+    background: var(--sorcc-green-dark);
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 3px solid var(--sorcc-green);
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo-text {
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--text-bright);
+    background: var(--sorcc-green);
+    padding: 4px 10px;
+    border-radius: 4px;
+    letter-spacing: 2px;
+}
+
+header h1 {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-bright);
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--text-secondary);
+    display: inline-block;
+}
+
+.status-dot.active { background: var(--signal-hot); }
+.status-dot.error  { background: var(--signal-cold); }
+
+.status-label {
+    color: var(--text-secondary);
+    margin-right: 8px;
+}
+
+.battery-display {
+    background: var(--bg-panel);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* ── Tabs ────────────────────────────────────────────────── */
+
+.tabs {
+    display: flex;
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+}
+
+.tab {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    padding: 14px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+}
+
+.tab:hover {
+    color: var(--text-primary);
+}
+
+.tab.active {
+    color: var(--sorcc-green-light);
+    border-bottom-color: var(--sorcc-green);
+}
+
+/* ── Main Content ────────────────────────────────────────── */
+
+main {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.panel {
+    background: var(--bg-panel);
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid var(--border);
+}
+
+.panel h2 {
+    font-size: 18px;
+    margin-bottom: 16px;
+    color: var(--text-bright);
+}
+
+.badge {
+    background: var(--sorcc-green);
+    color: white;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 13px;
+    margin-left: 8px;
+}
+
+/* ── Device List ─────────────────────────────────────────── */
+
+.device-filters {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.filter-btn {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 6px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.filter-btn.active {
+    background: var(--sorcc-green);
+    color: white;
+    border-color: var(--sorcc-green);
+}
+
+.device-list {
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.device-row {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+    transition: background 0.15s;
+}
+
+.device-row:hover {
+    background: rgba(74, 124, 63, 0.1);
+}
+
+.device-signal {
+    width: 60px;
+    text-align: right;
+    font-weight: 700;
+    font-size: 14px;
+    font-family: monospace;
+}
+
+.device-signal.strong { color: var(--signal-hot); }
+.device-signal.medium { color: var(--signal-warm); }
+.device-signal.weak   { color: var(--signal-cold); }
+
+.device-bar-container {
+    width: 80px;
+    height: 8px;
+    background: var(--bg-dark);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.device-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s;
+}
+
+.device-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.device-name {
+    font-weight: 600;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.device-meta {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+.device-type {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    background: var(--bg-dark);
+    color: var(--text-secondary);
+}
+
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-secondary);
+}
+
+/* ── Hunt Mode ───────────────────────────────────────────── */
+
+.hunt-setup {
+    margin-bottom: 20px;
+}
+
+.hunt-setup label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: var(--text-secondary);
+}
+
+.hunt-input-row {
+    display: flex;
+    gap: 10px;
+}
+
+.hunt-input-row input {
+    flex: 1;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    color: var(--text-bright);
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-size: 16px;
+}
+
+.hunt-input-row input::placeholder {
+    color: var(--text-secondary);
+}
+
+.btn-primary {
+    background: var(--sorcc-green);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.btn-primary:hover { background: var(--sorcc-green-light); }
+
+.btn-danger {
+    background: var(--danger);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-large {
+    padding: 16px 40px;
+    font-size: 18px;
+}
+
+/* Signal Gauge */
+.signal-gauge-container {
+    text-align: center;
+    padding: 30px 0;
+}
+
+.signal-label {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+}
+
+.signal-gauge {
+    width: 100%;
+    max-width: 500px;
+    height: 40px;
+    background: var(--bg-dark);
+    border-radius: 20px;
+    margin: 0 auto;
+    overflow: hidden;
+    border: 2px solid var(--border);
+}
+
+.signal-bar {
+    height: 100%;
+    width: 0%;
+    border-radius: 18px;
+    transition: width 0.3s, background 0.3s;
+    background: var(--signal-cold);
+}
+
+.signal-value {
+    font-size: 48px;
+    font-weight: 900;
+    margin-top: 16px;
+    font-family: monospace;
+}
+
+.signal-hint {
+    font-size: 24px;
+    font-weight: 700;
+    margin-top: 8px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.signal-hint.cold    { color: var(--signal-cold); }
+.signal-hint.warm    { color: var(--signal-warm); }
+.signal-hint.hot     { color: var(--signal-hot); }
+.signal-hint.searching { color: var(--text-secondary); }
+
+/* Hunt Stats */
+.hunt-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+    margin: 20px 0;
+}
+
+.stat {
+    background: var(--bg-dark);
+    padding: 12px;
+    border-radius: 6px;
+    text-align: center;
+}
+
+.stat-label {
+    display: block;
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    display: block;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: monospace;
+}
+
+/* RSSI Chart */
+.chart-container {
+    margin-top: 20px;
+}
+
+.chart-container h3 {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+#rssi-chart {
+    width: 100%;
+    height: 200px;
+    background: var(--bg-dark);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+}
+
+.chart-gridline {
+    stroke: var(--border);
+    stroke-width: 1;
+    stroke-dasharray: 4,4;
+}
+
+.chart-label {
+    fill: var(--text-secondary);
+    font-size: 11px;
+}
+
+.chart-line {
+    fill: none;
+    stroke: var(--sorcc-green-light);
+    stroke-width: 2;
+}
+
+/* ── Export Tab ───────────────────────────────────────────── */
+
+.export-actions {
+    text-align: center;
+    padding: 30px 0;
+}
+
+.export-instructions {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+}
+
+.export-instructions h3 {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 16px 0 8px;
+}
+
+.export-instructions ol {
+    padding-left: 20px;
+    line-height: 2;
+    color: var(--text-primary);
+}
+
+.export-instructions code {
+    display: block;
+    background: var(--bg-dark);
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 13px;
+    color: var(--sorcc-green-light);
+    margin-top: 8px;
+}
+
+/* ── Footer ──────────────────────────────────────────────── */
+
+footer {
+    background: var(--bg-panel);
+    border-top: 1px solid var(--border);
+    padding: 8px 20px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+    header {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .header-right {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .tabs {
+        padding: 0;
+        overflow-x: auto;
+    }
+
+    .tab {
+        padding: 12px 16px;
+        font-size: 14px;
+    }
+
+    main {
+        padding: 12px;
+    }
+
+    .hunt-input-row {
+        flex-direction: column;
+    }
+
+    .signal-value {
+        font-size: 36px;
+    }
+
+    .signal-hint {
+        font-size: 18px;
+    }
+
+    footer {
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+    }
+
+    .hunt-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
