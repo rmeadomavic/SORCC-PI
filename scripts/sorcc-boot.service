@@ -1,0 +1,15 @@
+[Unit]
+Description=SORCC Pi Boot Init (GPS + Avahi)
+After=ModemManager.service
+Wants=ModemManager.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# Enable GPS NMEA output on the LTE modem
+ExecStart=/usr/bin/python3 /opt/sorcc/gps_lte.py
+# Start mDNS for device discovery on the local network
+ExecStartPost=/usr/bin/systemctl start avahi-daemon
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,128 @@
+#! /bin/bash
+
+read -p "What is your sim IP address? " ipaddy
+read -p "What is your sim subnet? " subnet
+
+sudo wget https://archive.kali.org/archive-keyring.gpg -O /usr/share/keyrings/kali-archive-keyring.gpg
+sudo update -y
+sudo apt dist-upgrade -y
+sudo apt update -y
+sudo apt remove xtrx-dkms -y
+sudo apt reinstall dkms -y
+sudo apt autoremove && sudo apt clean
+sudo dpkg --configure -a
+wget http://ftp.us.debian.org/debian/pool/main/g/gcc-11/gcc-11-base_11.3.0-12_arm64.deb
+sudo dpkg -i /home/kali/gcc-11-base_11.3.0-12_arm64.deb
+sudo apt-get install -f /home/kali/gcc-11-base_11.3.0-12_arm64.deb -y
+sudo apt install gcc-12 -y
+sudo apt remove --purge gcc-14 -y
+sudo apt remove --purge gcc-13 -y
+sudo apt upgrade -y --fix-broken
+git clone https://github.com/Oros42/IMSI-catcher.git
+
+touch /etc/kismet/kismet_site.conf
+sudo echo "gps=serial:device=/dev/ttyUSB1,name=gps,baud=9600" > /etc/kismet/kismet_site.conf
+sudo echo "#source=wlan0" >> /etc/kismet/kismet_site.conf
+sudo echo "#source=rtladsb-00000001" >> /etc/kismet/kismet_site.conf
+sudo echo "source=hci0" >> /etc/kismet/kismet_site.conf
+sudo echo "#source=rtl433-0:channel=433000000" >> /etc/kismet/kismet_site.conf
+sudo echo "#source=rtl433-0:channel=315000000" >> /etc/kismet/kismet_site.conf
+
+touch /home/kali/reboot.sh
+echo 'modem_num=$(sudo mmcli -L | cut -d / -f 6 | cut -d " " -f 1)' > /home/kali/reboot.sh
+echo "sudo mmcli -m \$modem_num --location-enable-gps-nmea" >> /home/kali/reboot.sh
+echo "sudo mmcli -m \$modem_num --location-enable-gps-raw" >> /home/kali/reboot.sh 
+eco "sudo systemctl start pisugar-server" >> /home/kali/reboot.sh
+echo "cd /home/kali" >> /home/kali/reboot.sh
+echo "sleep 5" >> /home/kali/reboot.sh
+echo "sudo python3 /home/kali/gps_lte.py" >> /home/kali/reboot.sh
+echo "sudo kismet" >> /home/kali/reboot.sh
+echo "sudo /usr/sbin/avahi-daemon" >> /home/kali/reboot.sh
+sudo chmod +x /home/kali/reboot.sh
+
+
+
+sudo apt install git build-essential libusb-1.0-0-dev pkg-config rtl-sdr gr-gsm kalibrate-rtl -y
+echo 'blacklist dvb_usb_rtl28xxu' | sudo tee -a /etc/modprobe.d/blacklist-rtl.conf
+echo 'blacklist rtl2832' | sudo tee -a /etc/modprobe.d/blacklist-rtl.conf
+echo 'blacklist rtl2830' | sudo tee -a /etc/modprobe.d/blacklist-rtl.conf
+
+sudo update-initramfs -u
+
+sudo apt install gqrx-sdr -y
+sudo apt remove xtrx-dkms -y
+sudo apt install gnuradio -y
+sudo apt remove xtrx-dkms -y
+sudo apt install gr-osmosdr -y
+
+sudo apt-get install rtl-sdr -y
+sudo apt install kali-tools-sdr -y
+sudo apt install librtlsdr0 -y
+sudo apt install kalibrate-rtl -y
+sudo apt-get install rtl-sdr -y
+sudo apt install gr-gsm -y
+sudo apt install sox -y
+sudo apt install vlc -y
+sudo apt install gqrx -y
+sudo apt-get install avahi-daemon -y
+sudo apt-get install avahi-discover -y
+sudo apt-get install avahi-utils -y
+sudo apt install cmake -y
+sudo apt install libusb-1.0-0-dev -y
+sudo apt install linux-source-6.11 -y
+sudo apt install linux-headers-6.11.2-arm64 -y
+cd /home/kali/
+git clone https://github.com/Oros42/IMSI-catcher.git
+git clone https://github.com/mutability/rtl-sdr.git
+cd rtl-sdr
+mkdir build && cd build
+cmake ../
+make
+sudo make install
+sudo apt install rtl-433 -y
+
+
+
+#Install Sixfab packages
+sudo apt install minicom python3-pip -y
+pip3 install sixfab-power
+sudo apt install libqmi-utils udhcpc -y
+sudo qmicli -d /dev/cdc-wdm0 --dms-set-operating-mode='online'
+sudo qmicli -d /dev/cdc-wdm0 --nas-get-signal-strength
+sudo qmicli -d /dev/cdc-wdm0 --wds-start-network="apn='b2b.static'" --client-no-release-cid
+sudo udhcpc -i wwan0
+ping -c 5 8.8.8.8
+
+sleep 30
+qmicli -d /dev/cdc-wdm0 -p --wds-modify-profile=3gpp,1,apn=b2b.static,pdp-type=ip
+qmicli -d /dev/cdc-wdm0 -p --dms-set-operating-mode=offline
+qmicli -d /dev/cdc-wdm0 -p --dms-set-operating-mode=reset
+mmcli -m $modem_num --create-bearer="apn=b2b.static,ip-type=ipv4,allowed-auth=none,allow-roaming=yes"
+nmcli c add type gsm ifname '*' con-name "T-Mobile connection" apn "b2b.static"
+
+nmcli con mod "T-Mobile connection" ipv4.addresses $ipaddy/24
+nmcli con mod "T-Mobile connection" ipv4.gateway $subnet.1
+nmcli con mod "T-Mobile connection" ipv4.dns "8.8.8.8"
+nmcli con mod "T-Mobile connection" ipv4.method manual
+nmcli con up "T-Mobile connection"
+mmcli -m $modem_num --3gpp-register-home
+mmcli -m $modem_num -b 1 --connect
+sudo python3 /home/kali/gps_lte.py
+
+wget https://cdn.pisugar.com/release/pisugar-power-manager.sh
+bash pisugar-power-manager.sh -c release
+sudo apt install -y debconf-utils
+sudo systemctl enable pisugar-server
+sudo systemctl start pisugar-server
+sudo watch 'echo "get battery" | nc -q 1 127.0.0.1 8423'
+sudo apt install python3-pyqt5 --fix-missing
+#Change time zone
+
+echo "Put the following commands in a seperate terminal."
+echo "sudo crontab -e"
+echo "select 1"
+echo "add the following lines:"
+echo "@reboot sleep 30 && /home/kali/reboot.sh"
+echo "@reboot sleep 10 && sudo /usr/sbin/avahi-daemon"
+echo "press crtl-x, yes, and save"
+

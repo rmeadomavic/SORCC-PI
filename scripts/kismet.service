@@ -1,0 +1,16 @@
+[Unit]
+Description=Kismet Wireless Monitor (SORCC RF Survey)
+After=network.target sorcc-boot.service
+Wants=sorcc-boot.service
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/kismet --no-ncurses
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

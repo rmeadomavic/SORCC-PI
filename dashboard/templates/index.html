@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SORCC RF Survey Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-left">
+            <div class="logo-text">SORCC</div>
+            <h1>RF Survey Dashboard</h1>
+        </div>
+        <div class="header-right">
+            <span class="status-dot" id="kismet-dot" title="Kismet"></span>
+            <span class="status-label" id="kismet-label">Kismet</span>
+            <span class="status-dot" id="gps-dot" title="GPS"></span>
+            <span class="status-label" id="gps-label">GPS</span>
+            <span class="status-dot" id="modem-dot" title="Modem"></span>
+            <span class="status-label" id="modem-label">LTE</span>
+            <span id="battery-display" class="battery-display" title="Battery">--</span>
+        </div>
+    </header>
+
+    <!-- Tab Navigation -->
+    <nav class="tabs">
+        <button class="tab active" data-tab="live">Live View</button>
+        <button class="tab" data-tab="hunt">Hunt Mode</button>
+        <button class="tab" data-tab="export">Export</button>
+    </nav>
+
+    <!-- Tab Content -->
+    <main>
+        <!-- Live View Tab -->
+        <section id="tab-live" class="tab-content active">
+            <div class="panel">
+                <h2>Detected Devices <span id="device-count" class="badge">0</span></h2>
+                <div class="device-filters">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="Wi-Fi">WiFi</button>
+                    <button class="filter-btn" data-filter="Bluetooth">BT</button>
+                    <button class="filter-btn" data-filter="RTL433">433MHz</button>
+                </div>
+                <div class="device-list" id="device-list">
+                    <div class="loading">Connecting to Kismet...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Hunt Mode Tab -->
+        <section id="tab-hunt" class="tab-content">
+            <div class="panel">
+                <h2>WiFi Target Hunt</h2>
+                <div class="hunt-setup">
+                    <label for="target-ssid">Target SSID:</label>
+                    <div class="hunt-input-row">
+                        <input type="text" id="target-ssid" placeholder="Enter target network name...">
+                        <button id="hunt-start" class="btn-primary">Start Hunt</button>
+                        <button id="hunt-stop" class="btn-danger" style="display:none;">Stop</button>
+                    </div>
+                </div>
+
+                <div id="hunt-display" style="display:none;">
+                    <div class="signal-gauge-container">
+                        <div class="signal-label">Signal Strength</div>
+                        <div class="signal-gauge">
+                            <div class="signal-bar" id="signal-bar"></div>
+                        </div>
+                        <div class="signal-value" id="signal-value">-- dBm</div>
+                        <div class="signal-hint" id="signal-hint">Searching...</div>
+                    </div>
+
+                    <div class="hunt-stats">
+                        <div class="stat">
+                            <span class="stat-label">Status</span>
+                            <span class="stat-value" id="hunt-status">Searching</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Channel</span>
+                            <span class="stat-value" id="hunt-channel">--</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">MAC</span>
+                            <span class="stat-value" id="hunt-mac">--</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Peak Signal</span>
+                            <span class="stat-value" id="hunt-peak">-- dBm</span>
+                        </div>
+                    </div>
+
+                    <!-- RSSI History Chart -->
+                    <div class="chart-container">
+                        <h3>Signal History</h3>
+                        <svg id="rssi-chart" viewBox="0 0 600 200" preserveAspectRatio="none">
+                            <line x1="0" y1="50" x2="600" y2="50" class="chart-gridline"/>
+                            <line x1="0" y1="100" x2="600" y2="100" class="chart-gridline"/>
+                            <line x1="0" y1="150" x2="600" y2="150" class="chart-gridline"/>
+                            <text x="605" y="54" class="chart-label">-40 dBm</text>
+                            <text x="605" y="104" class="chart-label">-60 dBm</text>
+                            <text x="605" y="154" class="chart-label">-80 dBm</text>
+                            <polyline id="rssi-line" class="chart-line" points=""/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Export Tab -->
+        <section id="tab-export" class="tab-content">
+            <div class="panel">
+                <h2>Data Export</h2>
+                <p>Export Kismet capture data as KML for Google Earth visualization.</p>
+
+                <div class="export-actions">
+                    <button id="export-kml" class="btn-primary btn-large">
+                        Download KML File
+                    </button>
+                </div>
+
+                <div class="export-instructions">
+                    <h3>How to view in Google Earth</h3>
+                    <ol>
+                        <li>Click "Download KML File" above</li>
+                        <li>Transfer the file to your computer</li>
+                        <li>Open Google Earth Pro</li>
+                        <li>Drag and drop the .kml file into Google Earth</li>
+                        <li>RF sources will appear as placemarks on the map</li>
+                    </ol>
+
+                    <h3>Manual export (from terminal)</h3>
+                    <code>sudo kismetdb_to_kml -v --in Kismet-*.kismet --out survey.kml</code>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <span id="footer-ip">IP: --</span>
+        <span id="footer-tailscale">TS: --</span>
+        <span id="footer-uptime">Up: --</span>
+        <span>SORCC Payload Integrator</span>
+    </footer>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
