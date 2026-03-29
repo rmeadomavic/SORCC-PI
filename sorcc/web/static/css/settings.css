@@ -1,0 +1,267 @@
+/* SORCC Settings Tab — Configuration Editor */
+
+/* ── Settings Layout ── */
+.settings-layout {
+    display: flex;
+    gap: var(--sp-5);
+    min-height: 60vh;
+}
+
+/* ── Section Navigation (Left Sidebar) ── */
+.settings-nav {
+    width: 180px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-1);
+}
+
+.settings-nav-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    padding: var(--sp-2) var(--sp-3);
+    border-radius: var(--radius-md);
+    font-size: var(--font-sm);
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    transition: all var(--transition-normal);
+    border-left: 3px solid transparent;
+}
+
+.settings-nav-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-input);
+}
+
+.settings-nav-btn.active {
+    color: var(--sorcc-green-light);
+    background: rgba(74, 124, 63, 0.1);
+    border-left-color: var(--sorcc-green);
+}
+
+/* ── Section Content (Right Panel) ── */
+.settings-content {
+    flex: 1;
+    background: var(--bg-panel);
+    border-radius: var(--radius-lg);
+    padding: var(--sp-5);
+    border: 1px solid var(--border);
+    min-width: 0;
+}
+
+.settings-section {
+    display: none;
+}
+
+.settings-section.active {
+    display: block;
+}
+
+.settings-section h3 {
+    font-size: var(--font-lg);
+    color: var(--text-bright);
+    margin-bottom: var(--sp-4);
+    padding-bottom: var(--sp-2);
+    border-bottom: 1px solid var(--border);
+}
+
+/* ── Form Fields ── */
+.form-group {
+    margin-bottom: var(--sp-4);
+}
+
+.form-group label {
+    display: block;
+    font-size: var(--font-sm);
+    color: var(--text-secondary);
+    margin-bottom: var(--sp-1);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: var(--ls-wide);
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group input[type="password"],
+.form-group select {
+    width: 100%;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    color: var(--text-bright);
+    padding: var(--sp-2) var(--sp-3);
+    border-radius: var(--radius-md);
+    font-size: var(--font-base);
+    transition: border-color var(--transition-normal);
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--sorcc-green);
+}
+
+.form-group input::placeholder {
+    color: var(--text-dim);
+}
+
+.form-hint {
+    font-size: var(--font-xs);
+    color: var(--text-dim);
+    margin-top: var(--sp-1);
+}
+
+/* ── Toggle Switch ── */
+.toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--sp-2) 0;
+}
+
+.toggle-label {
+    font-size: var(--font-sm);
+    color: var(--text-primary);
+}
+
+.toggle {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    cursor: pointer;
+}
+
+.toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    transition: background var(--transition-normal);
+}
+
+.toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    left: 2px;
+    top: 2px;
+    background: var(--text-secondary);
+    border-radius: 50%;
+    transition: transform var(--transition-normal), background var(--transition-normal);
+}
+
+.toggle input:checked + .toggle-slider {
+    background: var(--sorcc-green);
+    border-color: var(--sorcc-green);
+}
+
+.toggle input:checked + .toggle-slider::before {
+    transform: translateX(20px);
+    background: var(--text-bright);
+}
+
+/* ── APN Datalist Styling ── */
+.form-group input[list] {
+    cursor: text;
+}
+
+/* ── Button Groups ── */
+.settings-actions {
+    display: flex;
+    gap: var(--sp-3);
+    margin-top: var(--sp-6);
+    padding-top: var(--sp-4);
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+}
+
+.settings-actions-left {
+    display: flex;
+    gap: var(--sp-3);
+    flex: 1;
+}
+
+.settings-actions-right {
+    display: flex;
+    gap: var(--sp-3);
+}
+
+/* ── Import / Export Buttons ── */
+.config-io-buttons {
+    display: flex;
+    gap: var(--sp-2);
+    margin-top: var(--sp-3);
+}
+
+.config-io-buttons button {
+    font-size: var(--font-sm);
+    padding: var(--sp-2) var(--sp-3);
+}
+
+/* ── Restart Button (inline) ── */
+.inline-action {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    margin-top: var(--sp-2);
+}
+
+.inline-action button {
+    flex-shrink: 0;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+    .settings-layout {
+        flex-direction: column;
+    }
+
+    .settings-nav {
+        width: 100%;
+        flex-direction: row;
+        overflow-x: auto;
+        gap: var(--sp-1);
+        padding-bottom: var(--sp-2);
+    }
+
+    .settings-nav-btn {
+        white-space: nowrap;
+        border-left: none;
+        border-bottom: 3px solid transparent;
+        padding: var(--sp-2) var(--sp-3);
+    }
+
+    .settings-nav-btn.active {
+        border-left-color: transparent;
+        border-bottom-color: var(--sorcc-green);
+    }
+
+    .settings-actions {
+        flex-direction: column;
+    }
+
+    .settings-actions-left,
+    .settings-actions-right {
+        width: 100%;
+    }
+
+    .settings-actions-left {
+        flex-direction: column;
+    }
+
+    .settings-actions-right {
+        flex-direction: column;
+    }
+}
