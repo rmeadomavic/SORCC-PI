@@ -7,6 +7,9 @@ Wants=NetworkManager-wait-online.service
 [Service]
 Type=oneshot
 RemainAfterExit=yes
+# Ensure WiFi and WWAN radios are enabled (they can get turned off unexpectedly)
+ExecStartPre=/usr/bin/nmcli radio wifi on
+ExecStartPre=/usr/bin/nmcli radio wwan on
 # Wait for ModemManager to fully enumerate the modem before touching it
 ExecStartPre=/bin/bash -c 'for i in 1 2 3 4 5 6; do mmcli -L 2>/dev/null | grep -q "/" && exit 0; echo "[INFO] Waiting for modem... ($i/6)"; sleep 5; done; echo "[WARN] Modem not detected after 30s — continuing anyway"; exit 0'
 # Bring up the LTE connection with retry (NetworkManager may need a kick after boot)
