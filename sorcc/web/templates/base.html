@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SORCC RF Survey Dashboard</title>
+    <link rel="stylesheet" href="/static/css/variables.css">
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/operations.css">
+    <link rel="stylesheet" href="/static/css/settings.css">
+    <link rel="stylesheet" href="/static/css/preflight.css">
+</head>
+<body>
+    <!-- ── Topbar ── -->
+    <header>
+        <div class="header-left">
+            <div class="logo-text">SORCC</div>
+            <h1>RF Survey Dashboard</h1>
+            <span class="profile-badge" id="active-profile">WiFi Survey</span>
+        </div>
+        <div class="header-right">
+            <span class="status-pill"><span class="status-dot" id="kismet-dot"></span> Kismet</span>
+            <span class="status-pill"><span class="status-dot" id="gps-dot"></span> GPS</span>
+            <span class="status-pill"><span class="status-dot" id="modem-dot"></span> LTE</span>
+            <span class="battery-display" id="battery-display">--</span>
+        </div>
+    </header>
+
+    <!-- ── Tab Navigation ── -->
+    <nav class="tabs">
+        <button class="tab active" data-tab="operations">Operations</button>
+        <button class="tab" data-tab="settings">Settings</button>
+        <button class="tab" data-tab="preflight">Preflight</button>
+    </nav>
+
+    <!-- ── Tab Content ── -->
+    <main>
+        <section id="tab-operations" class="tab-content active">
+            {% include "operations.html" %}
+        </section>
+        <section id="tab-settings" class="tab-content">
+            {% include "settings.html" %}
+        </section>
+        <section id="tab-preflight" class="tab-content">
+            {% include "preflight.html" %}
+        </section>
+    </main>
+
+    <!-- ── Toast Container ── -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- ── Footer ── -->
+    <footer>
+        <span id="footer-ip">--</span>
+        <span id="footer-tailscale">TS: --</span>
+        <span id="footer-uptime">Up: --</span>
+        <span class="footer-classification">UNCLASSIFIED</span>
+        <span>SORCC Payload Integrator</span>
+    </footer>
+
+    <!-- ── Scripts ── -->
+    <script src="/static/js/app.js"></script>
+    <script src="/static/js/operations.js"></script>
+    <script src="/static/js/settings.js"></script>
+    <script src="/static/js/preflight.js"></script>
+</body>
+</html>

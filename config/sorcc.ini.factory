@@ -1,0 +1,50 @@
+; SORCC-PI — Factory Defaults
+; Copy to config/sorcc.ini and edit for your deployment.
+; The setup script creates sorcc.ini automatically on first run.
+
+[general]
+hostname = sorcc-pi-01                  ; mDNS hostname (reachable as <hostname>.local)
+callsign = SORCC-01                     ; identifier shown in instructor overview
+
+[lte]
+apn =                                   ; carrier APN — leave blank for interactive prompt
+                                        ;   T-Mobile:  b2b.static
+                                        ;   AT&T:      broadband
+                                        ;   Verizon:   vzwinternet
+                                        ;   FirstNet:  firstnet
+connection_name = sorcc-lte             ; NetworkManager connection name
+dns = 8.8.8.8,1.1.1.1                  ; DNS servers (comma-separated)
+
+[gps]
+serial_port = /dev/ttyUSB1              ; GPS NMEA serial port (via LTE modem)
+serial_baud = 9600                      ; GPS serial baud rate
+at_port = /dev/ttyUSB2                  ; AT command port (modem control)
+at_baud = 115200                        ; AT command baud rate
+
+[kismet]
+user = kismet                           ; Kismet web UI username
+pass = kismet                           ; Kismet web UI password
+port = 2501                             ; Kismet REST API port
+source_bluetooth = hci0                 ; Bluetooth source (always available on RPi 4)
+source_wifi =                           ; WiFi monitor-mode adapter (e.g. wlan0)
+source_rtl433 =                         ; RTL-433 source (e.g. rtl433-0:channel=433000000)
+source_adsb =                           ; ADS-B source (e.g. rtladsb-00000001)
+log_dir = /opt/sorcc/output_data        ; Kismet capture data directory
+
+[dashboard]
+host = 0.0.0.0                         ; Dashboard bind address
+port = 8080                             ; Dashboard port
+
+[tailscale]
+enabled = true                          ; Install/enable Tailscale
+ssh = true                              ; Enable Tailscale SSH
+
+[pisugar]
+enabled = true                          ; Install PiSugar battery manager
+
+[wifi]
+ssid =                                  ; WiFi network to auto-connect (for headless boot)
+password =                              ; WiFi password
+
+[recon_tools]
+enabled = true                          ; Install gr-gsm, kalibrate, IMSI-catcher, GQRX

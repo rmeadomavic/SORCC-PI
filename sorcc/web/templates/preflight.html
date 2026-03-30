@@ -1,0 +1,180 @@
+<!-- SORCC Preflight Tab — Jinja2 include fragment -->
+
+<!-- Overall Status Banner -->
+<div class="preflight-banner status-unknown" id="preflight-banner">
+    <h2 id="preflight-status-text">Preflight Not Run</h2>
+    <p id="preflight-status-detail">Click "Run Checks" to validate system readiness</p>
+</div>
+
+<!-- Controls -->
+<div class="preflight-controls">
+    <div class="preflight-controls-left">
+        <button id="btn-run-preflight" class="btn-primary">Run Checks</button>
+        <div class="auto-refresh-toggle">
+            <label class="toggle">
+                <input type="checkbox" id="preflight-auto-refresh">
+                <span class="toggle-slider"></span>
+            </label>
+            <span>Auto-refresh</span>
+        </div>
+        <span class="refresh-indicator" id="preflight-refresh-indicator" style="display:none;">
+            <span class="spin"></span> Refreshing...
+        </span>
+    </div>
+    <span class="preflight-timestamp" id="preflight-timestamp">Last checked: --</span>
+</div>
+
+<!-- Category Cards -->
+<div class="preflight-grid">
+    <!-- Hardware -->
+    <div class="preflight-card" id="preflight-hardware">
+        <div class="preflight-card-header">
+            <h3>Hardware</h3>
+            <span class="preflight-card-status pending" id="hw-status">PENDING</span>
+        </div>
+        <div class="preflight-checks" id="hw-checks">
+            <div class="preflight-check">
+                <div class="check-indicator pending" id="chk-wifi-adapter">-</div>
+                <div class="check-info">
+                    <div class="check-name">WiFi Adapter</div>
+                    <div class="check-detail" id="chk-wifi-adapter-detail">Not checked</div>
+                </div>
+            </div>
+            <div class="preflight-check">
+                <div class="check-indicator pending" id="chk-bt-adapter">-</div>
+                <div class="check-info">
+                    <div class="check-name">Bluetooth Adapter</div>
+                    <div class="check-detail" id="chk-bt-adapter-detail">Not checked</div>
+                </div>
+            </div>
+            <div class="preflight-check">
+                <div class="check-indicator pending" id="chk-sdr">-</div>
+                <div class="check-info">
+                    <div class="check-name">SDR Dongle</div>
+                    <div class="check-detail" id="chk-sdr-detail">Not checked</div>
+                </div>
+            </div>
+            <div class="preflight-check">
+                <div class="check-indicator pending" id="chk-battery">-</div>
+                <div class="check-info">
+                    <div class="check-name">PiSugar Battery</div>
+                    <div class="check-detail" id="chk-battery-detail">Not checked</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Services -->
+    <div class="preflight-card" id="preflight-services">
+        <div class="preflight-card-header">
+            <h3>Services</h3>
+            <span class="preflight-card-status pending" id="svc-status">PENDING</span>
+        </div>
+        <div class="preflight-checks" id="svc-checks">
+            <div class="preflight-check">
+                <div class="check-indicator pending" id="chk-kismet">-</div>
+                <div class="check-info">
+                    <div class="check-name">Kismet</div>
+                    <div class="check-detail" id="chk-kismet-detail">Not checked</div>
+                </div>
+            </div>
+            <div class="preflight-check">
+                <div class="check-indicator pending" id="chk-dashboard">-</div>
+                <div class="check-info">
+                    <div class="check-name">Dashboard</div>
+                    <div class="check-detail" id="chk-dashboard-detail">Not checked</div>
+                </div>
+            </div>
+            <div class="preflight-check">
+                <div class="check-indicator pending" id="chk-gpsd">-</div>
+                <div class="check-info">
+                    <div class="check-name">GPS Daemon</div>
+                    <div class="check-detail" id="chk-gpsd-detail">Not checked</div>
+                </div>
+            </div>
+            <div class="preflight-check">
+                <div class="check-indicator pending" id="chk-modem-mgr">-</div>
+                <div class="check-info">
+                    <div class="check-name">ModemManager</div>
+                    <div class="check-detail" id="chk-modem-mgr-detail">Not checked</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Network -->
+    <div class="preflight-card" id="preflight-network">
+        <div class="preflight-card-header">
+            <h3>Network</h3>
+            <span class="preflight-card-status pending" id="net-status">PENDING</span>
+        </div>
+        <div class="preflight-checks" id="net-checks">
+            <div class="preflight-check">
+                <div class="check-indicator pending" id="chk-lte">-</div>
+                <div class="check-info">
+                    <div class="check-name">LTE Connection</div>
+                    <div class="check-detail" id="chk-lte-detail">Not checked</div>
+                </div>
+            </div>
+            <div class="preflight-check">
+                <div class="check-indicator pending" id="chk-internet">-</div>
+                <div class="check-info">
+                    <div class="check-name">Internet Access</div>
+                    <div class="check-detail" id="chk-internet-detail">Not checked</div>
+                </div>
+            </div>
+            <div class="preflight-check">
+                <div class="check-indicator pending" id="chk-tailscale">-</div>
+                <div class="check-info">
+                    <div class="check-name">Tailscale VPN</div>
+                    <div class="check-detail" id="chk-tailscale-detail">Not checked</div>
+                </div>
+            </div>
+            <div class="preflight-check">
+                <div class="check-indicator pending" id="chk-gps-fix">-</div>
+                <div class="check-info">
+                    <div class="check-name">GPS Fix</div>
+                    <div class="check-detail" id="chk-gps-fix-detail">Not checked</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configuration -->
+    <div class="preflight-card" id="preflight-config">
+        <div class="preflight-card-header">
+            <h3>Configuration</h3>
+            <span class="preflight-card-status pending" id="cfg-status">PENDING</span>
+        </div>
+        <div class="preflight-checks" id="cfg-checks">
+            <div class="preflight-check">
+                <div class="check-indicator pending" id="chk-kismet-cfg">-</div>
+                <div class="check-info">
+                    <div class="check-name">Kismet Config</div>
+                    <div class="check-detail" id="chk-kismet-cfg-detail">Not checked</div>
+                </div>
+            </div>
+            <div class="preflight-check">
+                <div class="check-indicator pending" id="chk-data-sources">-</div>
+                <div class="check-info">
+                    <div class="check-name">Data Sources</div>
+                    <div class="check-detail" id="chk-data-sources-detail">Not checked</div>
+                </div>
+            </div>
+            <div class="preflight-check">
+                <div class="check-indicator pending" id="chk-disk-space">-</div>
+                <div class="check-info">
+                    <div class="check-name">Disk Space</div>
+                    <div class="check-detail" id="chk-disk-space-detail">Not checked</div>
+                </div>
+            </div>
+            <div class="preflight-check">
+                <div class="check-indicator pending" id="chk-time-sync">-</div>
+                <div class="check-info">
+                    <div class="check-name">Time Sync</div>
+                    <div class="check-detail" id="chk-time-sync-detail">Not checked</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,115 +1,114 @@
-# SORCC-PI — Raspberry Pi RF Survey Payload
+# SORCC-PI — RF Survey Payload Integrator
 
-Automated setup and mission dashboard for the **Special Operations Robotics Capabilities Course (SORCC)** Module 4.3: Raspberry Pi Payload Integrator.
+![Platform](https://img.shields.io/badge/Platform-Raspberry_Pi_4-c51a4a?style=flat-square)
+![OS](https://img.shields.io/badge/OS-Kali_Linux_ARM64-557C94?style=flat-square)
+![RF](https://img.shields.io/badge/RF-Kismet_+_RTL--SDR-4a7c3f?style=flat-square)
+![Status](https://img.shields.io/badge/Status-Field_Ready-2ecc71?style=flat-square)
 
-Transforms a Raspberry Pi 4 into a deployable RF survey payload for robotics platforms — including FPV quadcopters — capable of WiFi, Bluetooth, SDR, and cellular reconnaissance.
+Software toolkit for the **Special Operations Robotics Capabilities Course (SORCC)**
+Module 4.3: Raspberry Pi Payload Integrator. Transforms a Raspberry Pi 4 into a
+deployable RF survey payload for robotics platforms.
 
-## Parts List
+```
+Student Browser ──:8080──▶ SORCC Dashboard (FastAPI)
+                                    │
+                              :2501 │
+                                    ▼
+                          Kismet Wireless Monitor
+                          ┌────┬────┬────┐
+                          │WiFi│ BT │SDR │
+                          └────┴────┴────┘
+                                    │
+                        LTE Modem ──┤── GPS
+                                    │
+                        PiSugar ────┘── Battery
+```
 
-| Component | Model |
-|-----------|-------|
-| SBC | Raspberry Pi 4 8GB |
-| LTE Hat | SixFab LE910Cx |
-| Battery | PiSugar 5000mAh |
-| SDR | Nooelec SMART (RTL2832U) + antenna |
-| SIM | T-Mobile (dynamic IP) |
-| Storage | 128GB+ SD card |
-| OS | Raspberry Pi OS 64-bit (Bookworm) |
+## Quick Start
 
-## Quick Start (Instructors)
-
-### 1. Flash the SD Card
-Use [Raspberry Pi Imager](https://www.raspberrypi.com/software/) to flash **Raspberry Pi OS 64-bit** (Bookworm). In the customization settings:
-- Set hostname (e.g., `sorcc-pi-01`)
-- Set username and password
-- Configure WiFi
-- Enable SSH
-
-### 2. Assemble Hardware
-Follow slides 8-11 in the course presentation:
-1. Mount PiSugar battery on RPi (Slide 9)
-2. Install SixFab LTE hat with LE910C4-NF modem (Slide 10)
-3. Attach Nooelec SDR + antenna (Slide 11)
-4. Insert SIM card
-
-### 3. Run the Installer
 ```bash
-git clone https://github.com/rmeadomavic/SORCC-PI.git
-cd SORCC-PI
+# 1. Flash Kali Linux ARM64 onto SD card (use RPi Imager)
+# 2. Clone the repo
+git clone https://github.com/rmeadomavic/sorcc-pi.git
+cd sorcc-pi
+
+# 3. Run the one-click installer
 sudo bash scripts/sorcc-setup.sh
+
+# 4. Open the dashboard
+# http://<pi-ip>:8080
 ```
 
-The installer runs 11 automated steps: preflight checks, system update, SDR tools, Kismet, LTE modem, GPS, Tailscale, PiSugar, cellular recon tools, systemd services, and the SORCC dashboard.
+## Hardware
 
-### 4. Validate
+| Component | Model | Purpose |
+|-----------|-------|---------|
+| SBC | Raspberry Pi 4 8GB | Main compute |
+| OS | Kali Linux ARM64 | Base operating system |
+| LTE | SixFab LE910Cx hat | Cellular connectivity |
+| Battery | PiSugar 5000mAh | Portable power |
+| SDR | Nooelec SMART (RTL2832U) | RF reception |
+| Storage | 128GB+ SD card | OS + capture data |
+
+## Dashboard Features
+
+### Operations
+- **Live View** — Real-time device list with signal strength, MAC, type, packet count
+- **Hunt Mode** — Enter a target SSID, track signal with WARMER/COLDER feedback
+- **RF Mission Profiles** — Switch between WiFi Survey, Bluetooth Recon, TPMS, ADS-B, Full Spectrum
+- **Export** — Download KML for Google Earth or CSV for analysis
+
+### Settings
+- **Config Editor** — Edit all settings from the browser (APN, Kismet sources, GPS, WiFi)
+- **APN Management** — Carrier dropdown with common APNs (T-Mobile, AT&T, Verizon, FirstNet)
+- **Import/Export** — Share configurations between devices
+
+### Preflight
+- **Visual Checklist** — Hardware, services, network, and config checks with pass/warn/fail indicators
+- **Auto-refresh** — Continuous monitoring of system health
+
+### Instructor Overview
+- **Multi-Device View** — Monitor all Pi payloads from a single browser tab
+- **Real-time Status** — Kismet, GPS, LTE, battery, device count per Pi
+- **Access:** `http://<any-pi-ip>:8080/instructor`
+
+## RF Mission Profiles
+
+| Profile | Sources | Use Case |
+|---------|---------|----------|
+| WiFi Survey | WiFi + Bluetooth | Scan all access points and clients |
+| Bluetooth Recon | Bluetooth only | BLE and Classic device discovery |
+| TPMS Monitoring | Bluetooth + RTL-433 @ 433MHz | Vehicle tire pressure sensors |
+| ADS-B Aircraft | Bluetooth + ADS-B @ 1090MHz | Aircraft transponder tracking |
+| Full Spectrum | All sources | Complete RF survey |
+
+## Student Exercises
+
+1. **RF Survey** — Fly the payload, map all WiFi/BT devices, export KML
+2. **WiFi Hunt** — Locate a hidden access point using Hunt Mode signal tracking
+3. **RF Recording** — Capture signals with GQRX and RTL-SDR
+4. **TPMS Monitoring** — Detect vehicle tire pressure sensors at 433 MHz
+5. **Cellular Recon** — Use gr-gsm and IMSI-catcher (instructor-led)
+6. **KML Export** — Visualize survey results in Google Earth
+
+## Configuration
+
+All settings live in `config/sorcc.ini`. Edit via the web dashboard (Settings tab)
+or directly on the Pi:
+
 ```bash
-bash scripts/sorcc-preflight.sh
+nano /opt/sorcc/config/sorcc.ini
 ```
 
-### 5. Reboot
-```bash
-sudo reboot
-```
-
-After reboot, Kismet and the dashboard start automatically.
-
-## Architecture
-
-```
-Student's Browser (phone/laptop)
-        │ port 8080
-   SORCC Dashboard (FastAPI)
-        │ port 2501
-      Kismet Wireless Monitor
-     ┌──┼──┐
-   WiFi  BT  SDR
-```
-
-## What Students Do
-
-### Exercise 1: RF Survey
-Open the SORCC Dashboard at `http://<pi-ip>:8080` → **Live View** tab. Observe WiFi, Bluetooth, and SDR devices being detected in real time.
-
-### Exercise 2: WiFi Hunt (FPV Mission)
-1. Open **Hunt Mode** tab on a phone/tablet
-2. Enter the target SSID
-3. Mount the payload on the FPV quadcopter
-4. Fly toward the signal — the dashboard shows live "WARMER / COLDER" feedback
-5. Land and export KML for Google Earth analysis
-
-### Exercise 3: RF Recording
-Use GQRX to tune to frequencies and record I/Q data (Slide 22):
-```bash
-gqrx
-```
-
-### Exercise 4: TPMS Monitoring
-Monitor tire pressure sensors at 433 MHz (Slide 21):
-```bash
-rtl_433 -f 433M -p 26
-```
-
-### Exercise 5: Cellular Recon (Instructor Demo)
-Instructor demonstrates IMSI catching workflow (Slide 23):
-```bash
-kal -s 1900                                    # Find cell towers
-grgsm-livemon -f 1987.6M -p 26                # Sniff tower
-cd ~/IMSI-catcher && python3 simple_IMSI-catcher.py -s -t test.txt
-```
-
-### Exercise 6: Google Earth Export
-1. Open **Export** tab in the dashboard and click "Download KML File"
-2. Or from terminal:
-   ```bash
-   sudo kismetdb_to_kml -v --in Kismet-*.kismet --out survey.kml
-   ```
-3. Transfer KML to your computer and open in Google Earth
+Key settings:
+- `[lte] apn` — Your carrier's APN (blank for auto-detect)
+- `[kismet] source_wifi` — WiFi adapter for monitor mode
+- `[general] hostname` — mDNS hostname (e.g., `sorcc-pi.local`)
 
 ## Remote Access
 
-Tailscale provides SSH and dashboard access over the internet:
 ```bash
-# Set up Tailscale (during install or standalone)
+# Set up Tailscale VPN
 sudo bash scripts/setup-tailscale.sh
 
 # SSH from anywhere
@@ -119,36 +118,64 @@ ssh <user>@<tailscale-ip>
 http://<tailscale-ip>:8080
 ```
 
-## Services
+## Headless Field-Boot
 
-| Service | Port | Purpose |
-|---------|------|---------|
-| `sorcc-boot` | — | GPS init + Avahi on boot |
-| `kismet` | 2501 | Wireless monitoring |
-| `sorcc-dashboard` | 8080 | SORCC web dashboard |
+Configure zero-touch operation — power on and the dashboard is ready:
 
 ```bash
-# Check status
+# With WiFi
+sudo bash scripts/sorcc-headless.sh --ssid "ClassroomWiFi" --password "s3cret"
+
+# LTE only
+sudo bash scripts/sorcc-headless.sh --ethernet-only
+
+# Custom hostname
+sudo bash scripts/sorcc-headless.sh --hostname sorcc-pi-03
+```
+
+## Service Management
+
+| Service | Purpose | Depends On |
+|---------|---------|------------|
+| `sorcc-boot` | GPS init, Avahi startup | ModemManager |
+| `kismet` | Wireless monitoring | sorcc-boot |
+| `sorcc-dashboard` | Web UI on :8080 | kismet |
+
+```bash
+# Check all services
 systemctl status kismet sorcc-dashboard sorcc-boot
 
 # View logs
-journalctl -u kismet -f
 journalctl -u sorcc-dashboard -f
+journalctl -u kismet -f
+
+# Restart services
+sudo systemctl restart sorcc-dashboard
 ```
 
 ## Troubleshooting
 
-| Problem | Solution |
-|---------|----------|
-| No LTE connection | `sudo mmcli -m 0` — check modem status. Verify SIM and APN. |
-| Kismet won't start | `sudo kismet --no-ncurses` — check error output |
-| No GPS data | `sudo mmcli -m 0 --location-get` — GPS needs sky view to acquire |
-| Dashboard not loading | `systemctl status sorcc-dashboard` — check if service is running |
-| SDR not detected | `lsusb` — verify Nooelec SMART is plugged in (0bda:2838) |
-| Cannot SSH remotely | `tailscale status` — verify Tailscale is connected |
-| Battery not reporting | `systemctl status pisugar-server` — check PiSugar service |
+| Issue | Fix |
+|-------|-----|
+| No devices in Live View | Check Kismet: `systemctl status kismet` |
+| LTE not connecting | Verify APN in Settings tab or `sudo mmcli -m 0` |
+| No GPS fix | Move to open sky area, check `sudo mmcli -m 0 --location-get` |
+| Dashboard not loading | Check: `systemctl status sorcc-dashboard` |
+| SDR not detected | Replug the Nooelec dongle, check `lsusb` |
+| Bluetooth missing | Check `hciconfig` — may need `sudo hciconfig hci0 up` |
 
-## Course Documents
+## Validation
 
-- `4.3 Raspberry Pi Payload Integrator_v2 - Copy.pptx` — Full lesson plan presentation
-- `Slide1.JPG` through `Slide29.JPG` — Extracted slide images for reference
+```bash
+# Full preflight check
+bash scripts/sorcc-preflight.sh
+
+# JSON output (used by dashboard)
+bash scripts/sorcc-preflight.sh --json
+```
+
+## Course Materials
+
+Presentation slides are in the `courseware/` directory:
+- `4.3 Raspberry Pi Payload Integrator_v2 - Copy.pptx` — Full lesson plan
+- `Slide1.JPG` through `Slide29.JPG` — Individual slides for reference

@@ -1,0 +1,65 @@
+{
+  "default_profile": "wifi-survey",
+  "profiles": [
+    {
+      "id": "wifi-survey",
+      "name": "WiFi Survey",
+      "description": "Scan all WiFi access points and clients in the area",
+      "kismet_sources": {
+        "bluetooth": "hci0",
+        "wifi": "wlan0",
+        "rtl433": null,
+        "adsb": null
+      },
+      "icon": "wifi"
+    },
+    {
+      "id": "bluetooth-recon",
+      "name": "Bluetooth Recon",
+      "description": "Bluetooth LE and Classic device discovery and tracking",
+      "kismet_sources": {
+        "bluetooth": "hci0",
+        "wifi": null,
+        "rtl433": null,
+        "adsb": null
+      },
+      "icon": "bluetooth"
+    },
+    {
+      "id": "tpms-monitor",
+      "name": "TPMS Monitoring",
+      "description": "Vehicle tire pressure sensors at 433 MHz / 315 MHz",
+      "kismet_sources": {
+        "bluetooth": "hci0",
+        "wifi": null,
+        "rtl433": "rtl433-0:channel=433000000",
+        "adsb": null
+      },
+      "icon": "radio"
+    },
+    {
+      "id": "adsb-tracking",
+      "name": "ADS-B Aircraft",
+      "description": "Track aircraft transponders at 1090 MHz",
+      "kismet_sources": {
+        "bluetooth": "hci0",
+        "wifi": null,
+        "rtl433": null,
+        "adsb": "rtladsb-00000001"
+      },
+      "icon": "plane"
+    },
+    {
+      "id": "full-spectrum",
+      "name": "Full Spectrum",
+      "description": "All sources active — WiFi, Bluetooth, SDR, ADS-B",
+      "kismet_sources": {
+        "bluetooth": "hci0",
+        "wifi": "wlan0",
+        "rtl433": "rtl433-0:channel=433000000",
+        "adsb": "rtladsb-00000001"
+      },
+      "icon": "spectrum"
+    }
+  ]
+}

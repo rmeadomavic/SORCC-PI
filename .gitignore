@@ -1,0 +1,46 @@
+# Runtime config (keep factory defaults only)
+config/sorcc.ini
+config/sorcc.ini.bak
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+*.so
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Kismet capture data
+*.kismet
+*.kismet.journal
+output_data/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env
+*.key
+*.pem
+
+# Logs
+*.log
+
+# Temporary
+/tmp/
+*.tmp

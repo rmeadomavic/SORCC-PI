@@ -1,0 +1,195 @@
+<!-- SORCC Settings Tab — Jinja2 include fragment -->
+
+<div class="settings-layout">
+    <!-- Section Navigation -->
+    <nav class="settings-nav" id="settings-nav">
+        <button class="settings-nav-btn active" data-section="general">General</button>
+        <button class="settings-nav-btn" data-section="lte">LTE</button>
+        <button class="settings-nav-btn" data-section="gps">GPS</button>
+        <button class="settings-nav-btn" data-section="kismet">Kismet</button>
+        <button class="settings-nav-btn" data-section="dashboard">Dashboard</button>
+        <button class="settings-nav-btn" data-section="tailscale">Tailscale</button>
+        <button class="settings-nav-btn" data-section="pisugar">PiSugar</button>
+        <button class="settings-nav-btn" data-section="wifi">WiFi</button>
+    </nav>
+
+    <!-- Section Content -->
+    <div class="settings-content">
+        <!-- General -->
+        <div id="settings-general" class="settings-section active">
+            <h3>General</h3>
+            <div class="form-group">
+                <label for="cfg-hostname">Hostname</label>
+                <input type="text" id="cfg-hostname" placeholder="sorcc-pi-01">
+                <div class="form-hint">Device hostname (requires reboot)</div>
+            </div>
+            <div class="form-group">
+                <label for="cfg-callsign">Callsign</label>
+                <input type="text" id="cfg-callsign" placeholder="ALPHA-1">
+                <div class="form-hint">Team / operator identifier shown in dashboard</div>
+            </div>
+        </div>
+
+        <!-- LTE -->
+        <div id="settings-lte" class="settings-section">
+            <h3>LTE Configuration</h3>
+            <div class="form-group">
+                <label for="cfg-apn">APN</label>
+                <input type="text" id="cfg-apn" list="apn-suggestions" placeholder="b2b.static">
+                <datalist id="apn-suggestions">
+                    <option value="b2b.static" label="T-Mobile (static)">
+                    <option value="fast.t-mobile.com" label="T-Mobile (dynamic)">
+                    <option value="broadband" label="AT&amp;T">
+                    <option value="vzwinternet" label="Verizon">
+                    <option value="firstnet" label="FirstNet">
+                </datalist>
+                <div class="form-hint">Access Point Name for your SIM carrier</div>
+            </div>
+            <div class="form-group">
+                <label for="cfg-sim-pin">SIM PIN</label>
+                <input type="password" id="cfg-sim-pin" placeholder="(leave blank if none)">
+            </div>
+            <div class="inline-action">
+                <button id="btn-restart-lte" class="btn-danger">Restart LTE</button>
+                <span class="form-hint">Restarts ModemManager and reconnects cellular</span>
+            </div>
+        </div>
+
+        <!-- GPS -->
+        <div id="settings-gps" class="settings-section">
+            <h3>GPS Configuration</h3>
+            <div class="form-group">
+                <label for="cfg-gps-port">GPS Serial Port</label>
+                <input type="text" id="cfg-gps-port" placeholder="/dev/ttyUSB1">
+                <div class="form-hint">NMEA serial device (usually /dev/ttyUSB1 via LTE modem)</div>
+            </div>
+            <div class="form-group">
+                <label for="cfg-gps-baud">Baud Rate</label>
+                <select id="cfg-gps-baud">
+                    <option value="4800">4800</option>
+                    <option value="9600" selected>9600</option>
+                    <option value="38400">38400</option>
+                    <option value="115200">115200</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Kismet -->
+        <div id="settings-kismet" class="settings-section">
+            <h3>Kismet Configuration</h3>
+            <div class="form-group">
+                <label for="cfg-kismet-url">Kismet API URL</label>
+                <input type="text" id="cfg-kismet-url" placeholder="http://localhost:2501">
+            </div>
+            <div class="form-group">
+                <label for="cfg-kismet-user">Kismet Username</label>
+                <input type="text" id="cfg-kismet-user" placeholder="kismet">
+            </div>
+            <div class="form-group">
+                <label for="cfg-kismet-pass">Kismet Password</label>
+                <input type="password" id="cfg-kismet-pass" placeholder="kismet">
+            </div>
+            <div class="toggle-row">
+                <span class="toggle-label">Auto-start Kismet on boot</span>
+                <label class="toggle">
+                    <input type="checkbox" id="cfg-kismet-autostart" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="settings-dashboard" class="settings-section">
+            <h3>Dashboard Settings</h3>
+            <div class="form-group">
+                <label for="cfg-dash-port">Dashboard Port</label>
+                <input type="number" id="cfg-dash-port" value="8080" min="1024" max="65535">
+            </div>
+            <div class="form-group">
+                <label for="cfg-poll-interval">Device Poll Interval (ms)</label>
+                <input type="number" id="cfg-poll-interval" value="5000" min="1000" max="30000" step="1000">
+                <div class="form-hint">How often to refresh the device list (1000-30000 ms)</div>
+            </div>
+            <div class="toggle-row">
+                <span class="toggle-label">Show Bluetooth devices</span>
+                <label class="toggle">
+                    <input type="checkbox" id="cfg-show-bt" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="toggle-row">
+                <span class="toggle-label">Show SDR/433MHz devices</span>
+                <label class="toggle">
+                    <input type="checkbox" id="cfg-show-sdr" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Tailscale -->
+        <div id="settings-tailscale" class="settings-section">
+            <h3>Tailscale VPN</h3>
+            <div class="form-group">
+                <label for="cfg-ts-authkey">Auth Key</label>
+                <input type="password" id="cfg-ts-authkey" placeholder="tskey-auth-...">
+                <div class="form-hint">Tailscale auth key for headless enrollment</div>
+            </div>
+            <div class="toggle-row">
+                <span class="toggle-label">Enable Tailscale</span>
+                <label class="toggle">
+                    <input type="checkbox" id="cfg-ts-enabled" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <!-- PiSugar -->
+        <div id="settings-pisugar" class="settings-section">
+            <h3>PiSugar Battery</h3>
+            <div class="toggle-row">
+                <span class="toggle-label">Enable battery monitoring</span>
+                <label class="toggle">
+                    <input type="checkbox" id="cfg-pisugar-enabled" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="form-group">
+                <label for="cfg-pisugar-warn">Low Battery Warning (%)</label>
+                <input type="number" id="cfg-pisugar-warn" value="20" min="5" max="50">
+                <div class="form-hint">Dashboard will warn when battery drops below this level</div>
+            </div>
+        </div>
+
+        <!-- WiFi -->
+        <div id="settings-wifi" class="settings-section">
+            <h3>WiFi Configuration</h3>
+            <div class="form-group">
+                <label for="cfg-wifi-ssid">WiFi SSID</label>
+                <input type="text" id="cfg-wifi-ssid" placeholder="SORCC-NET">
+            </div>
+            <div class="form-group">
+                <label for="cfg-wifi-pass">WiFi Password</label>
+                <input type="password" id="cfg-wifi-pass" placeholder="********">
+            </div>
+            <div class="form-group">
+                <label for="cfg-wifi-country">Country Code</label>
+                <input type="text" id="cfg-wifi-country" value="US" maxlength="2" style="width: 80px;">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Action Buttons -->
+<div class="settings-actions">
+    <div class="settings-actions-left">
+        <button id="btn-settings-apply" class="btn-primary">Apply</button>
+        <button id="btn-settings-reset" class="btn-secondary">Reset</button>
+        <button id="btn-factory-reset" class="btn-danger">Factory Reset</button>
+    </div>
+    <div class="settings-actions-right">
+        <div class="config-io-buttons">
+            <button id="btn-config-export" class="btn-secondary">Export Config</button>
+            <button id="btn-config-import" class="btn-secondary">Import Config</button>
+        </div>
+    </div>
+</div>

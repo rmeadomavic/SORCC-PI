@@ -1,67 +1,92 @@
 #!/usr/bin/env bash
 # SORCC-PI — Post-install validation
-# Usage: bash scripts/sorcc-preflight.sh
+# Usage: bash scripts/sorcc-preflight.sh [--json]
 set -euo pipefail
 
 PASS=0
 WARN=0
 FAIL=0
+JSON_MODE=false
+JSON_CHECKS="[]"
 
-ok()   { echo -e "\033[0;32m[PASS]\033[0m $1"; PASS=$((PASS+1)); }
-warn() { echo -e "\033[1;33m[WARN]\033[0m $1"; WARN=$((WARN+1)); }
-fail() { echo -e "\033[0;31m[FAIL]\033[0m $1"; FAIL=$((FAIL+1)); }
+# Parse args
+if [[ "${1:-}" == "--json" ]]; then
+    JSON_MODE=true
+fi
+
+ok()   {
+    if [ "$JSON_MODE" = true ]; then
+        json_add "$1" "$2" "pass" "$3"
+    else
+        echo -e "\033[0;32m[PASS]\033[0m $3"
+    fi
+    PASS=$((PASS+1))
+}
+warn() {
+    if [ "$JSON_MODE" = true ]; then
+        json_add "$1" "$2" "warn" "$3"
+    else
+        echo -e "\033[1;33m[WARN]\033[0m $3"
+    fi
+    WARN=$((WARN+1))
+}
+fail() {
+    if [ "$JSON_MODE" = true ]; then
+        json_add "$1" "$2" "fail" "$3"
+    else
+        echo -e "\033[0;31m[FAIL]\033[0m $3"
+    fi
+    FAIL=$((FAIL+1))
+}
+
+json_add() {
+    local name="$1" category="$2" status="$3" detail="$4"
+    # Escape quotes in detail
+    detail="${detail//\"/\\\"}"
+    JSON_CHECKS=$(echo "$JSON_CHECKS" | python3 -c "
+import sys, json
+checks = json.load(sys.stdin)
+checks.append({'name': '$name', 'category': '$category', 'status': '$status', 'detail': '$detail'})
+json.dump(checks, sys.stdout)
+" 2>/dev/null || echo "$JSON_CHECKS")
+}
 
 check_cmd() {
-    local cmd="$1" label="$2"
+    local cmd="$1" label="$2" category="${3:-tools}"
     if command -v "$cmd" >/dev/null 2>&1; then
-        ok "$label"
+        ok "$label" "$category" "$label is installed"
     else
-        fail "$label (command not found: $cmd)"
+        fail "$label" "$category" "$label not found (command: $cmd)"
     fi
 }
 
 check_service() {
     local svc="$1" label="$2"
     if systemctl is-active --quiet "$svc" 2>/dev/null; then
-        ok "$label"
+        ok "$label" "services" "$label is running"
     elif systemctl is-enabled --quiet "$svc" 2>/dev/null; then
-        warn "$label (enabled but not running — may need reboot)"
+        warn "$label" "services" "$label enabled but not running — may need reboot"
     else
-        fail "$label (not installed or not enabled)"
+        fail "$label" "services" "$label not installed or not enabled"
     fi
 }
 
-echo "SORCC-PI Preflight Check"
-echo "========================"
-echo ""
-
-# ── Tools ────────────────────────────────────────────────────
-echo "-- Tools --"
-check_cmd python3 "python3 is installed"
-check_cmd kismet "Kismet is installed"
-check_cmd rtl_test "rtl-sdr tools installed"
-check_cmd mmcli "ModemManager CLI installed"
-check_cmd nmcli "NetworkManager CLI installed"
-check_cmd gqrx "GQRX SDR installed"
-
-if python3 -m pip --version >/dev/null 2>&1; then
-    ok "pip is installed"
-else
-    fail "pip is not installed"
+if [ "$JSON_MODE" = false ]; then
+    echo "SORCC-PI Preflight Check"
+    echo "========================"
+    echo ""
 fi
 
-echo ""
-
 # ── Hardware ─────────────────────────────────────────────────
-echo "-- Hardware --"
+if [ "$JSON_MODE" = false ]; then echo "-- Hardware --"; fi
 
 # SDR
 if lsusb 2>/dev/null | grep -q "0bda:2838"; then
-    ok "RTL-SDR dongle detected"
+    ok "RTL-SDR" "hardware" "RTL-SDR dongle detected (RTL2832U)"
 elif lsusb 2>/dev/null | grep -qi "nooelec"; then
-    ok "Nooelec SDR detected"
+    ok "RTL-SDR" "hardware" "Nooelec SDR detected"
 else
-    warn "No SDR dongle detected (plug in the Nooelec SMART)"
+    warn "RTL-SDR" "hardware" "No SDR dongle detected"
 fi
 
 # Serial devices
@@ -73,152 +98,132 @@ for dev in /dev/ttyUSB*; do
     fi
 done
 if [ "$SERIAL_FOUND" = true ]; then
-    ok "Serial devices present ($(ls /dev/ttyUSB* 2>/dev/null | tr '\n' ' '))"
+    ok "Serial Devices" "hardware" "Serial devices present ($(ls /dev/ttyUSB* 2>/dev/null | tr '\n' ' '))"
 else
-    warn "No /dev/ttyUSB* devices found (LTE modem may not be connected)"
+    warn "Serial Devices" "hardware" "No /dev/ttyUSB* devices found (LTE modem not connected)"
 fi
 
 # Bluetooth
 if [ -e /sys/class/bluetooth/hci0 ]; then
-    ok "Bluetooth adapter (hci0) present"
+    ok "Bluetooth" "hardware" "Bluetooth adapter (hci0) present"
 else
-    warn "No Bluetooth adapter found"
+    warn "Bluetooth" "hardware" "No Bluetooth adapter found"
+fi
+
+# PiSugar
+if systemctl is-active --quiet pisugar-server 2>/dev/null; then
+    ok "PiSugar" "hardware" "PiSugar battery manager running"
+else
+    warn "PiSugar" "hardware" "PiSugar not running (battery monitoring unavailable)"
 fi
 
 # User groups
 SORCC_USER="${SUDO_USER:-$(whoami)}"
 if id -nG "$SORCC_USER" | grep -qw dialout; then
-    ok "User $SORCC_USER in dialout group"
+    ok "Dialout Group" "hardware" "User $SORCC_USER in dialout group"
 else
-    warn "User $SORCC_USER NOT in dialout group. Run: sudo usermod -aG dialout $SORCC_USER"
+    warn "Dialout Group" "hardware" "User $SORCC_USER NOT in dialout group"
 fi
 
-echo ""
+if [ "$JSON_MODE" = false ]; then echo ""; echo "-- Services --"; fi
 
 # ── Services ─────────────────────────────────────────────────
-echo "-- Services --"
-check_service kismet "Kismet service"
-check_service sorcc-boot "SORCC boot service"
-check_service sorcc-dashboard "SORCC dashboard service"
+check_service kismet "Kismet Service"
+check_service sorcc-boot "SORCC Boot Service"
+check_service sorcc-dashboard "SORCC Dashboard"
 check_service avahi-daemon "Avahi mDNS"
 
-if systemctl is-active --quiet pisugar-server 2>/dev/null; then
-    ok "PiSugar server running"
-else
-    warn "PiSugar server not running (battery monitoring unavailable)"
-fi
-
-echo ""
+if [ "$JSON_MODE" = false ]; then echo ""; echo "-- Network --"; fi
 
 # ── Network ──────────────────────────────────────────────────
-echo "-- Network --"
-
-# LTE modem
 if mmcli -L 2>/dev/null | grep -q "/"; then
-    ok "LTE modem detected by ModemManager"
+    ok "LTE Modem" "network" "LTE modem detected by ModemManager"
 else
-    warn "LTE modem not detected"
+    warn "LTE Modem" "network" "LTE modem not detected"
 fi
 
-# Internet connectivity
 if ping -c 1 -W 3 8.8.8.8 >/dev/null 2>&1; then
-    ok "Internet connectivity (ping 8.8.8.8)"
+    ok "Internet" "network" "Internet connectivity OK"
 else
-    warn "No internet connectivity"
+    warn "Internet" "network" "No internet connectivity"
 fi
 
-# Tailscale
 if command -v tailscale >/dev/null 2>&1; then
     TS_IP="$(tailscale ip -4 2>/dev/null || true)"
     if [ -n "$TS_IP" ]; then
-        ok "Tailscale connected ($TS_IP)"
+        ok "Tailscale" "network" "Tailscale connected ($TS_IP)"
     else
-        warn "Tailscale installed but not connected"
+        warn "Tailscale" "network" "Tailscale installed but not connected"
     fi
 else
-    warn "Tailscale not installed (remote access unavailable)"
+    warn "Tailscale" "network" "Tailscale not installed"
 fi
 
-echo ""
+if [ "$JSON_MODE" = false ]; then echo ""; echo "-- Config --"; fi
 
-# ── Kismet ───────────────────────────────────────────────────
-echo "-- Kismet --"
-
+# ── Config ───────────────────────────────────────────────────
 if [ -f /etc/kismet/kismet_site.conf ]; then
-    ok "Kismet site config exists"
+    ok "Kismet Config" "config" "Kismet site config exists"
 else
-    fail "Kismet site config missing (/etc/kismet/kismet_site.conf)"
+    fail "Kismet Config" "config" "Kismet site config missing (/etc/kismet/kismet_site.conf)"
 fi
 
 if [ -f /root/.kismet/kismet_httpd.conf ]; then
-    ok "Kismet credentials configured"
+    ok "Kismet Credentials" "config" "Kismet credentials configured"
 else
-    warn "Kismet credentials not set (/root/.kismet/kismet_httpd.conf)"
+    warn "Kismet Credentials" "config" "Kismet credentials not set"
 fi
 
-# Check if Kismet web UI responds
 if curl -s -o /dev/null -w "%{http_code}" http://localhost:2501/ 2>/dev/null | grep -q "200\|401"; then
-    ok "Kismet web UI responding on port 2501"
+    ok "Kismet Web UI" "config" "Kismet responding on port 2501"
 else
-    warn "Kismet web UI not responding (service may not be running)"
-fi
-
-echo ""
-
-# ── Dashboard ────────────────────────────────────────────────
-echo "-- Dashboard --"
-
-if [ -f /opt/sorcc/dashboard/app.py ]; then
-    ok "Dashboard app installed"
-else
-    fail "Dashboard app not found (/opt/sorcc/dashboard/app.py)"
+    warn "Kismet Web UI" "config" "Kismet not responding on port 2501"
 fi
 
 if curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/ 2>/dev/null | grep -q "200"; then
-    ok "SORCC Dashboard responding on port 8080"
+    ok "SORCC Dashboard" "config" "Dashboard responding on port 8080"
 else
-    warn "SORCC Dashboard not responding on port 8080"
+    warn "SORCC Dashboard" "config" "Dashboard not responding on port 8080"
 fi
 
-echo ""
-
-# ── GPS ──────────────────────────────────────────────────────
-echo "-- GPS --"
+if [ -f /opt/sorcc/config/sorcc.ini ]; then
+    ok "SORCC Config" "config" "sorcc.ini exists"
+else
+    warn "SORCC Config" "config" "sorcc.ini not found — run sorcc-setup.sh"
+fi
 
 if [ -f /opt/sorcc/gps_lte.py ]; then
-    ok "GPS script installed"
+    ok "GPS Script" "config" "GPS script installed"
 else
-    fail "GPS script not found (/opt/sorcc/gps_lte.py)"
+    warn "GPS Script" "config" "GPS script not found"
 fi
 
-echo ""
+# ── Output ───────────────────────────────────────────────────
+if [ "$JSON_MODE" = true ]; then
+    # Determine overall status
+    if [ "$FAIL" -gt 0 ]; then
+        STATUS="fail"
+    elif [ "$WARN" -gt 0 ]; then
+        STATUS="warn"
+    else
+        STATUS="pass"
+    fi
 
-# ── Cellular Recon ───────────────────────────────────────────
-echo "-- Cellular Recon Tools --"
-check_cmd grgsm_livemon "gr-gsm (grgsm_livemon)"
-check_cmd kal "kalibrate-rtl (kal)"
-
-SORCC_HOME="$(eval echo ~"$SORCC_USER")"
-if [ -d "$SORCC_HOME/IMSI-catcher" ]; then
-    ok "IMSI-catcher cloned"
+    echo "{\"status\": \"$STATUS\", \"pass\": $PASS, \"warn\": $WARN, \"fail\": $FAIL, \"checks\": $JSON_CHECKS}"
 else
-    warn "IMSI-catcher not found at $SORCC_HOME/IMSI-catcher"
-fi
+    echo ""
+    echo "========================"
+    echo "Summary: PASS=$PASS  WARN=$WARN  FAIL=$FAIL"
+    echo ""
 
-echo ""
-
-# ── Summary ──────────────────────────────────────────────────
-echo "========================"
-echo "Summary: PASS=$PASS  WARN=$WARN  FAIL=$FAIL"
-echo ""
-
-if [ "$FAIL" -gt 0 ]; then
-    echo "Some checks FAILED. Review the output above and re-run sorcc-setup.sh."
-    exit 1
-elif [ "$WARN" -gt 0 ]; then
-    echo "All critical checks passed. Some warnings — review above."
-    exit 0
-else
-    echo "All checks passed. The payload is mission-ready."
-    exit 0
+    if [ "$FAIL" -gt 0 ]; then
+        echo "Some checks FAILED. Review the output above and re-run sorcc-setup.sh."
+        exit 1
+    elif [ "$WARN" -gt 0 ]; then
+        echo "All critical checks passed. Some warnings — review above."
+        exit 0
+    else
+        echo "All checks passed. The payload is mission-ready."
+        exit 0
+    fi
 fi

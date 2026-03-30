@@ -1,0 +1,134 @@
+<!-- SORCC Operations Tab — Jinja2 include fragment -->
+
+<!-- Profile Selector -->
+<div class="profile-selector" id="profile-selector">
+    <div class="profile-card active" data-profile="wifi-survey">
+        <div class="profile-card-name">WiFi Survey</div>
+        <div class="profile-card-desc">Locate and map WiFi networks</div>
+    </div>
+    <div class="profile-card" data-profile="bt-survey">
+        <div class="profile-card-name">BT Survey</div>
+        <div class="profile-card-desc">Bluetooth device enumeration</div>
+    </div>
+    <div class="profile-card" data-profile="full-spectrum">
+        <div class="profile-card-name">Full Spectrum</div>
+        <div class="profile-card-desc">All sources: WiFi + BT + SDR</div>
+    </div>
+    <div class="profile-card" data-profile="sdr-only">
+        <div class="profile-card-name">SDR Only</div>
+        <div class="profile-card-desc">433MHz / ADS-B monitoring</div>
+    </div>
+</div>
+
+<!-- Sub-Tab Navigation -->
+<div class="sub-tabs">
+    <button class="sub-tab active" data-subtab="live">Live View</button>
+    <button class="sub-tab" data-subtab="hunt">Hunt Mode</button>
+    <button class="sub-tab" data-subtab="export">Export</button>
+</div>
+
+<!-- ── Live View ── -->
+<div id="subtab-live" class="sub-content active">
+    <div class="panel">
+        <h2>Detected Devices <span id="device-count" class="badge">0</span></h2>
+        <div class="device-filters">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="Wi-Fi">WiFi</button>
+            <button class="filter-btn" data-filter="Bluetooth">BT</button>
+            <button class="filter-btn" data-filter="RTL433">433MHz</button>
+        </div>
+        <div class="device-list" id="device-list">
+            <div class="loading">Connecting to Kismet...</div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Hunt Mode ── -->
+<div id="subtab-hunt" class="sub-content">
+    <div class="panel">
+        <h2>WiFi Target Hunt</h2>
+        <div class="hunt-setup">
+            <label for="target-ssid">Target SSID:</label>
+            <div class="hunt-input-row">
+                <input type="text" id="target-ssid" placeholder="Enter target network name...">
+                <button id="hunt-start" class="btn-primary">Start Hunt</button>
+                <button id="hunt-stop" class="btn-danger" style="display:none;">Stop</button>
+            </div>
+        </div>
+
+        <div id="hunt-display" style="display:none;">
+            <div class="signal-gauge-container">
+                <div class="signal-label">Signal Strength</div>
+                <div class="signal-gauge">
+                    <div class="signal-bar" id="signal-bar"></div>
+                </div>
+                <div class="signal-value" id="signal-value">-- dBm</div>
+                <div class="signal-hint" id="signal-hint">Searching...</div>
+            </div>
+
+            <div class="hunt-stats">
+                <div class="stat">
+                    <span class="stat-label">Status</span>
+                    <span class="stat-value" id="hunt-status">Searching</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Channel</span>
+                    <span class="stat-value" id="hunt-channel">--</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">MAC</span>
+                    <span class="stat-value" id="hunt-mac">--</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Peak Signal</span>
+                    <span class="stat-value" id="hunt-peak">-- dBm</span>
+                </div>
+            </div>
+
+            <!-- RSSI History Chart -->
+            <div class="chart-container">
+                <h3>Signal History</h3>
+                <svg id="rssi-chart" viewBox="0 0 600 200" preserveAspectRatio="none">
+                    <line x1="0" y1="50" x2="600" y2="50" class="chart-gridline"/>
+                    <line x1="0" y1="100" x2="600" y2="100" class="chart-gridline"/>
+                    <line x1="0" y1="150" x2="600" y2="150" class="chart-gridline"/>
+                    <text x="605" y="54" class="chart-label">-40 dBm</text>
+                    <text x="605" y="104" class="chart-label">-60 dBm</text>
+                    <text x="605" y="154" class="chart-label">-80 dBm</text>
+                    <polyline id="rssi-line" class="chart-line" points=""/>
+                </svg>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Export ── -->
+<div id="subtab-export" class="sub-content">
+    <div class="panel">
+        <h2>Data Export</h2>
+        <p>Export Kismet capture data for analysis and visualization.</p>
+
+        <div class="export-actions">
+            <button id="export-kml" class="btn-primary btn-large">
+                Download KML File
+            </button>
+            <button id="export-csv" class="btn-secondary btn-large">
+                Download CSV
+            </button>
+        </div>
+
+        <div class="export-instructions">
+            <h3>How to view in Google Earth</h3>
+            <ol>
+                <li>Click "Download KML File" above</li>
+                <li>Transfer the file to your computer</li>
+                <li>Open Google Earth Pro</li>
+                <li>Drag and drop the .kml file into Google Earth</li>
+                <li>RF sources will appear as placemarks on the map</li>
+            </ol>
+
+            <h3>Manual export (from terminal)</h3>
+            <code>sudo kismetdb_to_kml -v --in Kismet-*.kismet --out survey.kml</code>
+        </div>
+    </div>
+</div>
