@@ -5,6 +5,8 @@
 
     // ── State ───────────────────────────────────────────────
     var activeTab = "operations";
+    var consecutiveFailures = 0;
+    var lastSuccessTime = Date.now();
 
     // ── Utility Functions ───────────────────────────────────
 
@@ -82,10 +84,36 @@
         dot.classList.add(active ? "active" : "error");
     }
 
+    function showConnectionBanner(connected) {
+        var banner = document.getElementById("connection-banner");
+        if (!banner) {
+            banner = document.createElement("div");
+            banner.id = "connection-banner";
+            banner.className = "connection-banner";
+            var header = document.querySelector("header");
+            if (header && header.nextSibling) {
+                header.parentNode.insertBefore(banner, header.nextSibling);
+            } else {
+                document.body.prepend(banner);
+            }
+        }
+        if (connected) {
+            banner.classList.remove("active");
+        } else {
+            var ago = Math.round((Date.now() - lastSuccessTime) / 1000);
+            banner.textContent = "CONNECTION LOST — Last data " + ago + "s ago";
+            banner.classList.add("active");
+        }
+    }
+
     function updateStatus() {
-        fetch("/api/status")
+        fetch("/api/status", { signal: AbortSignal.timeout ? AbortSignal.timeout(8000) : undefined })
             .then(function (r) { return r.json(); })
             .then(function (s) {
+                consecutiveFailures = 0;
+                lastSuccessTime = Date.now();
+                showConnectionBanner(true);
+
                 setDot("kismet-dot", s.kismet);
                 setDot("gps-dot", s.gps);
                 setDot("modem-dot", s.modem);
@@ -111,19 +139,28 @@
                 if (footerIp && s.hostname) footerIp.textContent = s.hostname;
 
                 // Active profile badge
-                var profileBadge = document.getElementById("active-profile-badge");
+                var profileBadge = document.getElementById("active-profile");
                 if (profileBadge && s.active_profile) {
                     profileBadge.textContent = s.active_profile;
                     profileBadge.style.display = "";
                 }
 
-                // Device count badge
-                var countBadge = document.getElementById("device-count-badge");
+                // Device count badge (in operations tab header)
+                var countBadge = document.getElementById("device-count");
                 if (countBadge && s.device_count !== undefined && s.device_count !== null) {
                     countBadge.textContent = s.device_count;
                 }
             })
-            .catch(function () {});
+            .catch(function () {
+                consecutiveFailures++;
+                if (consecutiveFailures >= 2) {
+                    showConnectionBanner(false);
+                    // Grey out all status dots
+                    setDot("kismet-dot", false);
+                    setDot("gps-dot", false);
+                    setDot("modem-dot", false);
+                }
+            });
     }
 
     // ── Init ────────────────────────────────────────────────

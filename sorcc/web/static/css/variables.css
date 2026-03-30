@@ -53,7 +53,7 @@
     --gap-lg: 16px; --gap-xl: 24px;
 
     /* ── Type Scale ── */
-    --font-xs: 0.65rem; --font-sm: 0.75rem; --font-base: 0.85rem;
+    --font-xs: 0.75rem; --font-sm: 0.85rem; --font-base: 1rem;
     --font-md: 1rem; --font-lg: 1.2rem; --font-xl: 1.5rem;
     --font-2xl: 2rem; --font-3xl: 3rem;
 

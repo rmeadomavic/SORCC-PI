@@ -230,11 +230,12 @@
 .device-row {
     display: flex;
     align-items: center;
-    padding: 10px var(--sp-3);
+    padding: 12px var(--sp-3);
     border-bottom: 1px solid var(--border);
     gap: var(--sp-3);
     transition: background var(--transition-fast);
     cursor: pointer;
+    min-height: 48px;
 }
 
 .device-row:hover {
@@ -375,8 +376,13 @@
     color: var(--text-dim);
     font-size: 1.5rem;
     cursor: pointer;
-    padding: 0 4px;
+    padding: 8px 12px;
     line-height: 1;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .detail-close:hover { color: var(--text-primary); }
@@ -548,6 +554,7 @@
 .signal-hint.warm      { color: var(--signal-warm); }
 .signal-hint.hot       { color: var(--signal-hot); }
 .signal-hint.searching { color: var(--text-secondary); }
+.signal-hint.stale     { color: var(--danger); animation: pulse-banner 1.5s ease-in-out infinite; }
 
 /* ── Hunt Stats ── */
 .hunt-stats {
@@ -846,6 +853,8 @@
 }
 
 /* ── Scan Line Effect ── */
+#subtab-spectrum { position: relative; overflow: hidden; }
+
 .spectrum-scanline {
     display: none;
 }

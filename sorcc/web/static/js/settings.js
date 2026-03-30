@@ -82,8 +82,10 @@
             "cfg-hostname":       { section: "general", key: "hostname" },
             "cfg-callsign":       { section: "general", key: "callsign" },
             "cfg-apn":            { section: "lte", key: "apn" },
+            "cfg-sim-pin":        { section: "lte", key: "sim_pin" },
             "cfg-gps-port":       { section: "gps", key: "serial_port" },
             "cfg-gps-baud":       { section: "gps", key: "serial_baud" },
+            "cfg-kismet-url":     { section: "kismet", key: "port" },
             "cfg-kismet-user":    { section: "kismet", key: "user" },
             "cfg-kismet-pass":    { section: "kismet", key: "pass" },
             "cfg-dash-port":      { section: "dashboard", key: "port" },
@@ -101,8 +103,6 @@
 
             if (el.type === "checkbox") {
                 config[m.section][m.key] = el.checked ? "true" : "false";
-            } else if (el.type === "number") {
-                config[m.section][m.key] = el.value;
             } else {
                 config[m.section][m.key] = el.value;
             }

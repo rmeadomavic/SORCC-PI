@@ -78,13 +78,20 @@
 
     // ── Device List (Live View) ─────────────────────────────
 
+    var deviceFetchInFlight = false;
+
     function fetchDevices() {
         if (window.SORCC.getActiveTab() !== "operations") return;
         if (activeSubTab !== "live" && activeSubTab !== "spectrum") return;
+        if (deviceFetchInFlight) return;
+        deviceFetchInFlight = true;
 
-        fetch("/api/devices")
+        fetch("/api/devices", {
+            signal: AbortSignal.timeout ? AbortSignal.timeout(8000) : undefined
+        })
             .then(function (r) { return r.json(); })
             .then(function (devices) {
+                deviceFetchInFlight = false;
                 lastDevices = devices;
                 updateSignalHistory(devices);
                 renderDevices(devices);
@@ -92,9 +99,10 @@
                 renderSpectrum(devices);
             })
             .catch(function () {
+                deviceFetchInFlight = false;
                 var list = document.getElementById("device-list");
                 if (list) {
-                    list.innerHTML = '<div class="loading">Cannot reach Kismet. Is it running?</div>';
+                    list.innerHTML = '<div class="loading">Cannot reach dashboard. Check connection.</div>';
                 }
             });
     }
@@ -146,15 +154,31 @@
         }, 200);
     }
 
+    var signalHistoryLastSeen = {};  // MAC → timestamp of last update
+    var HISTORY_PRUNE_AGE = 300000;  // 5 minutes in ms
+
     function updateSignalHistory(devices) {
+        var now = Date.now();
+        var activeKeys = {};
+
         devices.forEach(function (d) {
             var key = d.mac || d.key;
             if (!key) return;
+            activeKeys[key] = true;
             var sig = (d.signal === 0 || d.signal == null) ? null : d.signal;
             if (!signalHistory[key]) signalHistory[key] = [];
             signalHistory[key].push(sig);
             if (signalHistory[key].length > SPARKLINE_MAX) {
                 signalHistory[key].shift();
+            }
+            signalHistoryLastSeen[key] = now;
+        });
+
+        // Prune history for devices not seen in 5+ minutes
+        Object.keys(signalHistory).forEach(function (key) {
+            if (!activeKeys[key] && (now - (signalHistoryLastSeen[key] || 0)) > HISTORY_PRUNE_AGE) {
+                delete signalHistory[key];
+                delete signalHistoryLastSeen[key];
             }
         });
     }
@@ -304,6 +328,9 @@
             var ssid = ssidInput.value.trim();
             if (!ssid) {
                 ssidInput.focus();
+                ssidInput.style.borderColor = "var(--danger)";
+                window.SORCC.showToast("Enter a target SSID to hunt", "error");
+                setTimeout(function () { ssidInput.style.borderColor = ""; }, 2000);
                 return;
             }
             startHunt(ssid);
@@ -337,6 +364,8 @@
     function stopHunt() {
         if (huntInterval) clearInterval(huntInterval);
         huntInterval = null;
+        huntPollInFlight = false;
+        huntConsecutiveErrors = 0;
 
         // Stop audio
         if (audioGain) audioGain.gain.value = 0;
@@ -350,13 +379,35 @@
         if (ssidInput) ssidInput.disabled = false;
     }
 
+    var huntPollInFlight = false;
+    var huntConsecutiveErrors = 0;
+
     function pollTarget(ssid) {
-        fetch("/api/target/" + encodeURIComponent(ssid))
+        if (huntPollInFlight) return;  // prevent stacking over slow connections
+        huntPollInFlight = true;
+        fetch("/api/target/" + encodeURIComponent(ssid), {
+            signal: AbortSignal.timeout ? AbortSignal.timeout(4000) : undefined
+        })
             .then(function (r) { return r.json(); })
             .then(function (data) {
+                huntPollInFlight = false;
+                huntConsecutiveErrors = 0;
+                var sigHint = document.getElementById("signal-hint");
+                if (sigHint) sigHint.classList.remove("stale");
                 updateHuntDisplay(data);
             })
-            .catch(function () {});
+            .catch(function () {
+                huntPollInFlight = false;
+                huntConsecutiveErrors++;
+                if (huntConsecutiveErrors >= 3) {
+                    var sigHint = document.getElementById("signal-hint");
+                    if (sigHint) {
+                        sigHint.textContent = "SIGNAL STALE — CONNECTION LOST";
+                        sigHint.className = "signal-hint stale";
+                    }
+                    if (audioGain) audioGain.gain.value = 0;
+                }
+            });
     }
 
     // Audio context for hunt mode tone

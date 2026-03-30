@@ -181,7 +181,7 @@
     }
 
     function updateMapPosition() {
-        fetch("/api/gps")
+        fetch("/api/gps", { signal: AbortSignal.timeout ? AbortSignal.timeout(8000) : undefined })
             .then(function (r) { return r.json(); })
             .then(function (gps) {
                 if (!gps.lat || !gps.lon || !map) return;
@@ -229,7 +229,7 @@
     }
 
     function updateMapDevices() {
-        fetch("/api/devices/located")
+        fetch("/api/devices/located", { signal: AbortSignal.timeout ? AbortSignal.timeout(8000) : undefined })
             .then(function (r) { return r.json(); })
             .then(function (devices) {
                 if (!map) return;
@@ -306,10 +306,7 @@
     }
 
     function escapeForPopup(str) {
-        if (!str) return "";
-        var div = document.createElement("div");
-        div.textContent = str;
-        return div.innerHTML;
+        return str ? window.SORCC.escapeHtml(str) : "";
     }
 
     function pollMap() {

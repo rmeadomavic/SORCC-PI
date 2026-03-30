@@ -152,7 +152,7 @@
             <span class="map-stats" id="map-stats">--</span>
             <span class="map-gps-info" id="map-gps-info">No GPS fix</span>
         </div>
-        <div id="sorcc-map" style="height:500px;border-radius:8px;border:1px solid var(--border);"></div>
+        <div id="sorcc-map" style="height:min(500px, 60vh);border-radius:8px;border:1px solid var(--border);"></div>
         <div class="map-legend">
             <span class="legend-item"><span class="legend-dot" style="background:#ef5350"></span> Strong (&gt;-50 dBm)</span>
             <span class="legend-item"><span class="legend-dot" style="background:#ff9800"></span> Medium (-50 to -70)</span>
@@ -292,7 +292,7 @@
             <!-- RSSI History Chart -->
             <div class="chart-container">
                 <h3>Signal History</h3>
-                <svg id="rssi-chart" viewBox="0 0 600 200" preserveAspectRatio="none">
+                <svg id="rssi-chart" viewBox="0 0 660 200" preserveAspectRatio="none">
                     <line x1="0" y1="50" x2="600" y2="50" class="chart-gridline"/>
                     <line x1="0" y1="100" x2="600" y2="100" class="chart-gridline"/>
                     <line x1="0" y1="150" x2="600" y2="150" class="chart-gridline"/>

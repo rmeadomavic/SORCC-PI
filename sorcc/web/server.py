@@ -23,7 +23,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 try:
     from sorcc.config_api import (
         read_config, write_config, restore_backup, restore_factory,
-        has_backup, has_factory, set_config_path,
+        has_backup, has_factory,
     )
     _HAS_CONFIG_API = True
 except ImportError:
@@ -63,7 +63,14 @@ KISMET_PASS = "kismet"
 _active_profile: str = "wifi-survey"
 
 
+_kismet_session_cache: requests.Session | None = None
+_kismet_session_time: float = 0
+
 def kismet_session() -> requests.Session:
+    global _kismet_session_cache, _kismet_session_time
+    # Reuse cached session for up to 60 seconds
+    if _kismet_session_cache and (time.time() - _kismet_session_time) < 60:
+        return _kismet_session_cache
     s = requests.Session()
     s.auth = (KISMET_USER, KISMET_PASS)
     s.headers.update({"Accept": "application/json"})
@@ -73,6 +80,8 @@ def kismet_session() -> requests.Session:
             s.cookies.update(r.cookies)
     except (requests.ConnectionError, requests.Timeout):
         pass
+    _kismet_session_cache = s
+    _kismet_session_time = time.time()
     return s
 
 
@@ -111,15 +120,6 @@ def _load_profiles() -> dict:
         log.warning("Could not load profiles.json: %s", e)
         return {"default_profile": "wifi-survey", "profiles": []}
 
-def _get_device_count() -> int:
-    try:
-        data = kismet_get("/system/status.json")
-        if isinstance(data, dict):
-            return data.get("kismet.system.devices.count", 0)
-    except Exception:
-        pass
-    return 0
-
 def _get_callsign() -> str:
     if _HAS_CONFIG_API:
         try:
@@ -137,6 +137,24 @@ async def index(request: Request):
 @app.get("/instructor", response_class=HTMLResponse)
 async def instructor_page(request: Request):
     return templates.TemplateResponse("instructor.html", {"request": request})
+
+
+@app.post("/api/lte/restart")
+async def restart_lte():
+    try:
+        result = subprocess.run(
+            ["mmcli", "-m", "0", "--reset"],
+            capture_output=True, text=True, timeout=10
+        )
+        if result.returncode == 0:
+            return {"status": "ok", "detail": "LTE modem resetting"}
+        return {"status": "error", "detail": result.stderr.strip() or "Reset command failed"}
+    except FileNotFoundError:
+        raise HTTPException(status_code=500, detail="mmcli not found")
+    except subprocess.TimeoutExpired:
+        raise HTTPException(status_code=504, detail="Modem reset timed out")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/api/status")
@@ -561,7 +579,6 @@ def _check_time_sync():
     result = subprocess.run(["timedatectl", "show", "--property=NTPSynchronized"], capture_output=True, text=True, timeout=5)
     if "yes" in result.stdout.lower(): return "pass", "NTP synchronized"
     # Check if time is at least reasonable (after 2025)
-    import time
     if time.time() > 1735689600: return "warn", "NTP not synced but clock looks reasonable"
     return "fail", "Clock may be wrong — NTP not synchronized"
 
@@ -623,7 +640,8 @@ async def switch_profile(request: Request):
         try:
             r = s.get(f"{KISMET_URL}/datasource/all_sources.json", timeout=5)
             if r.status_code == 200:
-                for src in r.json() if isinstance(r.json(), list) else []:
+                sources = r.json()
+                for src in sources if isinstance(sources, list) else []:
                     uuid = src.get("kismet.datasource.uuid")
                     if uuid:
                         try: s.post(f"{KISMET_URL}/datasource/by-uuid/{uuid}/close_source.cmd", timeout=5)
