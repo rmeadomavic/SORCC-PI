@@ -228,6 +228,44 @@ async def get_devices():
     return devices
 
 
+@app.get("/api/devices/located")
+async def get_located_devices():
+    """Return devices that have GPS coordinates for map plotting."""
+    try:
+        data = kismet_post("/devices/views/all/devices.json", data={"json": json.dumps({"fields": [
+            "kismet.device.base.macaddr", "kismet.device.base.name", "kismet.device.base.commonname",
+            "kismet.device.base.type", "kismet.device.base.phyname",
+            "kismet.device.base.signal/kismet.common.signal.last_signal",
+            "kismet.device.base.channel",
+            "kismet.device.base.packets.total",
+            "kismet.device.base.location/kismet.common.location.last/kismet.common.location.geopoint",
+            "dot11.device/dot11.device.last_beaconed_ssid_record/dot11.advertisedssid.ssid",
+        ]})})
+    except HTTPException:
+        return []
+    located: list[dict[str, Any]] = []
+    for d in data if isinstance(data, list) else []:
+        geopoint = d.get("kismet.device.base.location/kismet.common.location.last/kismet.common.location.geopoint")
+        if not geopoint or not isinstance(geopoint, list) or len(geopoint) < 2:
+            continue
+        lon, lat = geopoint[0], geopoint[1]
+        if lat == 0 and lon == 0:
+            continue
+        name = d.get("kismet.device.base.commonname") or d.get("kismet.device.base.name", "")
+        ssid = d.get("dot11.device/dot11.device.last_beaconed_ssid_record/dot11.advertisedssid.ssid", "")
+        located.append({
+            "mac": d.get("kismet.device.base.macaddr", ""),
+            "name": name or ssid or d.get("kismet.device.base.macaddr", "Unknown"),
+            "phy": d.get("kismet.device.base.phyname", ""),
+            "signal": d.get("kismet.device.base.signal/kismet.common.signal.last_signal", 0),
+            "channel": d.get("kismet.device.base.channel", ""),
+            "packets": d.get("kismet.device.base.packets.total", 0),
+            "lat": lat,
+            "lon": lon,
+        })
+    return located
+
+
 @app.get("/api/target/{ssid}")
 async def get_target_rssi(ssid: str):
     result: dict[str, Any] = {"ssid": ssid, "found": False, "signal": -100, "max_signal": -100, "mac": "", "channel": "", "gps": None, "timestamp": time.time()}
@@ -487,6 +525,42 @@ def _check_source_config():
     if configured: return "pass", f"Active sources: {', '.join(configured)}"
     return "fail", "No sources configured"
 
+def _check_gps_fix():
+    result = subprocess.run(["mmcli", "-m", "0", "--location-get"], capture_output=True, text=True, timeout=5)
+    lat, lon = None, None
+    for line in result.stdout.splitlines():
+        line = line.strip().lower()
+        if "latitude" in line:
+            try: lat = float(line.split(":")[-1].strip())
+            except ValueError: pass
+        elif "longitude" in line:
+            try: lon = float(line.split(":")[-1].strip())
+            except ValueError: pass
+    if lat and lon and lat != 0:
+        return "pass", f"Fix: {lat:.5f}, {lon:.5f}"
+    return "warn", "No GPS fix yet"
+
+def _check_disk_space():
+    result = subprocess.run(["df", "-h", "/"], capture_output=True, text=True, timeout=5)
+    lines = result.stdout.strip().split("\n")
+    if len(lines) >= 2:
+        parts = lines[1].split()
+        if len(parts) >= 5:
+            use_pct = int(parts[4].replace("%", ""))
+            avail = parts[3]
+            if use_pct > 90: return "fail", f"{avail} free ({use_pct}% used)"
+            if use_pct > 75: return "warn", f"{avail} free ({use_pct}% used)"
+            return "pass", f"{avail} free ({use_pct}% used)"
+    return "warn", "Could not determine disk usage"
+
+def _check_time_sync():
+    result = subprocess.run(["timedatectl", "show", "--property=NTPSynchronized"], capture_output=True, text=True, timeout=5)
+    if "yes" in result.stdout.lower(): return "pass", "NTP synchronized"
+    # Check if time is at least reasonable (after 2025)
+    import time
+    if time.time() > 1735689600: return "warn", "NTP not synced but clock looks reasonable"
+    return "fail", "Clock may be wrong — NTP not synchronized"
+
 
 @app.get("/api/preflight")
 async def preflight():
@@ -503,9 +577,12 @@ async def preflight():
         _run_check("Internet", "network", _check_internet),
         _run_check("Tailscale", "network", _check_tailscale),
         _run_check("WiFi (wlan0)", "network", _check_wifi),
+        _run_check("GPS Fix", "network", _check_gps_fix),
         _run_check("Kismet Config", "config", _check_kismet_config),
         _run_check("Kismet Credentials", "config", _check_kismet_credentials),
         _run_check("Source Config", "config", _check_source_config),
+        _run_check("Disk Space", "config", _check_disk_space),
+        _run_check("Time Sync", "config", _check_time_sync),
     ]
     statuses = [c["status"] for c in checks]
     overall = "fail" if "fail" in statuses else ("warn" if "warn" in statuses else "pass")

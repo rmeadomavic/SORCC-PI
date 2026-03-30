@@ -3,51 +3,58 @@
 /* ── Settings Layout ── */
 .settings-layout {
     display: flex;
-    gap: var(--sp-5);
+    gap: var(--gap-lg);
     min-height: 60vh;
 }
 
 /* ── Section Navigation (Left Sidebar) ── */
 .settings-nav {
-    width: 180px;
+    width: 160px;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
-    gap: var(--sp-1);
+    gap: 2px;
+    background: var(--bg-sidebar);
+    border-radius: var(--radius-lg);
+    padding: var(--gap-sm);
+    border: 1px solid var(--card-border);
 }
 
 .settings-nav-btn {
     background: none;
     border: none;
     color: var(--text-secondary);
-    padding: var(--sp-2) var(--sp-3);
+    padding: var(--gap-sm) var(--gap-md);
     border-radius: var(--radius-md);
+    font-family: var(--font-heading);
     font-size: var(--font-sm);
     font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: var(--ls-condensed);
     cursor: pointer;
     text-align: left;
-    transition: all var(--transition-normal);
-    border-left: 3px solid transparent;
+    transition: all var(--transition-fast);
+    border-left: 2px solid transparent;
 }
 
 .settings-nav-btn:hover {
     color: var(--text-primary);
-    background: var(--bg-input);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .settings-nav-btn.active {
-    color: var(--sorcc-green-light);
-    background: rgba(74, 124, 63, 0.1);
+    color: var(--sorcc-light);
+    background: rgba(56, 87, 35, 0.15);
     border-left-color: var(--sorcc-green);
 }
 
 /* ── Section Content (Right Panel) ── */
 .settings-content {
     flex: 1;
-    background: var(--bg-panel);
+    background: var(--bg-panel-gradient);
     border-radius: var(--radius-lg);
-    padding: var(--sp-5);
-    border: 1px solid var(--border);
+    padding: var(--gap-lg);
+    border: 1px solid var(--card-border);
     min-width: 0;
 }
 
@@ -87,19 +94,22 @@
 .form-group input[type="password"],
 .form-group select {
     width: 100%;
+    font-family: var(--font-mono);
+    font-size: var(--font-sm);
     background: var(--bg-input);
-    border: 1px solid var(--border);
-    color: var(--text-bright);
-    padding: var(--sp-2) var(--sp-3);
+    border: 1px solid var(--card-border);
+    color: var(--text-primary);
+    padding: 6px 10px;
     border-radius: var(--radius-md);
-    font-size: var(--font-base);
-    transition: border-color var(--transition-normal);
+    min-height: 32px;
+    transition: border-color var(--transition-normal), box-shadow var(--transition-normal);
 }
 
 .form-group input:focus,
 .form-group select:focus {
     outline: none;
     border-color: var(--sorcc-green);
+    box-shadow: var(--glow-green);
 }
 
 .form-group input::placeholder {

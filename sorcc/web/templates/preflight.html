@@ -34,24 +34,24 @@
         </div>
         <div class="preflight-checks" id="hw-checks">
             <div class="preflight-check">
-                <div class="check-indicator pending" id="chk-wifi-adapter">-</div>
+                <div class="check-indicator pending" id="chk-sdr">-</div>
                 <div class="check-info">
-                    <div class="check-name">WiFi Adapter</div>
-                    <div class="check-detail" id="chk-wifi-adapter-detail">Not checked</div>
+                    <div class="check-name">SDR Dongle (RTL2832U)</div>
+                    <div class="check-detail" id="chk-sdr-detail">Not checked</div>
+                </div>
+            </div>
+            <div class="preflight-check">
+                <div class="check-indicator pending" id="chk-serial">-</div>
+                <div class="check-info">
+                    <div class="check-name">Serial Devices</div>
+                    <div class="check-detail" id="chk-serial-detail">Not checked</div>
                 </div>
             </div>
             <div class="preflight-check">
                 <div class="check-indicator pending" id="chk-bt-adapter">-</div>
                 <div class="check-info">
-                    <div class="check-name">Bluetooth Adapter</div>
+                    <div class="check-name">Bluetooth (hci0)</div>
                     <div class="check-detail" id="chk-bt-adapter-detail">Not checked</div>
-                </div>
-            </div>
-            <div class="preflight-check">
-                <div class="check-indicator pending" id="chk-sdr">-</div>
-                <div class="check-info">
-                    <div class="check-name">SDR Dongle</div>
-                    <div class="check-detail" id="chk-sdr-detail">Not checked</div>
                 </div>
             </div>
             <div class="preflight-check">
@@ -81,22 +81,22 @@
             <div class="preflight-check">
                 <div class="check-indicator pending" id="chk-dashboard">-</div>
                 <div class="check-info">
-                    <div class="check-name">Dashboard</div>
+                    <div class="check-name">SORCC Dashboard</div>
                     <div class="check-detail" id="chk-dashboard-detail">Not checked</div>
                 </div>
             </div>
             <div class="preflight-check">
-                <div class="check-indicator pending" id="chk-gpsd">-</div>
+                <div class="check-indicator pending" id="chk-boot-svc">-</div>
                 <div class="check-info">
-                    <div class="check-name">GPS Daemon</div>
-                    <div class="check-detail" id="chk-gpsd-detail">Not checked</div>
+                    <div class="check-name">Boot Service</div>
+                    <div class="check-detail" id="chk-boot-svc-detail">Not checked</div>
                 </div>
             </div>
             <div class="preflight-check">
-                <div class="check-indicator pending" id="chk-modem-mgr">-</div>
+                <div class="check-indicator pending" id="chk-avahi">-</div>
                 <div class="check-info">
-                    <div class="check-name">ModemManager</div>
-                    <div class="check-detail" id="chk-modem-mgr-detail">Not checked</div>
+                    <div class="check-name">Avahi (mDNS)</div>
+                    <div class="check-detail" id="chk-avahi-detail">Not checked</div>
                 </div>
             </div>
         </div>
@@ -112,7 +112,7 @@
             <div class="preflight-check">
                 <div class="check-indicator pending" id="chk-lte">-</div>
                 <div class="check-info">
-                    <div class="check-name">LTE Connection</div>
+                    <div class="check-name">LTE Modem</div>
                     <div class="check-detail" id="chk-lte-detail">Not checked</div>
                 </div>
             </div>
@@ -128,6 +128,13 @@
                 <div class="check-info">
                     <div class="check-name">Tailscale VPN</div>
                     <div class="check-detail" id="chk-tailscale-detail">Not checked</div>
+                </div>
+            </div>
+            <div class="preflight-check">
+                <div class="check-indicator pending" id="chk-wifi">-</div>
+                <div class="check-info">
+                    <div class="check-name">WiFi (wlan0)</div>
+                    <div class="check-detail" id="chk-wifi-detail">Not checked</div>
                 </div>
             </div>
             <div class="preflight-check">
@@ -155,10 +162,17 @@
                 </div>
             </div>
             <div class="preflight-check">
-                <div class="check-indicator pending" id="chk-data-sources">-</div>
+                <div class="check-indicator pending" id="chk-kismet-creds">-</div>
                 <div class="check-info">
-                    <div class="check-name">Data Sources</div>
-                    <div class="check-detail" id="chk-data-sources-detail">Not checked</div>
+                    <div class="check-name">Kismet Credentials</div>
+                    <div class="check-detail" id="chk-kismet-creds-detail">Not checked</div>
+                </div>
+            </div>
+            <div class="preflight-check">
+                <div class="check-indicator pending" id="chk-source-cfg">-</div>
+                <div class="check-info">
+                    <div class="check-name">Source Config</div>
+                    <div class="check-detail" id="chk-source-cfg-detail">Not checked</div>
                 </div>
             </div>
             <div class="preflight-check">

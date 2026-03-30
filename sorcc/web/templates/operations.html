@@ -1,7 +1,7 @@
 <!-- SORCC Operations Tab — Jinja2 include fragment -->
 
 <!-- Profile Selector -->
-<div class="profile-selector" id="profile-selector">
+<div class="profile-selector" id="profile-list">
     <div class="profile-card active" data-profile="wifi-survey">
         <div class="profile-card-name">WiFi Survey</div>
         <div class="profile-card-desc">Locate and map WiFi networks</div>
@@ -23,22 +23,140 @@
 <!-- Sub-Tab Navigation -->
 <div class="sub-tabs">
     <button class="sub-tab active" data-subtab="live">Live View</button>
+    <button class="sub-tab" data-subtab="map">Map</button>
     <button class="sub-tab" data-subtab="hunt">Hunt Mode</button>
     <button class="sub-tab" data-subtab="export">Export</button>
 </div>
 
 <!-- ── Live View ── -->
 <div id="subtab-live" class="sub-content active">
+    <!-- Stats Summary Bar -->
+    <div class="stats-bar">
+        <div class="stat-card">
+            <div class="stat-card-value" id="stat-total">0</div>
+            <div class="stat-card-label">Total Devices</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-value" id="stat-wifi">0</div>
+            <div class="stat-card-label">WiFi</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-value" id="stat-bt">0</div>
+            <div class="stat-card-label">Bluetooth</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-value" id="stat-other">0</div>
+            <div class="stat-card-label">Other</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-value" id="stat-strong">0</div>
+            <div class="stat-card-label">Strong (&gt;-50)</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-value" id="stat-new">--</div>
+            <div class="stat-card-label">New / min</div>
+        </div>
+    </div>
+
     <div class="panel">
-        <h2>Detected Devices <span id="device-count" class="badge">0</span></h2>
-        <div class="device-filters">
-            <button class="filter-btn active" data-filter="all">All</button>
-            <button class="filter-btn" data-filter="Wi-Fi">WiFi</button>
-            <button class="filter-btn" data-filter="Bluetooth">BT</button>
-            <button class="filter-btn" data-filter="RTL433">433MHz</button>
+        <div class="device-toolbar">
+            <h2>Detected Devices <span id="device-count" class="badge">0</span></h2>
+            <div class="device-search-wrap">
+                <input type="text" id="device-search" placeholder="Search devices..." class="device-search">
+            </div>
+        </div>
+        <div class="device-controls">
+            <div class="device-filters">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="IEEE802.11">WiFi</button>
+                <button class="filter-btn" data-filter="Bluetooth">BT</button>
+                <button class="filter-btn" data-filter="RTL433">433MHz</button>
+                <button class="filter-btn" data-filter="ADSB">ADS-B</button>
+            </div>
+            <div class="device-sort">
+                <select id="device-sort">
+                    <option value="signal">Signal (strongest)</option>
+                    <option value="signal-asc">Signal (weakest)</option>
+                    <option value="name">Name (A-Z)</option>
+                    <option value="packets">Packets (most)</option>
+                    <option value="last-seen">Last Seen (newest)</option>
+                </select>
+            </div>
         </div>
         <div class="device-list" id="device-list">
             <div class="loading">Connecting to Kismet...</div>
+        </div>
+    </div>
+
+    <!-- Device Detail Slide-out -->
+    <div class="device-detail-overlay" id="device-detail-overlay">
+        <div class="device-detail-panel" id="device-detail-panel">
+            <div class="detail-header">
+                <h3 id="detail-name">--</h3>
+                <button class="detail-close" id="detail-close">&times;</button>
+            </div>
+            <div class="detail-body">
+                <div class="detail-section">
+                    <div class="detail-row">
+                        <span class="detail-label">MAC</span>
+                        <span class="detail-value mono" id="detail-mac">--</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Type</span>
+                        <span class="detail-value" id="detail-type">--</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Signal</span>
+                        <span class="detail-value mono" id="detail-signal">--</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Channel</span>
+                        <span class="detail-value mono" id="detail-channel">--</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Packets</span>
+                        <span class="detail-value mono" id="detail-packets">--</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Last Seen</span>
+                        <span class="detail-value" id="detail-last-seen">--</span>
+                    </div>
+                </div>
+                <div class="detail-section">
+                    <h4>Actions</h4>
+                    <div class="detail-actions">
+                        <button class="btn-primary" id="detail-hunt-btn">Hunt This Device</button>
+                        <button class="btn-secondary" id="detail-locate-btn">Show on Map</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Map View ── -->
+<div id="subtab-map" class="sub-content">
+    <div class="panel map-panel">
+        <div class="map-toolbar">
+            <h2>RF Survey Map</h2>
+            <div class="map-controls">
+                <button id="map-center-gps" class="btn-secondary" title="Center on GPS position">Center GPS</button>
+                <button id="map-toggle-track" class="btn-secondary active" title="Toggle GPS track">Track: ON</button>
+                <button id="map-toggle-radii" class="btn-secondary" title="Show signal range circles">Range: OFF</button>
+                <button id="map-toggle-tiles" class="btn-secondary" title="Switch map/satellite view">Map: STD</button>
+                <button id="map-fit-all" class="btn-secondary" title="Fit all markers in view">Fit All</button>
+            </div>
+        </div>
+        <div class="map-info-bar">
+            <span class="map-stats" id="map-stats">--</span>
+            <span class="map-gps-info" id="map-gps-info">No GPS fix</span>
+        </div>
+        <div id="sorcc-map" style="height:500px;border-radius:8px;border:1px solid var(--border);"></div>
+        <div class="map-legend">
+            <span class="legend-item"><span class="legend-dot" style="background:#ef5350"></span> Strong (&gt;-50 dBm)</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#ff9800"></span> Medium (-50 to -70)</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#42a5f5"></span> Weak (&lt;-70 dBm)</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#385723"></span> Your Position</span>
         </div>
     </div>
 </div>
@@ -59,11 +177,33 @@
         <div id="hunt-display" style="display:none;">
             <div class="signal-gauge-container">
                 <div class="signal-label">Signal Strength</div>
-                <div class="signal-gauge">
+                <!-- SVG Arc Gauge -->
+                <svg class="arc-gauge" viewBox="0 0 200 120" id="arc-gauge">
+                    <defs>
+                        <linearGradient id="gauge-gradient" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0%" stop-color="#42a5f5"/>
+                            <stop offset="50%" stop-color="#ff9800"/>
+                            <stop offset="100%" stop-color="#ef5350"/>
+                        </linearGradient>
+                    </defs>
+                    <!-- Background arc -->
+                    <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#262626" stroke-width="12" stroke-linecap="round"/>
+                    <!-- Value arc -->
+                    <path id="gauge-arc" d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="url(#gauge-gradient)" stroke-width="12" stroke-linecap="round" stroke-dasharray="0 251.33" />
+                    <!-- Needle -->
+                    <line id="gauge-needle" x1="100" y1="100" x2="100" y2="30" stroke="#fff" stroke-width="2" stroke-linecap="round" transform="rotate(-90, 100, 100)"/>
+                    <circle cx="100" cy="100" r="4" fill="#385723" stroke="#fff" stroke-width="2"/>
+                </svg>
+                <!-- Fallback bar gauge -->
+                <div class="signal-gauge" style="display:none">
                     <div class="signal-bar" id="signal-bar"></div>
                 </div>
                 <div class="signal-value" id="signal-value">-- dBm</div>
                 <div class="signal-hint" id="signal-hint">Searching...</div>
+                <!-- Audio toggle -->
+                <label class="hunt-audio-toggle">
+                    <input type="checkbox" id="hunt-audio-toggle"> Audio Feedback
+                </label>
             </div>
 
             <div class="hunt-stats">

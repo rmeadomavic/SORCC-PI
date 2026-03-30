@@ -15,6 +15,8 @@
     }
 
     function signalToPercent(dbm) {
+        // 0 dBm means Kismet has no RSSI data (common for BLE)
+        if (dbm === 0) return 0;
         // Map -100 dBm -> 0%, -20 dBm -> 100%
         var pct = ((dbm + 100) / 80) * 100;
         return Math.max(0, Math.min(100, pct));
@@ -28,44 +30,39 @@
         if (!container) {
             container = document.createElement("div");
             container.id = "toast-container";
-            container.style.cssText = "position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px;";
+            container.className = "toast-container";
             document.body.appendChild(container);
         }
 
-        var colors = {
-            success: { bg: "#2e7d32", border: "#4caf50" },
-            info:    { bg: "#1565c0", border: "#42a5f5" },
-            error:   { bg: "#c62828", border: "#ef5350" }
-        };
-        var c = colors[type] || colors.info;
-
         var toast = document.createElement("div");
         toast.className = "toast toast-" + type;
-        toast.style.cssText = "background:" + c.bg + ";border:1px solid " + c.border +
-            ";color:#fff;padding:12px 20px;border-radius:6px;font-size:14px;" +
-            "box-shadow:0 4px 12px rgba(0,0,0,0.4);opacity:1;transition:opacity 0.3s ease;" +
-            "max-width:360px;word-wrap:break-word;";
         toast.textContent = message;
         container.appendChild(toast);
 
+        toast.addEventListener("click", function () {
+            if (toast.parentNode) toast.parentNode.removeChild(toast);
+        });
+
         setTimeout(function () {
             toast.style.opacity = "0";
+            toast.style.transform = "translateX(100%)";
+            toast.style.transition = "opacity 0.2s ease, transform 0.2s ease";
             setTimeout(function () {
                 if (toast.parentNode) toast.parentNode.removeChild(toast);
-            }, 300);
+            }, 200);
         }, 3000);
     }
 
     // ── Tab Navigation ──────────────────────────────────────
 
     function initTabs() {
-        document.querySelectorAll(".main-tab").forEach(function (tab) {
+        document.querySelectorAll(".tab").forEach(function (tab) {
             tab.addEventListener("click", function () {
                 var target = this.dataset.tab;
-                document.querySelectorAll(".main-tab").forEach(function (t) {
+                document.querySelectorAll(".tab").forEach(function (t) {
                     t.classList.remove("active");
                 });
-                document.querySelectorAll(".main-tab-content").forEach(function (tc) {
+                document.querySelectorAll(".tab-content").forEach(function (tc) {
                     tc.classList.remove("active");
                 });
                 this.classList.add("active");
