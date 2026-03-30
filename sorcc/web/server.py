@@ -727,16 +727,7 @@ async def get_target_rssi(query: str):
             "kismet.device.base.location/kismet.common.location.last/kismet.common.location.geopoint",
             "dot11.device/dot11.device.last_beaconed_ssid_record/dot11.advertisedssid.ssid",
         ]})})
-        log.info(f"Hunt: got {len(data) if isinstance(data, list) else 'non-list'} devices from Kismet")
-        if isinstance(data, list) and data:
-            sample_mac = data[0].get("kismet.device.base.macaddr", "NO_MAC_FIELD")
-            log.info(f"Hunt: sample MAC field='{sample_mac}', keys={list(data[0].keys())[:5]}")
-    except HTTPException as e:
-        log.warning(f"Hunt: Kismet query failed: {e.detail}")
-        return result
-    except Exception as e:
-        log.error(f"Hunt: unexpected error: {e}")
-
+    except HTTPException:
         return result
 
     best_signal = -100
@@ -761,7 +752,7 @@ async def get_target_rssi(query: str):
             # Kismet flattens nested paths: "a/b" returns as "b"
             sig = d.get("kismet.common.signal.last_signal", d.get("kismet.device.base.signal/kismet.common.signal.last_signal", 0))
             packets = d.get("kismet.device.base.packets.total", 0)
-            log.info(f"Hunt: MATCHED mac={mac} sig={sig} pkts={packets}")
+            log.debug(f"Hunt match: mac={mac} sig={sig} pkts={packets}")
             # For MAC hunt (usually BT), always take the match — use packets as tiebreaker
             if is_mac_query:
                 best_device = d

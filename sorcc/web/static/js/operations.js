@@ -1339,6 +1339,68 @@
         setInterval(pollWifiCaptureStatus, 15000);
     }
 
+    // ── Activity Feed ──────────────────────────────────────
+
+    function fetchActivityFeed() {
+        if (window.SORCC.getActiveTab() !== "operations") return;
+        if (activeSubTab !== "live") return;
+
+        fetch("/api/activity", {
+            signal: AbortSignal.timeout ? AbortSignal.timeout(5000) : undefined
+        })
+            .then(function (r) {
+                if (!r.ok) throw new Error("HTTP " + r.status);
+                return r.json();
+            })
+            .then(function (data) {
+                var countEl = document.getElementById("activity-new-count");
+                if (countEl) {
+                    countEl.textContent = (data.recent_1min || 0) + " new/min";
+                }
+                var scrollEl = document.getElementById("activity-feed-scroll");
+                if (!scrollEl) return;
+
+                var feed = data.feed || [];
+                // Build using safe DOM methods
+                scrollEl.textContent = "";
+                feed.forEach(function (item) {
+                    var ago = item.seconds_ago;
+                    var timeStr = ago < 60 ? ago + "s" : Math.floor(ago / 60) + "m";
+                    var mfr = item.manufacturer || "";
+                    var cat = item.category || "";
+                    var icon = cat === "phone" ? "\uD83D\uDCF1" : cat === "wearable" ? "\u231A" : cat === "laptop" ? "\uD83D\uDCBB" : cat === "speaker" ? "\uD83D\uDD0A" : cat === "network" ? "\uD83D\uDDA7" : "\uD83D\uDCE1";
+
+                    var row = document.createElement("div");
+                    row.className = "activity-feed-item";
+
+                    var timeSpan = document.createElement("span");
+                    timeSpan.className = "feed-time";
+                    timeSpan.textContent = timeStr + " ago";
+                    row.appendChild(timeSpan);
+
+                    var iconSpan = document.createElement("span");
+                    iconSpan.className = "feed-icon";
+                    iconSpan.textContent = icon;
+                    row.appendChild(iconSpan);
+
+                    if (mfr && mfr !== "Random BLE") {
+                        var mfrSpan = document.createElement("span");
+                        mfrSpan.className = "feed-mfr";
+                        mfrSpan.textContent = mfr + " ";
+                        row.appendChild(mfrSpan);
+                    }
+
+                    var macSpan = document.createElement("span");
+                    macSpan.className = "feed-mac";
+                    macSpan.textContent = item.mac;
+                    row.appendChild(macSpan);
+
+                    scrollEl.appendChild(row);
+                });
+            })
+            .catch(function () {}); // Silent fail — feed is supplementary
+    }
+
     // ── Init ────────────────────────────────────────────────
 
     document.addEventListener("DOMContentLoaded", function () {
@@ -1353,6 +1415,10 @@
         // Start device polling
         fetchDevices();
         devicePollTimer = setInterval(fetchDevices, 5000);
+
+        // Start activity feed polling
+        fetchActivityFeed();
+        setInterval(fetchActivityFeed, 10000);
     });
 
 })();

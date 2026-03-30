@@ -47,6 +47,87 @@
     color: var(--text-dim);
 }
 
+/* ── Activity Feed ── */
+.activity-feed {
+    background: var(--bg-panel-gradient);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--gap-md);
+    overflow: hidden;
+}
+
+.activity-feed-header {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-sm);
+    padding: var(--gap-sm) var(--gap-md);
+    border-bottom: 1px solid var(--border);
+}
+
+.activity-feed-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #4ade80;
+    animation: pulse-dot 2s ease-in-out infinite;
+    flex-shrink: 0;
+}
+
+.activity-feed-label {
+    font-size: var(--font-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: var(--ls-wide);
+    color: var(--text-secondary);
+    flex: 1;
+}
+
+.activity-feed-count {
+    font-family: var(--font-mono);
+    font-size: var(--font-xs);
+    font-weight: 700;
+    color: var(--sorcc-green-light);
+}
+
+.activity-feed-scroll {
+    max-height: 80px;
+    overflow-y: hidden;
+    padding: var(--gap-xs) var(--gap-md);
+    font-family: var(--font-mono);
+    font-size: var(--font-xs);
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.activity-feed-item {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    animation: feed-in 300ms ease-out;
+}
+
+.activity-feed-item .feed-time {
+    color: var(--text-dim);
+    margin-right: var(--gap-sm);
+}
+
+.activity-feed-item .feed-icon {
+    margin-right: 2px;
+}
+
+.activity-feed-item .feed-mac {
+    color: var(--sorcc-green-light);
+}
+
+.activity-feed-item .feed-mfr {
+    color: var(--text-primary);
+}
+
+@keyframes feed-in {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 /* ── WiFi Capture Toggle ── */
 .wifi-capture-bar {
     display: flex;
