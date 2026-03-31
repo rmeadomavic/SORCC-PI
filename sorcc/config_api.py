@@ -28,6 +28,7 @@ _config_path: Path | None = None
 REDACTED_FIELDS: dict[str, set[str]] = {
     "kismet": {"pass"},
     "wifi": {"password"},
+    "dashboard": {"password"},
 }
 
 REDACTED_VALUE = "***"

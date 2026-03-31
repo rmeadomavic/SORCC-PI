@@ -197,6 +197,15 @@ SCHEMA: dict[str, dict[str, FieldSpec]] = {
             default=8080,
             description="Dashboard web port -- open this in your browser",
         ),
+        "password": FieldSpec(
+            FieldType.STRING,
+            required=False,
+            default="",
+            description=(
+                "Dashboard login password (bcrypt hash). "
+                "Leave blank to disable password protection."
+            ),
+        ),
     },
     "tailscale": {
         "enabled": FieldSpec(

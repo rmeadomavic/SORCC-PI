@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import configparser
 import csv
 import io
 import json
 import logging
+import os
+import secrets
 import socket
 import subprocess
 import time
@@ -13,17 +16,20 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any
 
+import bcrypt
 import requests
 from fastapi import FastAPI, HTTPException, Request, Response, UploadFile, File
-from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 
 try:
     from sorcc.config_api import (
         read_config, write_config, restore_backup, restore_factory,
-        has_backup, has_factory, set_config_path,
+        has_backup, has_factory, set_config_path, get_config_path,
+        REDACTED_VALUE,
     )
     _HAS_CONFIG_API = True
 except ImportError:
@@ -40,7 +46,67 @@ TEMPLATE_DIR = BASE_DIR / "templates"
 PROJECT_ROOT = BASE_DIR.parent.parent
 PROFILES_PATH = PROJECT_ROOT / "profiles.json"
 
+# ---------------------------------------------------------------------------
+# Session secret — generated once, persisted to disk
+# ---------------------------------------------------------------------------
+
+_SESSION_SECRET_PATH = Path("/opt/sorcc/config/.session_secret")
+
+
+def _get_session_secret() -> str:
+    """Return a stable session secret, creating one on first boot."""
+    # Try the standard location first
+    for path in [_SESSION_SECRET_PATH, PROJECT_ROOT / ".session_secret"]:
+        if path.exists():
+            secret = path.read_text().strip()
+            if secret:
+                return secret
+    # Generate and persist
+    secret = secrets.token_hex(32)
+    for path in [_SESSION_SECRET_PATH, PROJECT_ROOT / ".session_secret"]:
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(secret)
+            path.chmod(0o600)
+            log.info("Session secret created at %s", path)
+            break
+        except OSError:
+            continue
+    return secret
+
+
+# ---------------------------------------------------------------------------
+# Auth helpers
+# ---------------------------------------------------------------------------
+
+# Paths that never require authentication
+_AUTH_EXEMPT_PATHS = {"/login", "/api/login", "/api/status"}
+_AUTH_EXEMPT_PREFIXES = ("/static/",)
+
+
+def _get_dashboard_password_hash() -> str:
+    """Read the bcrypt password hash from sorcc.ini. Empty = auth disabled."""
+    if not _HAS_CONFIG_API:
+        return ""
+    try:
+        cfg = configparser.ConfigParser(inline_comment_prefixes=(";", "#"))
+        cfg.read(get_config_path())
+        return cfg.get("dashboard", "password", fallback="").strip()
+    except Exception:
+        return ""
+
+
+def _is_bcrypt_hash(value: str) -> bool:
+    """Check if a string looks like a bcrypt hash."""
+    return value.startswith("$2b$") or value.startswith("$2a$")
+
+
+# ---------------------------------------------------------------------------
+# Middleware
+# ---------------------------------------------------------------------------
+
 _CORS_ALLOWED_PATHS = {"/api/status"}
+
 
 class _InstructorCORSMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -51,7 +117,40 @@ class _InstructorCORSMiddleware(BaseHTTPMiddleware):
             response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
         return response
 
+
+class _AuthMiddleware(BaseHTTPMiddleware):
+    """Redirect unauthenticated requests to /login when a password is set."""
+
+    async def dispatch(self, request: Request, call_next):
+        path = request.url.path
+
+        # Always allow exempt paths
+        if path in _AUTH_EXEMPT_PATHS or any(path.startswith(p) for p in _AUTH_EXEMPT_PREFIXES):
+            return await call_next(request)
+
+        # If no password configured, allow everything
+        pw_hash = _get_dashboard_password_hash()
+        if not pw_hash:
+            return await call_next(request)
+
+        # Check session
+        if request.session.get("authenticated"):
+            return await call_next(request)
+
+        # Not authenticated — return 401 for API, redirect for pages
+        if path.startswith("/api/"):
+            return JSONResponse(
+                status_code=401,
+                content={"detail": "Authentication required"},
+            )
+        return RedirectResponse(url="/login", status_code=302)
+
+
+# Middleware order matters: session must be added first (outermost),
+# then auth, then CORS
+app.add_middleware(_AuthMiddleware)
 app.add_middleware(_InstructorCORSMiddleware)
+app.add_middleware(SessionMiddleware, secret_key=_get_session_secret())
 
 if STATIC_DIR.is_dir():
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
@@ -137,6 +236,51 @@ async def index(request: Request):
 @app.get("/instructor", response_class=HTMLResponse)
 async def instructor_page(request: Request):
     return templates.TemplateResponse("instructor.html", {"request": request})
+
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    # If no password set, just redirect to dashboard
+    if not _get_dashboard_password_hash():
+        return RedirectResponse(url="/", status_code=302)
+    # If already authenticated, go to dashboard
+    if request.session.get("authenticated"):
+        return RedirectResponse(url="/", status_code=302)
+    return templates.TemplateResponse("login.html", {
+        "request": request,
+        "error": request.query_params.get("error", ""),
+    })
+
+
+@app.post("/api/login")
+async def api_login(request: Request):
+    pw_hash = _get_dashboard_password_hash()
+    if not pw_hash:
+        return {"status": "ok", "detail": "No password required"}
+
+    try:
+        body = await request.json()
+        password = body.get("password", "")
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid request body")
+
+    if not password:
+        raise HTTPException(status_code=401, detail="Password required")
+
+    try:
+        if bcrypt.checkpw(password.encode("utf-8"), pw_hash.encode("utf-8")):
+            request.session["authenticated"] = True
+            return {"status": "ok"}
+    except Exception:
+        pass
+
+    raise HTTPException(status_code=401, detail="Wrong password")
+
+
+@app.post("/api/logout")
+async def api_logout(request: Request):
+    request.session.clear()
+    return {"status": "ok"}
 
 
 @app.get("/api/status")
@@ -362,6 +506,13 @@ async def config_write(request: Request):
         raise HTTPException(status_code=501, detail="Config API module not available")
     try:
         updates = await request.json()
+        # Hash plaintext dashboard password before saving
+        dash = updates.get("dashboard", {})
+        if isinstance(dash, dict):
+            pw = dash.get("password", "")
+            if pw and pw != REDACTED_VALUE and not _is_bcrypt_hash(pw):
+                hashed = bcrypt.hashpw(pw.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+                updates["dashboard"]["password"] = hashed
         write_config(updates)
         return {"status": "ok"}
     except Exception as e:

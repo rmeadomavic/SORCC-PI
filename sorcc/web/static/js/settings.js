@@ -94,7 +94,7 @@
                 } else if (typeof value === "number") {
                     // Number input
                     html += '  <input type="number" id="cfg-' + escapeHtml(fieldId) + '" data-field="' + escapeHtml(fieldId) + '" value="' + value + '" class="form-input">';
-                } else if (fieldKey === "password" || fieldKey === "wifi_password" || fieldKey === "psk") {
+                } else if (fieldKey === "password" || fieldKey === "pass" || fieldKey === "wifi_password" || fieldKey === "psk") {
                     // Password field
                     html += '  <input type="password" id="cfg-' + escapeHtml(fieldId) + '" data-field="' + escapeHtml(fieldId) + '" value="' + escapeHtml(String(value || "")) + '" class="form-input" autocomplete="off">';
                 } else if (fieldKey === "apn") {
