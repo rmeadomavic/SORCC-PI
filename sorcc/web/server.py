@@ -1280,6 +1280,12 @@ def _run_check(name, category, fn):
     except Exception as e:
         return {"name": name, "category": category, "status": "fail", "detail": str(e)}
 
+
+async def _run_check_async(name, category, fn):
+    """Run a blocking preflight check in an executor to avoid blocking the event loop."""
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(None, _run_check, name, category, fn)
+
 def _check_sdr():
     result = subprocess.run(["lsusb"], capture_output=True, text=True, timeout=5)
     if "RTL2832" in result.stdout or "Realtek" in result.stdout or "Nooelec" in result.stdout:
@@ -1422,30 +1428,30 @@ def _check_time_sync():
 
 @app.get("/api/preflight")
 async def preflight():
-    checks = [
-        _run_check("SDR (RTL2832U)", "hardware", _check_sdr),
-        _run_check("Serial Devices", "hardware", _check_serial),
-        _run_check("Bluetooth (hci0)", "hardware", _check_bluetooth),
-        _run_check("PiSugar Battery", "hardware", _check_pisugar),
-        _run_check("Kismet", "services", _check_service("kismet")),
-        _run_check("sorcc-dashboard", "services", _check_service("sorcc-dashboard")),
-        _run_check("sorcc-boot", "services", _check_service("sorcc-boot")),
-        _run_check("avahi-daemon", "services", _check_service("avahi-daemon")),
-        _run_check("LTE Modem", "network", _check_lte_modem),
-        _run_check("Internet", "network", _check_internet),
-        _run_check("Tailscale", "network", _check_tailscale),
-        _run_check("WiFi (wlan0)", "network", _check_wifi),
-        _run_check("WiFi Adapter Conflict", "network", _check_wifi_conflict),
-        _run_check("GPS Fix", "network", _check_gps_fix),
-        _run_check("Kismet Config", "config", _check_kismet_config),
-        _run_check("Kismet Credentials", "config", _check_kismet_credentials),
-        _run_check("Source Config", "config", _check_source_config),
-        _run_check("Disk Space", "config", _check_disk_space),
-        _run_check("Time Sync", "config", _check_time_sync),
-    ]
+    checks = await asyncio.gather(
+        _run_check_async("SDR (RTL2832U)", "hardware", _check_sdr),
+        _run_check_async("Serial Devices", "hardware", _check_serial),
+        _run_check_async("Bluetooth (hci0)", "hardware", _check_bluetooth),
+        _run_check_async("PiSugar Battery", "hardware", _check_pisugar),
+        _run_check_async("Kismet", "services", _check_service("kismet")),
+        _run_check_async("sorcc-dashboard", "services", _check_service("sorcc-dashboard")),
+        _run_check_async("sorcc-boot", "services", _check_service("sorcc-boot")),
+        _run_check_async("avahi-daemon", "services", _check_service("avahi-daemon")),
+        _run_check_async("LTE Modem", "network", _check_lte_modem),
+        _run_check_async("Internet", "network", _check_internet),
+        _run_check_async("Tailscale", "network", _check_tailscale),
+        _run_check_async("WiFi (wlan0)", "network", _check_wifi),
+        _run_check_async("WiFi Adapter Conflict", "network", _check_wifi_conflict),
+        _run_check_async("GPS Fix", "network", _check_gps_fix),
+        _run_check_async("Kismet Config", "config", _check_kismet_config),
+        _run_check_async("Kismet Credentials", "config", _check_kismet_credentials),
+        _run_check_async("Source Config", "config", _check_source_config),
+        _run_check_async("Disk Space", "config", _check_disk_space),
+        _run_check_async("Time Sync", "config", _check_time_sync),
+    )
     statuses = [c["status"] for c in checks]
     overall = "fail" if "fail" in statuses else ("warn" if "warn" in statuses else "pass")
-    return {"status": overall, "checks": checks}
+    return {"status": overall, "checks": list(checks)}
 
 
 @app.get("/api/profiles")
