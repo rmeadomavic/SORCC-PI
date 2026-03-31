@@ -40,6 +40,7 @@
     <button class="sub-tab" data-subtab="map">Map</button>
     <button class="sub-tab" data-subtab="spectrum">Spectrum</button>
     <button class="sub-tab" data-subtab="hunt">Hunt Mode</button>
+    <button class="sub-tab" data-subtab="logs">Logs</button>
     <button class="sub-tab" data-subtab="export">Export</button>
 </div>
 
@@ -81,6 +82,18 @@
             <span class="activity-feed-count" id="activity-new-count">--</span>
         </div>
         <div class="activity-feed-scroll" id="activity-feed-scroll"></div>
+    </div>
+
+    <!-- Top Activity Leaderboard -->
+    <div class="leaderboard-panel" id="leaderboard-panel">
+        <div class="leaderboard-header">
+            <span class="leaderboard-icon">&#9650;</span>
+            <span class="leaderboard-title">TOP ACTIVE</span>
+            <span class="leaderboard-badge" id="leaderboard-count">--</span>
+        </div>
+        <div class="leaderboard-list" id="leaderboard-list">
+            <div class="leaderboard-empty">Waiting for data...</div>
+        </div>
     </div>
 
     <div class="panel">
@@ -349,6 +362,34 @@
                     <polyline id="rssi-line" class="chart-line" points=""/>
                 </svg>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Log Viewer ── -->
+<div id="subtab-logs" class="sub-content">
+    <div class="panel log-panel">
+        <div class="log-toolbar">
+            <h2>System Logs</h2>
+            <div class="log-controls">
+                <select id="log-level-filter" class="log-filter-select">
+                    <option value="">All Levels</option>
+                    <option value="ERROR">ERROR</option>
+                    <option value="WARNING">WARNING</option>
+                    <option value="INFO">INFO</option>
+                    <option value="DEBUG">DEBUG</option>
+                </select>
+                <button id="log-pause-btn" class="btn-secondary log-btn" title="Pause auto-scroll">&#9646;&#9646; Pause</button>
+                <button id="log-refresh-btn" class="btn-secondary log-btn" title="Refresh now">&#8635; Refresh</button>
+                <button id="log-clear-btn" class="btn-secondary log-btn" title="Clear display">Clear</button>
+            </div>
+        </div>
+        <div class="log-viewer" id="log-viewer">
+            <div class="log-line log-dim">Loading logs...</div>
+        </div>
+        <div class="log-status-bar">
+            <span id="log-status">Connecting...</span>
+            <span id="log-entry-count">0 entries</span>
         </div>
     </div>
 </div>

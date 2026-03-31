@@ -41,6 +41,10 @@
                 if (target === "spectrum" && lastDevices.length > 0) {
                     renderSpectrum(lastDevices);
                 }
+                // Fetch logs when switching to logs tab
+                if (target === "logs") {
+                    fetchLogs();
+                }
             });
         });
     }
@@ -166,6 +170,71 @@
         }
         var newEl = document.getElementById("stat-new");
         if (newEl) newEl.textContent = newPerMinute > 0 ? "+" + newPerMinute : "--";
+
+        // Update leaderboard — top 8 by packet count
+        renderLeaderboard(devices);
+    }
+
+    function renderLeaderboard(devices) {
+        var listEl = document.getElementById("leaderboard-list");
+        var badgeEl = document.getElementById("leaderboard-count");
+        if (!listEl) return;
+
+        var top = devices.slice().sort(function (a, b) {
+            return (b.packets || 0) - (a.packets || 0);
+        }).slice(0, 8);
+
+        if (badgeEl) badgeEl.textContent = "Top " + top.length;
+
+        if (top.length === 0) {
+            listEl.textContent = "";
+            var empty = document.createElement("div");
+            empty.className = "leaderboard-empty";
+            empty.textContent = "Waiting for data...";
+            listEl.appendChild(empty);
+            return;
+        }
+
+        var maxPkts = top[0].packets || 1;
+        listEl.textContent = "";
+
+        top.forEach(function (d, i) {
+            var row = document.createElement("div");
+            row.className = "leaderboard-row";
+            if (d.activity && d.activity >= 2) row.classList.add("leaderboard-hot");
+
+            var rank = document.createElement("span");
+            rank.className = "leaderboard-rank";
+            rank.textContent = "#" + (i + 1);
+            row.appendChild(rank);
+
+            var icon = document.createElement("span");
+            icon.className = "leaderboard-device-icon";
+            icon.textContent = d.icon || "\uD83D\uDCE1";
+            row.appendChild(icon);
+
+            var info = document.createElement("span");
+            info.className = "leaderboard-info";
+            var name = d.manufacturer && d.manufacturer !== "Random BLE" ? d.manufacturer : (d.name || d.mac || "Unknown");
+            if (name.length > 18) name = name.substring(0, 16) + "\u2026";
+            info.textContent = name;
+            row.appendChild(info);
+
+            var bar = document.createElement("span");
+            bar.className = "leaderboard-bar";
+            var fill = document.createElement("span");
+            fill.className = "leaderboard-bar-fill";
+            fill.style.width = Math.round(((d.packets || 0) / maxPkts) * 100) + "%";
+            bar.appendChild(fill);
+            row.appendChild(bar);
+
+            var pkts = document.createElement("span");
+            pkts.className = "leaderboard-pkts";
+            pkts.textContent = (d.packets || 0).toLocaleString();
+            row.appendChild(pkts);
+
+            listEl.appendChild(row);
+        });
     }
 
     // Animated count-up with easing + pulse glow on change
@@ -1009,6 +1078,123 @@
         }
     }
 
+    // ── Device Category Donut Chart ──
+
+    var CATEGORY_DEFS = [
+        { id: "phone",    label: "Phones",     color: "#4ade80", icon: "\uD83D\uDCF1" },
+        { id: "laptop",   label: "Laptops",    color: "#42a5f5", icon: "\uD83D\uDCBB" },
+        { id: "wearable", label: "Wearables",  color: "#a78bfa", icon: "\u231A" },
+        { id: "speaker",  label: "Speakers",   color: "#f59e0b", icon: "\uD83D\uDD0A" },
+        { id: "network",  label: "Network",    color: "#06b6d4", icon: "\uD83D\uDDA7" },
+        { id: "tv",       label: "TVs/Display",color: "#ec4899", icon: "\uD83D\uDCFA" },
+        { id: "iot",      label: "IoT Devices",color: "#14b8a6", icon: "\uD83D\uDD0C" },
+        { id: "vehicle",  label: "Vehicles",   color: "#ef5350", icon: "\uD83D\uDE97" },
+        { id: "other",    label: "Other/Unclassified", color: "#6b7280", icon: "\uD83D\uDCE1" }
+    ];
+
+    function renderCategoryDonut(devices) {
+        var svg = document.getElementById("category-donut");
+        var listEl = document.getElementById("category-list");
+        var totalEl = document.getElementById("cat-donut-total");
+        var badgeEl = document.getElementById("cat-device-count");
+        if (!svg) return;
+
+        var catCounts = {};
+        CATEGORY_DEFS.forEach(function (c) { catCounts[c.id] = 0; });
+        var classified = 0;
+        devices.forEach(function (d) {
+            var cat = (d.category || "other").toLowerCase();
+            if (cat === "unknown") cat = "other";
+            if (!catCounts.hasOwnProperty(cat)) cat = "other";
+            catCounts[cat]++;
+            if (cat !== "other") classified++;
+        });
+
+        var total = devices.length;
+        if (totalEl) totalEl.textContent = total;
+        if (badgeEl) badgeEl.textContent = classified + " classified";
+
+        var cx = 120, cy = 120, r = 85, strokeW = 22;
+        var circumference = 2 * Math.PI * r;
+        var offset = 0;
+
+        var sortedCats = CATEGORY_DEFS.filter(function (c) { return catCounts[c.id] > 0; });
+        sortedCats.sort(function (a, b) { return catCounts[b.id] - catCounts[a.id]; });
+
+        // Build SVG with safe DOM methods
+        while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+        if (sortedCats.length === 0) {
+            var emptyRing = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            emptyRing.setAttribute("cx", cx); emptyRing.setAttribute("cy", cy);
+            emptyRing.setAttribute("r", r); emptyRing.setAttribute("fill", "none");
+            emptyRing.setAttribute("stroke", "rgba(56,87,35,0.15)");
+            emptyRing.setAttribute("stroke-width", strokeW);
+            svg.appendChild(emptyRing);
+        } else {
+            var bgRing = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            bgRing.setAttribute("cx", cx); bgRing.setAttribute("cy", cy);
+            bgRing.setAttribute("r", r); bgRing.setAttribute("fill", "none");
+            bgRing.setAttribute("stroke", "rgba(38,38,38,0.8)");
+            bgRing.setAttribute("stroke-width", strokeW);
+            svg.appendChild(bgRing);
+
+            sortedCats.forEach(function (cat) {
+                var count = catCounts[cat.id];
+                var pct = total > 0 ? count / total : 0;
+                var segLen = pct * circumference;
+                var gapLen = circumference - segLen;
+                var seg = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                seg.setAttribute("cx", cx); seg.setAttribute("cy", cy);
+                seg.setAttribute("r", r); seg.setAttribute("fill", "none");
+                seg.setAttribute("stroke", cat.color);
+                seg.setAttribute("stroke-width", strokeW);
+                seg.setAttribute("stroke-dasharray", segLen.toFixed(1) + " " + gapLen.toFixed(1));
+                seg.setAttribute("stroke-dashoffset", (-offset).toFixed(1));
+                seg.setAttribute("stroke-linecap", "round");
+                seg.setAttribute("opacity", "0.85");
+                seg.setAttribute("transform", "rotate(-90 " + cx + " " + cy + ")");
+                var anim = document.createElementNS("http://www.w3.org/2000/svg", "animate");
+                anim.setAttribute("attributeName", "stroke-dasharray");
+                anim.setAttribute("from", "0 " + circumference);
+                anim.setAttribute("to", segLen.toFixed(1) + " " + gapLen.toFixed(1));
+                anim.setAttribute("dur", "0.6s"); anim.setAttribute("fill", "freeze");
+                seg.appendChild(anim);
+                svg.appendChild(seg);
+                offset += segLen;
+            });
+        }
+
+        // Category list using safe DOM methods
+        if (listEl) {
+            listEl.textContent = "";
+            CATEGORY_DEFS.forEach(function (cat) {
+                var count = catCounts[cat.id];
+                if (count === 0) return;
+                var pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                var row = document.createElement("div");
+                row.className = "band-row";
+                var dot = document.createElement("span");
+                dot.className = "band-dot";
+                dot.style.background = cat.color;
+                row.appendChild(dot);
+                var label = document.createElement("span");
+                label.className = "band-label";
+                label.textContent = cat.icon + " " + cat.label;
+                row.appendChild(label);
+                var countEl = document.createElement("span");
+                countEl.className = "band-count";
+                countEl.textContent = count;
+                row.appendChild(countEl);
+                var pctEl = document.createElement("span");
+                pctEl.className = "band-pct";
+                pctEl.textContent = pct + "%";
+                row.appendChild(pctEl);
+                listEl.appendChild(row);
+            });
+        }
+    }
+
     // ── Signal Heatmap Grid ──
 
     function renderSignalHeatmap(devices) {
@@ -1439,6 +1625,134 @@
             .catch(function () {}); // Silent fail — feed is supplementary
     }
 
+    // ── Log Viewer ──────────────────────────────────────────
+
+    var logPaused = false;
+    var logPollTimer = null;
+
+    function initLogViewer() {
+        var pauseBtn = document.getElementById("log-pause-btn");
+        var refreshBtn = document.getElementById("log-refresh-btn");
+        var clearBtn = document.getElementById("log-clear-btn");
+        var levelFilter = document.getElementById("log-level-filter");
+
+        if (pauseBtn) {
+            pauseBtn.addEventListener("click", function () {
+                logPaused = !logPaused;
+                this.textContent = logPaused ? "\u25B6 Resume" : "\u23F8 Pause";
+                var panel = document.querySelector(".log-panel");
+                if (panel) panel.classList.toggle("log-paused", logPaused);
+            });
+        }
+
+        if (refreshBtn) {
+            refreshBtn.addEventListener("click", function () {
+                fetchLogs();
+            });
+        }
+
+        if (clearBtn) {
+            clearBtn.addEventListener("click", function () {
+                var viewer = document.getElementById("log-viewer");
+                if (viewer) viewer.textContent = "";
+                var countEl = document.getElementById("log-entry-count");
+                if (countEl) countEl.textContent = "0 entries";
+            });
+        }
+
+        if (levelFilter) {
+            levelFilter.addEventListener("change", function () {
+                fetchLogs();
+            });
+        }
+    }
+
+    function fetchLogs() {
+        if (window.SORCC.getActiveTab() !== "operations") return;
+        if (activeSubTab !== "logs") return;
+        if (logPaused) return;
+
+        var levelFilter = document.getElementById("log-level-filter");
+        var level = levelFilter ? levelFilter.value : "";
+        var url = "/api/logs?n=150" + (level ? "&level=" + level : "");
+
+        fetch(url, {
+            signal: AbortSignal.timeout ? AbortSignal.timeout(5000) : undefined
+        })
+            .then(function (r) {
+                if (!r.ok) throw new Error("HTTP " + r.status);
+                return r.json();
+            })
+            .then(function (data) {
+                renderLogs(data.entries || data);
+            })
+            .catch(function () {
+                var statusEl = document.getElementById("log-status");
+                if (statusEl) statusEl.textContent = "Connection error";
+            });
+    }
+
+    function renderLogs(entries) {
+        var viewer = document.getElementById("log-viewer");
+        var statusEl = document.getElementById("log-status");
+        var countEl = document.getElementById("log-entry-count");
+        if (!viewer) return;
+
+        var wasAtBottom = viewer.scrollHeight - viewer.scrollTop - viewer.clientHeight < 30;
+
+        viewer.textContent = "";
+
+        if (!Array.isArray(entries) || entries.length === 0) {
+            var empty = document.createElement("div");
+            empty.className = "log-line log-dim";
+            empty.textContent = "No log entries";
+            viewer.appendChild(empty);
+            if (statusEl) statusEl.textContent = "Updated " + new Date().toLocaleTimeString();
+            if (countEl) countEl.textContent = "0 entries";
+            return;
+        }
+
+        entries.forEach(function (entry) {
+            var line = document.createElement("div");
+            line.className = "log-line";
+
+            // Format timestamp from epoch
+            var timeStr = "";
+            if (entry.ts) {
+                var d = new Date(entry.ts * 1000);
+                timeStr = d.toLocaleTimeString();
+            } else {
+                timeStr = entry.timestamp || entry.time || "";
+            }
+
+            var time = document.createElement("span");
+            time.className = "log-time";
+            time.textContent = timeStr;
+            line.appendChild(time);
+
+            var lvl = entry.level || "INFO";
+            var level = document.createElement("span");
+            level.className = "log-level log-level-" + lvl;
+            level.textContent = lvl;
+            line.appendChild(level);
+
+            var msg = document.createElement("span");
+            msg.className = "log-msg";
+            msg.textContent = entry.msg || entry.message || "";
+            line.appendChild(msg);
+
+            viewer.appendChild(line);
+        });
+
+        // Auto-scroll to bottom if user was already at bottom
+        if (wasAtBottom && !logPaused) {
+            viewer.scrollTop = viewer.scrollHeight;
+        }
+
+        if (statusEl) statusEl.textContent = "Updated " + new Date().toLocaleTimeString();
+        if (countEl) countEl.textContent = entries.length + " entries";
+    }
+
     // ── Init ────────────────────────────────────────────────
 
     document.addEventListener("DOMContentLoaded", function () {
@@ -1449,6 +1763,7 @@
         initProfiles();
         initExport();
         initWifiCapture();
+        initLogViewer();
 
         // Start device polling
         fetchDevices();
@@ -1457,6 +1772,9 @@
         // Start activity feed polling
         fetchActivityFeed();
         setInterval(fetchActivityFeed, 10000);
+
+        // Start log polling (slower — every 5s, only when log tab visible)
+        setInterval(fetchLogs, 5000);
     });
 
 })();

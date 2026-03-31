@@ -257,34 +257,64 @@
                     var color = signalColor(d.signal);
                     var name = escapeForPopup(d.name || d.mac);
                     var phyLabel = d.phy === "IEEE802.11" ? "WiFi" : d.phy || "Unknown";
+                    var mfr = d.manufacturer || "";
+                    var icon = d.icon || "";
+                    var packets = d.packets || 0;
 
-                    // Marker size based on signal strength
-                    var markerSize = d.signal === 0 ? 5 :
-                                     d.signal > -50 ? 8 :
-                                     d.signal > -70 ? 6 : 5;
+                    // Bubble size: logarithmic scale based on packet count
+                    // 1 pkt → 4px, 10 → 7px, 100 → 10px, 1000 → 13px, 10000 → 16px
+                    var markerSize = 4 + Math.log10(Math.max(1, packets)) * 3;
+
+                    // Boost size for devices with real signal data
+                    if (d.signal !== 0 && d.signal > -50) markerSize = Math.max(markerSize, 10);
 
                     var marker = L.circleMarker([d.lat, d.lon], {
-                        radius: markerSize,
+                        radius: Math.round(markerSize),
                         fillColor: color,
-                        color: "#fff",
-                        weight: 1,
-                        opacity: 0.9,
-                        fillOpacity: 0.85
+                        color: color,
+                        weight: 2,
+                        opacity: 0.7,
+                        fillOpacity: 0.55
                     }).addTo(map);
 
                     var sigText = d.signal === 0 ? "N/A" : d.signal + " dBm";
+                    var displayName = mfr && mfr !== "Random BLE" ? mfr : name;
 
-                    marker.bindPopup(
-                        "<div style='min-width:160px'>" +
-                        "<b style='font-size:14px;color:" + color + "'>" + name + "</b><br>" +
-                        "<span style='font-family:monospace;font-size:11px;color:#aaa'>" + escapeForPopup(d.mac) + "</span><br>" +
-                        "<hr style='border:none;border-top:1px solid #333;margin:6px 0'>" +
-                        "<b>Type:</b> " + escapeForPopup(phyLabel) + "<br>" +
-                        "<b>Signal:</b> " + sigText + "<br>" +
-                        "<b>Channel:</b> " + escapeForPopup(d.channel) + "<br>" +
-                        "<b>Packets:</b> " + d.packets +
-                        "</div>"
-                    );
+                    // Build popup with DOM methods for safety
+                    var popupDiv = document.createElement("div");
+                    popupDiv.style.cssText = "min-width:180px;font-family:system-ui,sans-serif;";
+
+                    var titleLine = document.createElement("div");
+                    titleLine.style.cssText = "font-size:13px;font-weight:700;color:" + color + ";margin-bottom:2px;";
+                    titleLine.textContent = (icon ? icon + " " : "") + displayName;
+                    popupDiv.appendChild(titleLine);
+
+                    var macLine = document.createElement("div");
+                    macLine.style.cssText = "font-family:monospace;font-size:11px;color:#aaa;margin-bottom:6px;";
+                    macLine.textContent = d.mac || "";
+                    popupDiv.appendChild(macLine);
+
+                    var hr = document.createElement("hr");
+                    hr.style.cssText = "border:none;border-top:1px solid #333;margin:4px 0;";
+                    popupDiv.appendChild(hr);
+
+                    var fields = [
+                        ["Type", phyLabel],
+                        ["Signal", sigText],
+                        ["Channel", d.channel || "—"],
+                        ["Packets", packets.toLocaleString()]
+                    ];
+                    fields.forEach(function (f) {
+                        var row = document.createElement("div");
+                        row.style.cssText = "font-size:11px;margin:2px 0;";
+                        var label = document.createElement("b");
+                        label.textContent = f[0] + ": ";
+                        row.appendChild(label);
+                        row.appendChild(document.createTextNode(f[1]));
+                        popupDiv.appendChild(row);
+                    });
+
+                    marker.bindPopup(popupDiv);
 
                     deviceMarkers.push(marker);
 
