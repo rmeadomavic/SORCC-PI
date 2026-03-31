@@ -23,6 +23,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from sorcc.web import kismet as ks
 from sorcc.web.oui import classify_device
+from sorcc.web.event_logger import events
 
 try:
     from sorcc.config_api import (
@@ -121,11 +122,16 @@ def _get_callsign() -> str:
 @app.on_event("startup")
 async def _startup():
     log.info("SORCC Dashboard v2.0.0 starting")
+    # Initialize event logger with configured callsign
+    events.callsign = _get_callsign()
+    events.log("system_startup", version="2.0.0")
     online, count = ks.check_online()
     if online:
         log.info(f"Kismet online — {count} devices tracked")
+        events.log("kismet_connected", device_count=count)
     else:
         log.warning("Kismet not reachable at startup")
+        events.log("kismet_offline")
     log.info("Dashboard ready on http://0.0.0.0:8080")
 
 
@@ -239,6 +245,7 @@ async def wifi_capture_toggle():
         except Exception as e:
             log.warning("WiFi reconnect failed (LTE still available): %s", e)
 
+        events.log("wifi_capture_disabled")
         return {"status": "ok", "active": False, "detail": "WiFi capture disabled — connectivity restored"}
     else:
         # ── Enable capture: managed → monitor ──
@@ -273,6 +280,7 @@ async def wifi_capture_toggle():
             log.warning("Could not add wlan0 to Kismet: %s", e)
 
         detail = "WiFi capture enabled — wlan0 in monitor mode"
+        events.log("wifi_capture_enabled", source_added=source_added)
         if not source_added:
             detail += " (warning: could not add to Kismet automatically)"
         return {"status": "ok", "active": True, "detail": detail}
@@ -528,6 +536,7 @@ async def get_target_rssi(query: str):
         "manufacturer": "", "category": "",
     }
     log.info(f"Hunt: query='{query}' is_mac={is_mac_query}")
+    events.log("hunt_query", query=query, mode="mac" if is_mac_query else "ssid")
     try:
         data = ks.post("/devices/views/all/devices.json", data={"json": json.dumps({"fields": [
             "kismet.device.base.macaddr", "kismet.device.base.name", "kismet.device.base.commonname",
@@ -682,6 +691,12 @@ async def get_logs(n: int = 100, level: str | None = None):
     return {"count": len(entries), "entries": entries}
 
 
+@app.get("/api/events/history")
+async def get_events_history(n: int = 50):
+    """Return recent operator events from today's event log (after-action review)."""
+    return {"events": events.get_recent(n=min(n, 200))}
+
+
 @app.get("/api/gps")
 async def get_gps():
     gps: dict[str, Any] = {"lat": None, "lon": None, "alt": None, "source": None}
@@ -749,6 +764,7 @@ async def export_kml():
                 ET.SubElement(pm, "description").text = desc
         tree = ET.ElementTree(kml)
         tree.write(output_kml, xml_declaration=True, encoding="utf-8")
+        events.log("export_generated", format="kml")
         return FileResponse(output_kml, media_type="application/vnd.google-earth.kml+xml", filename="sorcc-survey.kml")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"KML export failed: {e}")
@@ -1264,6 +1280,7 @@ async def switch_profile(request: Request):
     except Exception as e:
         errors.append(f"Kismet reconfiguration failed: {e}")
     _active_profile = profile_id
+    events.log("mode_switched", profile=_active_profile, errors=errors or None)
     result: dict[str, Any] = {"status": "ok" if not errors else "partial", "active": _active_profile, "profile": target}
     if errors: result["errors"] = errors
     return result
