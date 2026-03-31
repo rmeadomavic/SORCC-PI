@@ -125,38 +125,57 @@ All tunables live in `config/sorcc.ini` (INI format). Sections:
 - API: `sorcc/config_api.py` — read/write with file locking, backup, factory reset
 - Factory defaults: `config/sorcc.ini.factory`
 - Runtime config: `/opt/sorcc/config/sorcc.ini` (on Pi)
+- Sensitive fields redacted in API responses: `kismet.pass`, `wifi.password`, `dashboard.password`
 
 ### API Endpoints
 
 **Pages:**
 - `GET /` — Dashboard SPA
 - `GET /instructor` — Standalone instructor overview
+- `GET /login` — Login page (redirects to `/` if no password set or already authenticated)
 
-**Status & Devices:**
-- `GET /api/status` — System health (Kismet, modem, GPS, battery, Tailscale, hostname, device count, active profile)
+**Auth (open — no login required):**
+- `POST /api/login` — Verify password, set session cookie. Rate-limited.
+- `POST /api/logout` — Clear session cookie.
+- `GET /api/status` — System health (always open for instructor CORS polling)
+
+**Status & Devices (protected when password is set):**
 - `GET /api/devices` — All WiFi/BT devices from Kismet
 - `GET /api/target/{ssid}` — Hunt Mode: live RSSI for target SSID
 - `GET /api/gps` — Current GPS position
 
-**Config:**
-- `GET /api/config/full` — Read all config (redacted sensitive fields)
-- `POST /api/config/full` — Write config updates
+**Config (protected):**
+- `GET /api/config/full` — Read all config (redacted: kismet.pass, wifi.password, dashboard.password)
+- `POST /api/config/full` — Write config updates (reloads web password if changed)
 - `POST /api/config/restore-backup` — Restore from .bak
 - `POST /api/config/factory-reset` — Restore factory defaults
 - `GET /api/config/export` — Download config as JSON
 - `POST /api/config/import` — Upload JSON config
 
-**Preflight:**
+**Preflight (protected):**
 - `GET /api/preflight` — Run hardware/service checks, returns structured JSON
 
-**Profiles:**
+**Profiles (protected):**
 - `GET /api/profiles` — List RF mission profiles
 - `GET /api/profiles/active` — Current active profile
 - `POST /api/profiles/switch` — Switch profile (reconfigures Kismet sources)
 
-**Export:**
+**Export (protected):**
 - `GET /api/export/kml` — Export Kismet data as KML
 - `GET /api/export/csv` — Export device list as CSV
+
+### Auth System
+
+Password protection is optional. Set `[dashboard] password` in `sorcc.ini`.
+When blank, all routes are open (backwards compatible).
+
+- **Password storage:** Plaintext in config file (file is 0o600). Matches Hydra's `api_token` pattern.
+- **Session cookies:** HMAC-SHA256 signed (`nonce:expires:sig`), HttpOnly, SameSite=Lax.
+- **Session secret:** Random bytes, rotates on each boot. Soldiers re-enter password after reboot.
+- **Session timeout:** Configurable via `[dashboard] session_timeout_min` (default 480 = 8 hours).
+- **Rate limiting:** 10 failed attempts per IP = 5 minute lockout.
+- **401 responses:** Include `X-Login-Required: true` header. JS intercepts and redirects to `/login`.
+- **Open endpoints:** `/api/status`, `/login`, `/api/login`, `/api/logout`, `/static/*`.
 
 ## Development Guidelines
 
