@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SORCC RF Survey Dashboard</title>
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-    <link rel="stylesheet" href="/static/css/variables.css?v=7">
-    <link rel="stylesheet" href="/static/css/base.css?v=7">
-    <link rel="stylesheet" href="/static/css/operations.css?v=7">
-    <link rel="stylesheet" href="/static/css/settings.css?v=7">
-    <link rel="stylesheet" href="/static/css/preflight.css?v=7">
+    <link rel="stylesheet" href="/static/css/variables.css?v=8">
+    <link rel="stylesheet" href="/static/css/base.css?v=8">
+    <link rel="stylesheet" href="/static/css/operations.css?v=8">
+    <link rel="stylesheet" href="/static/css/settings.css?v=8">
+    <link rel="stylesheet" href="/static/css/preflight.css?v=8">
     <link rel="stylesheet" href="/static/lib/leaflet/leaflet.css">
 </head>
 <body>
@@ -31,6 +31,10 @@
             <span class="profile-badge" id="active-profile">WiFi Survey</span>
         </div>
         <div class="header-right">
+            <span class="header-device-count" id="header-device-count" title="Total devices tracked">
+                <span class="header-count-value" id="header-count-value">--</span>
+                <span class="header-count-label">DEVICES</span>
+            </span>
             <span class="status-pill"><span class="status-dot" id="kismet-dot"></span> Kismet</span>
             <span class="status-pill"><span class="status-dot" id="gps-dot"></span> GPS</span>
             <span class="status-pill"><span class="status-dot" id="modem-dot"></span> LTE</span>
@@ -72,11 +76,11 @@
 
     <!-- ── Scripts ── -->
     <script src="/static/lib/leaflet/leaflet.js"></script>
-    <script src="/static/js/app.js?v=7"></script>
-    <script src="/static/js/operations.js?v=7"></script>
-    <script src="/static/js/map.js?v=7"></script>
-    <script src="/static/js/settings.js?v=7"></script>
-    <script src="/static/js/preflight.js?v=7"></script>
+    <script src="/static/js/app.js?v=8"></script>
+    <script src="/static/js/operations.js?v=8"></script>
+    <script src="/static/js/map.js?v=8"></script>
+    <script src="/static/js/settings.js?v=8"></script>
+    <script src="/static/js/preflight.js?v=8"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             var splash = document.getElementById("splash-screen");

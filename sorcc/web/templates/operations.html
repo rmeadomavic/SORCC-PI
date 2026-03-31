@@ -134,30 +134,51 @@
                 <button class="detail-close" id="detail-close">&times;</button>
             </div>
             <div class="detail-body">
+                <!-- Signal History Sparkline -->
+                <div class="detail-section detail-chart-section">
+                    <div class="detail-chart-header">
+                        <span class="detail-chart-label">SIGNAL HISTORY</span>
+                        <span class="detail-chart-value" id="detail-trend">--</span>
+                    </div>
+                    <svg id="detail-sparkline" class="detail-sparkline" viewBox="0 0 280 50" preserveAspectRatio="none">
+                        <polyline id="detail-spark-line" points="" fill="none" stroke="var(--sorcc-green-light)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+
                 <div class="detail-section">
-                    <div class="detail-row">
-                        <span class="detail-label">MAC</span>
-                        <span class="detail-value mono" id="detail-mac">--</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Type</span>
-                        <span class="detail-value" id="detail-type">--</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Signal</span>
-                        <span class="detail-value mono" id="detail-signal">--</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Channel</span>
-                        <span class="detail-value mono" id="detail-channel">--</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Packets</span>
-                        <span class="detail-value mono" id="detail-packets">--</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Last Seen</span>
-                        <span class="detail-value" id="detail-last-seen">--</span>
+                    <div class="detail-grid">
+                        <div class="detail-cell">
+                            <span class="detail-label">MAC</span>
+                            <span class="detail-value mono" id="detail-mac">--</span>
+                        </div>
+                        <div class="detail-cell">
+                            <span class="detail-label">Type</span>
+                            <span class="detail-value" id="detail-type">--</span>
+                        </div>
+                        <div class="detail-cell">
+                            <span class="detail-label">Signal</span>
+                            <span class="detail-value mono" id="detail-signal">--</span>
+                        </div>
+                        <div class="detail-cell">
+                            <span class="detail-label">Channel</span>
+                            <span class="detail-value mono" id="detail-channel">--</span>
+                        </div>
+                        <div class="detail-cell">
+                            <span class="detail-label">Packets</span>
+                            <span class="detail-value mono" id="detail-packets">--</span>
+                        </div>
+                        <div class="detail-cell">
+                            <span class="detail-label">Last Seen</span>
+                            <span class="detail-value" id="detail-last-seen">--</span>
+                        </div>
+                        <div class="detail-cell">
+                            <span class="detail-label">First Seen</span>
+                            <span class="detail-value" id="detail-first-seen">--</span>
+                        </div>
+                        <div class="detail-cell">
+                            <span class="detail-label">Activity</span>
+                            <span class="detail-value" id="detail-activity">--</span>
+                        </div>
                     </div>
                 </div>
                 <div class="detail-section">
@@ -165,6 +186,7 @@
                     <div class="detail-actions">
                         <button class="btn-primary" id="detail-hunt-btn">Hunt This Device</button>
                         <button class="btn-secondary" id="detail-locate-btn">Show on Map</button>
+                        <button class="btn-secondary" id="detail-copy-mac">Copy MAC</button>
                     </div>
                 </div>
             </div>

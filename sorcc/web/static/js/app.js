@@ -157,6 +157,12 @@
                 if (countBadge && s.device_count !== undefined && s.device_count !== null) {
                     countBadge.textContent = s.device_count;
                 }
+
+                // Header device count
+                var headerCount = document.getElementById("header-count-value");
+                if (headerCount && s.device_count !== undefined) {
+                    headerCount.textContent = s.device_count;
+                }
             })
             .catch(function () {
                 consecutiveFailures++;
@@ -184,7 +190,10 @@
                 var data = JSON.parse(e.data);
                 var badge = document.getElementById("device-count");
                 if (badge) badge.textContent = data.count;
-                if (data.delta > 0) {
+                var headerCount = document.getElementById("header-count-value");
+                if (headerCount) headerCount.textContent = data.count;
+                // Only toast for genuine new discoveries (not initial connect)
+                if (data.delta > 0 && data.delta < 50) {
                     showToast("+" + data.delta + " new device" + (data.delta > 1 ? "s" : ""), "info");
                 }
             } catch (err) {}

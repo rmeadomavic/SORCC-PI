@@ -816,6 +816,21 @@
             });
         }
 
+        // "Copy MAC" button
+        var copyBtn = document.getElementById("detail-copy-mac");
+        if (copyBtn) {
+            copyBtn.addEventListener("click", function () {
+                var mac = document.getElementById("detail-mac");
+                if (mac && mac.textContent !== "--") {
+                    navigator.clipboard.writeText(mac.textContent).then(function () {
+                        window.SORCC.showToast("MAC copied: " + mac.textContent, "success");
+                    }).catch(function () {
+                        window.SORCC.showToast("Copy failed — use Ctrl+C", "error");
+                    });
+                }
+            });
+        }
+
         // "Show on Map" button
         var locateBtn = document.getElementById("detail-locate-btn");
         if (locateBtn) {
@@ -840,16 +855,49 @@
 
         var name = d.name || d.ssid || d.mac || "Unknown";
         var noSignal = (d.signal === 0 || d.signal === undefined || d.signal === null);
+        var key = d.mac || d.key;
 
         // Populate fields
-        var displayName = d.manufacturer ? d.manufacturer + " " + (d.category || "") : name;
+        var displayName = d.icon ? d.icon + " " : "";
+        displayName += d.manufacturer && d.manufacturer !== "Random BLE" ? d.manufacturer : name;
         setText("detail-name", displayName);
         setText("detail-mac", d.mac || "--");
-        setText("detail-type", (d.manufacturer || "") + (d.manufacturer ? " · " : "") + (d.phy || d.type || "--"));
+        setText("detail-type", (d.manufacturer || "") + (d.manufacturer ? " \u00B7 " : "") + (d.phy || d.type || "--"));
         setText("detail-signal", noSignal ? (d.packets ? d.packets + " pkts" : "N/A") : d.signal + " dBm");
         setText("detail-channel", d.channel || "--");
         setText("detail-packets", d.packets != null ? d.packets.toLocaleString() : "--");
         setText("detail-last-seen", d.last_seen ? formatTimestamp(d.last_seen) : "--");
+        setText("detail-first-seen", d.first_seen ? formatTimestamp(d.first_seen) : "--");
+        setText("detail-activity", d.activity >= 2 ? "High" : d.activity >= 1 ? "Active" : d.packets > 0 ? "Idle" : "None");
+
+        // Draw signal history sparkline
+        var history = key ? signalHistory[key] : null;
+        var sparkLine = document.getElementById("detail-spark-line");
+        var trendEl = document.getElementById("detail-trend");
+        if (sparkLine && history && history.length >= 2) {
+            var w = 280, h = 50, minD = -100, maxD = -20, rng = maxD - minD;
+            var pts = [];
+            var validVals = history.filter(function (v) { return v !== null; });
+            var denom = Math.max(history.length - 1, 1);
+            for (var si = 0; si < history.length; si++) {
+                if (history[si] === null) continue;
+                var sx = (si / denom) * w;
+                var sy = h - ((history[si] - minD) / rng) * h;
+                sy = Math.max(1, Math.min(h - 1, sy));
+                pts.push(Math.round(sx * 10) / 10 + "," + Math.round(sy * 10) / 10);
+            }
+            sparkLine.setAttribute("points", pts.join(" "));
+            // Trend indicator
+            if (trendEl && validVals.length >= 2) {
+                var first = validVals[0], last = validVals[validVals.length - 1];
+                var diff = last - first;
+                trendEl.textContent = diff > 3 ? "\u2191 Stronger" : diff < -3 ? "\u2193 Weaker" : "\u2194 Stable";
+                trendEl.style.color = diff > 3 ? "var(--signal-hot)" : diff < -3 ? "var(--signal-cold)" : "var(--text-dim)";
+            }
+        } else if (sparkLine) {
+            sparkLine.setAttribute("points", "");
+            if (trendEl) { trendEl.textContent = noSignal ? "No RSSI (BT)" : "Collecting..."; trendEl.style.color = ""; }
+        }
 
         // Store data on action buttons for handlers
         var huntBtn = document.getElementById("detail-hunt-btn");
