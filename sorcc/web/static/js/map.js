@@ -360,6 +360,12 @@
                 pollMap();
                 mapPollTimer = setInterval(pollMap, 5000);
             }
+        } else {
+            // Clear poll timer when map sub-tab is not active
+            if (mapPollTimer) {
+                clearInterval(mapPollTimer);
+                mapPollTimer = null;
+            }
         }
     });
 

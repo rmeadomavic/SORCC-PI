@@ -84,34 +84,36 @@ if [ ! -f "$CONFIG_DIR/sorcc.ini" ]; then
     fi
 fi
 
-# Helper: read a config value from sorcc.ini
+# Helper: read a config value from sorcc.ini (safe — no shell interpolation into Python)
 cfg_get() {
     local section="$1" key="$2" default="${3:-}"
     local value
-    value=$(python3 -c "
-import configparser
+    value=$(SORCC_CFG="$CONFIG_DIR/sorcc.ini" SORCC_SEC="$section" SORCC_KEY="$key" \
+        python3 -c "
+import configparser, os
 c = configparser.ConfigParser()
-c.read('$CONFIG_DIR/sorcc.ini')
+c.read(os.environ['SORCC_CFG'])
 try:
-    v = c.get('$section', '$key').split(';')[0].strip()
+    v = c.get(os.environ['SORCC_SEC'], os.environ['SORCC_KEY']).split(';')[0].strip()
     print(v)
-except:
+except Exception:
     print('')
 " 2>/dev/null || true)
     echo "${value:-$default}"
 }
 
-# Helper: write a config value to sorcc.ini
+# Helper: write a config value to sorcc.ini (safe — no shell interpolation into Python)
 cfg_set() {
     local section="$1" key="$2" value="$3"
-    python3 -c "
-import configparser
+    SORCC_CFG="$CONFIG_DIR/sorcc.ini" SORCC_SEC="$section" SORCC_KEY="$key" SORCC_VAL="$value" \
+        python3 -c "
+import configparser, os
 c = configparser.ConfigParser()
-c.read('$CONFIG_DIR/sorcc.ini')
-if not c.has_section('$section'):
-    c.add_section('$section')
-c.set('$section', '$key', '$value')
-with open('$CONFIG_DIR/sorcc.ini', 'w') as f:
+c.read(os.environ['SORCC_CFG'])
+if not c.has_section(os.environ['SORCC_SEC']):
+    c.add_section(os.environ['SORCC_SEC'])
+c.set(os.environ['SORCC_SEC'], os.environ['SORCC_KEY'], os.environ['SORCC_VAL'])
+with open(os.environ['SORCC_CFG'], 'w') as f:
     c.write(f)
 " 2>/dev/null || true
 }
@@ -310,8 +312,9 @@ fi
 # Set Kismet credentials from config
 KISMET_USER=$(cfg_get kismet user "kismet")
 KISMET_PASS=$(cfg_get kismet pass "kismet")
-mkdir -p /root/.kismet
+mkdir -p /root/.kismet && chmod 700 /root/.kismet
 echo -e "httpd_username=$KISMET_USER\nhttpd_password=$KISMET_PASS" > /root/.kismet/kismet_httpd.conf
+chmod 600 /root/.kismet/kismet_httpd.conf
 ok "Kismet credentials set ($KISMET_USER/***)"
 
 # Generate kismet_site.conf dynamically from config
@@ -575,7 +578,7 @@ cat > /etc/systemd/system/sorcc-dashboard.service <<SVCFILE
 [Unit]
 Description=SORCC RF Survey Dashboard
 After=kismet.service
-Requires=kismet.service
+Wants=kismet.service
 
 [Service]
 Type=simple

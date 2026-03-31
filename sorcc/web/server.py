@@ -275,7 +275,7 @@ class _RequestLogMiddleware(BaseHTTPMiddleware):
         except Exception as exc:
             dt = (time.time() - t0) * 1000
             log.error(f"{request.method} {request.url.path} → 500 ({dt:.0f}ms) {type(exc).__name__}: {exc}")
-            return JSONResponse(status_code=500, content={"detail": "Internal server error", "error": str(exc)})
+            return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
 app.add_middleware(_RequestLogMiddleware)
 
@@ -472,7 +472,15 @@ async def wifi_capture_toggle():
     When enabling capture: disconnect WiFi, set monitor mode, add wlan0 to Kismet.
     When disabling capture: remove wlan0 from Kismet, restore managed mode, reconnect WiFi.
     LTE + Tailscale remain available throughout.
+
+    Runs in a thread pool to avoid blocking the event loop during sleeps/subprocesses.
     """
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(None, _wifi_capture_toggle_sync)
+
+
+def _wifi_capture_toggle_sync():
+    """Synchronous WiFi capture toggle — called via run_in_executor."""
     current = _wifi_capture_status()
 
     if current["active"]:
@@ -482,7 +490,8 @@ async def wifi_capture_toggle():
             s = ks.session()
             r = s.get(f"{ks.KISMET_URL}/datasource/all_sources.json", timeout=5)
             if r.status_code == 200:
-                for src in r.json() if isinstance(r.json(), list) else []:
+                all_sources = r.json()
+                for src in all_sources if isinstance(all_sources, list) else []:
                     iface = src.get("kismet.datasource.interface", "")
                     if "wlan0" in iface:
                         uuid = src.get("kismet.datasource.uuid")
@@ -566,7 +575,8 @@ async def wifi_capture_toggle():
                 s = ks.session()
                 r = s.get(f"{ks.KISMET_URL}/datasource/all_sources.json", timeout=5)
                 if r.status_code == 200:
-                    for src in r.json() if isinstance(r.json(), list) else []:
+                    verify_sources = r.json()
+                    for src in verify_sources if isinstance(verify_sources, list) else []:
                         if "wlan0" in src.get("kismet.datasource.interface", ""):
                             source_added = True
                             break
@@ -704,14 +714,13 @@ async def get_status():
 
     async def _check_battery():
         # PiSugar battery check via its local TCP interface — fast TCP probe first
+        writer = None
         try:
-            # Quick connect test (100ms timeout) — avoids 1.5s hang when PiSugar absent
             reader, writer = await asyncio.wait_for(
                 asyncio.open_connection("127.0.0.1", 8423), timeout=0.1)
             writer.write(b"get battery\n")
             await writer.drain()
             out = await asyncio.wait_for(reader.read(256), timeout=0.15)
-            writer.close()
             text = out.decode().strip()
             if text:
                 parts = text.split(":")
@@ -719,6 +728,9 @@ async def get_status():
                     status["battery"] = float(parts[1].strip())
         except (asyncio.TimeoutError, ConnectionRefusedError, OSError, ValueError):
             pass
+        finally:
+            if writer:
+                writer.close()
 
     async def _check_tailscale():
         out, rc = await _run(["tailscale", "ip", "-4"], timeout=3)
@@ -961,11 +973,12 @@ async def get_activity():
         age = now - first
         if age > 300:  # Only last 5 minutes
             break
+        cls = classify_device(mac, "", "")
         recent.append({
             "mac": mac,
             "seconds_ago": int(age),
-            "manufacturer": classify_device(mac, "", "")["manufacturer"],
-            "category": classify_device(mac, "", "")["category"],
+            "manufacturer": cls["manufacturer"],
+            "category": cls["category"],
         })
         if len(recent) >= 50:
             break
@@ -984,11 +997,9 @@ async def event_stream():
     Pushes device count changes, new discoveries, and status every 2s.
     Clients connect with EventSource and get instant updates vs polling.
     """
-    import asyncio
 
     async def generate():
         last_count = 0
-        last_status_hash = ""
         while True:
             try:
                 # Check device count
@@ -1036,7 +1047,9 @@ async def get_events_history(n: int = 50):
 async def get_gps():
     gps: dict[str, Any] = {"lat": None, "lon": None, "alt": None, "source": None}
     try:
-        result = subprocess.run(["mmcli", "-m", _get_modem_index(), "--location-get"], capture_output=True, text=True, timeout=5)
+        loop = asyncio.get_running_loop()
+        result = await loop.run_in_executor(None, lambda: subprocess.run(
+            ["mmcli", "-m", _get_modem_index(), "--location-get"], capture_output=True, text=True, timeout=5))
         for line in result.stdout.splitlines():
             line = line.strip()
             if "latitude" in line.lower():
@@ -1278,11 +1291,11 @@ async def export_cot_all():
     if not located:
         raise HTTPException(status_code=404, detail="No devices with GPS coordinates found")
 
-    events = ET.Element("events")
+    cot_events = ET.Element("events")
     for device, classification in located:
-        events.append(_build_cot_event(device, classification))
+        cot_events.append(_build_cot_event(device, classification))
 
-    xml_bytes = ET.tostring(events, encoding="unicode", xml_declaration=False)
+    xml_bytes = ET.tostring(cot_events, encoding="unicode", xml_declaration=False)
     xml_out = '<?xml version="1.0" encoding="UTF-8"?>\n' + xml_bytes
     return Response(content=xml_out, media_type="application/xml")
 
@@ -1599,7 +1612,7 @@ def _check_gps_fix():
         elif "longitude" in line:
             try: lon = float(line.split(":")[-1].strip())
             except ValueError: pass
-    if lat and lon and lat != 0:
+    if lat is not None and lon is not None:
         return "pass", f"Fix: {lat:.5f}, {lon:.5f}"
     return "warn", "No GPS fix yet"
 
@@ -1721,8 +1734,8 @@ async def switch_profile(request: Request):
         try:
             r = s.get(f"{ks.KISMET_URL}/datasource/all_sources.json", timeout=5)
             if r.status_code == 200:
-                sources = r.json()
-                for src in sources if isinstance(sources, list) else []:
+                current_sources = r.json()
+                for src in current_sources if isinstance(current_sources, list) else []:
                     uuid = src.get("kismet.datasource.uuid")
                     if uuid:
                         try: s.post(f"{ks.KISMET_URL}/datasource/by-uuid/{uuid}/close_source.cmd", timeout=5)

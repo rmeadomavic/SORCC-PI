@@ -44,7 +44,7 @@ def session() -> requests.Session:
 
 
 def get(endpoint: str, params: dict | None = None, timeout: int = 8) -> Any:
-    """GET from Kismet with caching fallback on errors."""
+    """GET from Kismet with caching fallback on connection/timeout errors only."""
     cache_key = f"GET:{endpoint}:{params}"
     s = session()
     try:
@@ -53,7 +53,8 @@ def get(endpoint: str, params: dict | None = None, timeout: int = 8) -> Any:
         result = r.json()
         _response_cache[cache_key] = (time.time(), result)
         return result
-    except (requests.ConnectionError, requests.Timeout, Exception) as e:
+    except (requests.ConnectionError, requests.Timeout) as e:
+        # Network-level failures — serve stale cache if available
         if cache_key in _response_cache:
             cached_time, cached_data = _response_cache[cache_key]
             if time.time() - cached_time < _CACHE_TTL:
@@ -61,8 +62,11 @@ def get(endpoint: str, params: dict | None = None, timeout: int = 8) -> Any:
                 return cached_data
         if isinstance(e, requests.ConnectionError):
             raise HTTPException(status_code=502, detail="Kismet not reachable")
-        if isinstance(e, requests.Timeout):
-            raise HTTPException(status_code=504, detail="Kismet request timed out")
+        raise HTTPException(status_code=504, detail="Kismet request timed out")
+    except requests.HTTPError as e:
+        # HTTP-level errors (401, 403, 500) — do NOT serve stale cache
+        raise HTTPException(status_code=e.response.status_code if e.response else 500, detail=str(e))
+    except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -76,7 +80,7 @@ def post(endpoint: str, data: dict | None = None, timeout: int = 15) -> Any:
         result = r.json()
         _response_cache[cache_key] = (time.time(), result)
         return result
-    except (requests.ConnectionError, requests.Timeout, Exception) as e:
+    except (requests.ConnectionError, requests.Timeout) as e:
         if cache_key in _response_cache:
             cached_time, cached_data = _response_cache[cache_key]
             if time.time() - cached_time < _CACHE_TTL:
@@ -84,8 +88,10 @@ def post(endpoint: str, data: dict | None = None, timeout: int = 15) -> Any:
                 return cached_data
         if isinstance(e, requests.ConnectionError):
             raise HTTPException(status_code=502, detail="Kismet not reachable")
-        if isinstance(e, requests.Timeout):
-            raise HTTPException(status_code=504, detail="Kismet request timed out")
+        raise HTTPException(status_code=504, detail="Kismet request timed out")
+    except requests.HTTPError as e:
+        raise HTTPException(status_code=e.response.status_code if e.response else 500, detail=str(e))
+    except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 

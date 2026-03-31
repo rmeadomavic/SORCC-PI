@@ -1,7 +1,7 @@
 [Unit]
 Description=SORCC RF Survey Dashboard
 After=kismet.service
-Requires=kismet.service
+Wants=kismet.service
 
 [Service]
 Type=simple
