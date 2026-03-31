@@ -125,30 +125,58 @@ cd ~/hydra && cc
 
 ## Starting a Recursive Session on Hydra
 
-Same pattern as SORCC-PI, just different URLs:
-
 ```bash
-# On the Jetson:
-cd ~/hydra
+# On the Jetson (SSH from laptop: ssh jetson):
+cd ~/Hydra
 cc
 # Then inside Claude Code:
 /remote-control
 ```
 
-**Laptop browser:**
+**Laptop browser — open two tabs:**
+
 | Tab | URL |
 |-----|-----|
 | Tab 1 | `claude.ai/code` → connect to Jetson remote session |
-| Tab 2 | `http://<JETSON_TAILSCALE_IP>:8080` |
+| Tab 2 | `http://100.109.160.122:8080` (Jetson Tailscale IP) |
 
-**Claude Chrome prompt:**
+**Tab 1 — Claude Code prompt:**
+```
+Start a recursive dev session on Hydra. Read CLAUDE.md for project context.
+Deploy path and repo structure should be in CLAUDE.md — if not, explore and
+document it. My browser instance is watching the UI live and will feed back
+visual issues as you work.
+
+Reference the SORCC-PI project at github.com/rmeadomavic/SORCC-PI branch
+claude/setup-sorcc-pi-qxVWN for patterns to adopt: structured logging with
+ring buffer, OUI manufacturer lookup, response caching, activity feed,
+CoT/TAK export, device classification, packet-based activity metrics.
+
+Quality bar: Palantir/Anduril grade — military functionality, civilian UX.
+No blank screens, always last-known-good state. Work through improvements
+in chunks, commit after each chunk. Cook.
+```
+
+**Tab 2 — Claude Chrome prompt (across both tabs):**
 ```
 I have two tabs open:
-- Tab 1: Claude Code remote terminal connected to Jetson Hydra at <IP>
-- Tab 2: Hydra dashboard at http://<IP>:8080
+- Tab 1: Claude Code remote terminal connected to my Jetson Hydra
+- Tab 2: Hydra dashboard UI
 
-Same workflow as SORCC-PI: screenshot UI, fix in terminal, verify, repeat.
-Focus areas: [your current Hydra priorities]
+Your workflow:
+1. Go to Tab 2 and screenshot the UI
+2. Identify visual issues, broken elements, UX problems, missing polish
+3. Switch to Tab 1 and describe what you found — the CLI session will fix it
+4. After the CLI session says it deployed, switch to Tab 2, wait 5 seconds,
+   refresh, and verify the fix
+5. Repeat until clean
+
+Audit from three personas:
+- A Green Beret using this on a mission from a phone
+- An instructor demoing to a classroom of soldiers
+- A general at Oak Grove deciding whether to fund this
+
+Be ruthless. Report everything.
 ```
 
 ---

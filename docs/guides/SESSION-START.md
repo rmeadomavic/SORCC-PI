@@ -106,6 +106,26 @@ curl -s http://localhost:8080/api/logs?n=3
 
 ---
 
+## Option C: Recursive Browser Loop — Hydra (Jetson)
+
+Same pattern, different device.
+
+```bash
+ssh jetson
+cd ~/Hydra
+cc
+# Then: /remote-control
+```
+
+| Tab | URL |
+|-----|-----|
+| Tab 1 | `claude.ai/code` → connect to Jetson remote session |
+| Tab 2 | `http://100.109.160.122:8080` |
+
+Prompts are in `docs/guides/JETSON-SETUP.md`.
+
+---
+
 ## End-of-Session Checklist
 
 Before closing out:
