@@ -400,8 +400,8 @@
                     var sb = (b.signal === 0 || b.signal == null) ? -999 : b.signal;
                     return sb - sa;
                 case "signal-asc":
-                    var sa2 = (a.signal === 0 || a.signal == null) ? 1 : a.signal;
-                    var sb2 = (b.signal === 0 || b.signal == null) ? 1 : b.signal;
+                    var sa2 = (a.signal === 0 || a.signal == null) ? 999 : a.signal;
+                    var sb2 = (b.signal === 0 || b.signal == null) ? 999 : b.signal;
                     return sa2 - sb2;
                 case "name":
                     return (a.name || a.mac || "").localeCompare(b.name || b.mac || "");
@@ -541,6 +541,8 @@
         prevSignal = -100;
         huntDeltaHistory = [];
 
+        // Clear any existing hunt interval to prevent parallel hunts
+        if (huntInterval) clearInterval(huntInterval);
         huntInterval = setInterval(function () {
             pollTarget(ssid);
         }, 500);
@@ -1788,6 +1790,7 @@
 
     var logPaused = false;
     var logPollTimer = null;
+    var logRetryTimer = null;
 
     function initLogViewer() {
         var pauseBtn = document.getElementById("log-pause-btn");
@@ -1848,8 +1851,13 @@
             .catch(function (err) {
                 var statusEl = document.getElementById("log-status");
                 if (statusEl) statusEl.textContent = "Retrying... (" + (err.message || "connection error") + ")";
-                // Auto-retry once after 3s
-                setTimeout(fetchLogs, 3000);
+                // Auto-retry once after 3s — guard against stacking timers
+                if (!logRetryTimer) {
+                    logRetryTimer = setTimeout(function () {
+                        logRetryTimer = null;
+                        fetchLogs();
+                    }, 3000);
+                }
             });
     }
 

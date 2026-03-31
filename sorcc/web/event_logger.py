@@ -18,6 +18,7 @@ import hashlib
 import json
 import logging
 import os
+import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -36,6 +37,7 @@ class EventLogger:
         self.log_dir = Path(log_dir)
         self.callsign = callsign
         self._prev_hash = "genesis"
+        self._lock = threading.Lock()
         self._file_path: Path | None = None
         self._current_date: str = ""
         self._ensure_dir()
@@ -85,17 +87,18 @@ class EventLogger:
         }
         record.update(kwargs)
 
-        # SHA-256 hash chain
-        record_json = json.dumps(record, sort_keys=True)
-        chain_hash = hashlib.sha256((record_json + self._prev_hash).encode()).hexdigest()[:16]
-        record["chain_hash"] = chain_hash
-        self._prev_hash = chain_hash
+        # SHA-256 hash chain — lock protects _prev_hash across concurrent requests
+        with self._lock:
+            record_json = json.dumps(record, sort_keys=True)
+            chain_hash = hashlib.sha256((record_json + self._prev_hash).encode()).hexdigest()[:16]
+            record["chain_hash"] = chain_hash
 
-        try:
-            with open(self._file_path, "a") as f:
-                f.write(json.dumps(record) + "\n")
-        except OSError as e:
-            log.warning("Failed to write event: %s", e)
+            try:
+                with open(self._file_path, "a") as f:
+                    f.write(json.dumps(record) + "\n")
+                self._prev_hash = chain_hash  # only advance after successful write
+            except OSError as e:
+                log.warning("Failed to write event: %s", e)
 
     def get_recent(self, n: int = 50) -> list[dict]:
         """Read the last N events from today's log file."""

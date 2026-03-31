@@ -139,7 +139,7 @@ def write_config(updates: dict[str, dict[str, str]]) -> dict[str, Any]:
         shutil.copy2(path, bak)
 
     # Write config with file locking
-    lock_fd = os.open(str(path), os.O_RDWR | os.O_CREAT)
+    lock_fd = os.open(str(path), os.O_RDWR | os.O_CREAT, 0o600)
     try:
         fcntl.flock(lock_fd, fcntl.LOCK_EX)
         with open(path, "w") as f:
