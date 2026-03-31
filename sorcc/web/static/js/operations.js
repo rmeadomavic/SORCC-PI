@@ -789,8 +789,8 @@
                 // Populate query and start hunt
                 var ssidInput = document.getElementById("target-ssid");
                 if (ssidInput) {
-                    ssidInput.value = ssid;
-                    startHunt(ssid);
+                    ssidInput.value = query;
+                    startHunt(query);
                 }
             });
         }

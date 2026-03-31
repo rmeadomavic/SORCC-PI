@@ -198,6 +198,29 @@ else
     warn "GPS Script" "config" "GPS script not found"
 fi
 
+# Dashboard modules
+for mod in server.py kismet.py oui.py logging_config.py; do
+    if [ -f /opt/sorcc/sorcc/web/"$mod" ]; then
+        ok "Module $mod" "config" "Dashboard module $mod present"
+    else
+        fail "Module $mod" "config" "Dashboard module $mod missing from /opt/sorcc/sorcc/web/"
+    fi
+done
+
+# Log directory
+if [ -d /opt/sorcc/logs ]; then
+    ok "Log Dir" "config" "Log directory exists (/opt/sorcc/logs/)"
+else
+    warn "Log Dir" "config" "Log directory missing — create with: mkdir -p /opt/sorcc/logs"
+fi
+
+# Python dependencies
+if python3 -c "import fastapi, uvicorn, requests, jinja2" 2>/dev/null; then
+    ok "Python Deps" "config" "All Python dependencies importable"
+else
+    fail "Python Deps" "config" "Some Python dependencies missing — run: pip3 install -r requirements.txt"
+fi
+
 # ── Output ───────────────────────────────────────────────────
 if [ "$JSON_MODE" = true ]; then
     # Determine overall status
