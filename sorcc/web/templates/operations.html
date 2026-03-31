@@ -107,10 +107,13 @@
         <div class="device-controls">
             <div class="device-filters">
                 <button class="filter-btn active" data-filter="all">All</button>
-                <button class="filter-btn" data-filter="IEEE802.11">WiFi</button>
                 <button class="filter-btn" data-filter="Bluetooth">BT</button>
-                <button class="filter-btn" data-filter="RTL433">433MHz</button>
+                <button class="filter-btn" data-filter="IEEE802.11">WiFi</button>
+                <button class="filter-btn" data-filter="band:915mhz">915 MHz</button>
+                <button class="filter-btn" data-filter="band:868mhz">868 MHz</button>
+                <button class="filter-btn" data-filter="band:433mhz">433 MHz</button>
                 <button class="filter-btn" data-filter="ADSB">ADS-B</button>
+                <button class="filter-btn" data-filter="band:fpv">FPV</button>
             </div>
             <div class="device-sort">
                 <select id="device-sort">
@@ -224,11 +227,21 @@
 
 <!-- ── Spectrum View ── -->
 <div id="subtab-spectrum" class="sub-content">
+    <div class="spectrum-view-selector">
+        <label for="spectrum-mode">View:</label>
+        <select id="spectrum-mode" class="spectrum-dropdown">
+            <option value="auto">Auto (best data)</option>
+            <option value="bt-activity">Bluetooth Activity</option>
+            <option value="wifi-channels">WiFi Channels</option>
+            <option value="fpv-bands">FPV / ISM Bands</option>
+            <option value="all-bands">All Frequency Bands</option>
+        </select>
+    </div>
     <div class="spectrum-grid">
         <!-- Channel Utilization Chart -->
         <div class="spectrum-card spectrum-card-wide">
             <div class="spectrum-card-header">
-                <h3>Channel Utilization</h3>
+                <h3 id="spec-chart-title">Channel Utilization</h3>
                 <span class="spectrum-card-badge" id="spec-ch-count">0 channels</span>
             </div>
             <div class="spectrum-chart-wrap">
@@ -285,8 +298,8 @@
         <!-- Signal Heatmap Grid -->
         <div class="spectrum-card">
             <div class="spectrum-card-header">
-                <h3>Signal Heatmap</h3>
-                <span class="spectrum-card-badge" id="spec-heatmap-info">Channel vs Signal</span>
+                <h3>RF Band Activity</h3>
+                <span class="spectrum-card-badge" id="spec-heatmap-info">Band vs Packets</span>
             </div>
             <div class="spectrum-chart-wrap">
                 <svg id="signal-heatmap" class="spectrum-svg" viewBox="0 0 400 200">
@@ -294,9 +307,9 @@
                 </svg>
             </div>
             <div class="heatmap-scale">
-                <span class="heatmap-scale-label">Empty</span>
+                <span class="heatmap-scale-label">Low activity</span>
                 <div class="heatmap-scale-bar"></div>
-                <span class="heatmap-scale-label">Crowded</span>
+                <span class="heatmap-scale-label">High activity</span>
             </div>
         </div>
     </div>

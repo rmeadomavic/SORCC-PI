@@ -20,7 +20,8 @@ and map the results in Google Earth after landing.
 | OS | Kali Linux ARM64 | Base operating system |
 | LTE | SixFab LE910Cx hat (Telit modem) | Cellular connectivity |
 | Battery | PiSugar 5000mAh | Portable power |
-| SDR | Nooelec SMART (RTL2832U) + antenna | RF reception (433MHz, ADS-B, etc.) |
+| SDR | Nooelec NESDR Smart XTR (R820T2, 24-1766 MHz) | RF reception (433/868/915/1090 MHz) |
+| LNA | Nooelec Lana WB (20 MHz - 4 GHz) | Wideband preamp for weak signal boost |
 | SIM | Carrier-configurable (via config/sorcc.ini) | Cellular data |
 | Storage | 128GB+ SD card | OS + capture data |
 
