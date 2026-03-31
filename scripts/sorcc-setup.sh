@@ -606,15 +606,43 @@ echo ""
 
 # Install the sorcc Python package
 mkdir -p "$INSTALL_DIR"
-cp -r "$REPO_DIR/sorcc" "$INSTALL_DIR/sorcc"
-cp -r "$REPO_DIR/profiles.json" "$INSTALL_DIR/profiles.json"
-cp -r "$REPO_DIR/config/sorcc.ini.factory" "$CONFIG_DIR/sorcc.ini.factory"
+mkdir -p "$INSTALL_DIR/logs"
+rsync -a --exclude='__pycache__' "$REPO_DIR/sorcc/" "$INSTALL_DIR/sorcc/"
+cp "$REPO_DIR/profiles.json" "$INSTALL_DIR/profiles.json"
+cp "$REPO_DIR/config/sorcc.ini.factory" "$CONFIG_DIR/sorcc.ini.factory"
+ok "Dashboard files synced to $INSTALL_DIR"
 
-# Install Python dependencies
-REQUIREMENTS="fastapi uvicorn requests jinja2"
-pip3 install --break-system-packages $REQUIREMENTS 2>/dev/null \
-    || pip3 install $REQUIREMENTS
+# Verify all expected modules exist
+EXPECTED_MODULES="server.py kismet.py oui.py logging_config.py"
+MISSING=""
+for mod in $EXPECTED_MODULES; do
+    if [ ! -f "$INSTALL_DIR/sorcc/web/$mod" ]; then
+        MISSING="$MISSING $mod"
+    fi
+done
+if [ -n "$MISSING" ]; then
+    warn "Missing modules in sorcc/web/:$MISSING"
+else
+    ok "All expected modules present"
+fi
+
+# Install Python dependencies from requirements.txt
+if [ -f "$REPO_DIR/requirements.txt" ]; then
+    pip3 install --break-system-packages -r "$REPO_DIR/requirements.txt" 2>/dev/null \
+        || pip3 install -r "$REPO_DIR/requirements.txt"
+else
+    REQUIREMENTS="fastapi uvicorn requests jinja2"
+    pip3 install --break-system-packages $REQUIREMENTS 2>/dev/null \
+        || pip3 install $REQUIREMENTS
+fi
 ok "Dashboard dependencies installed"
+
+# Verify critical imports
+if python3 -c "import fastapi, uvicorn, requests, jinja2" 2>/dev/null; then
+    ok "All Python dependencies verified"
+else
+    warn "Some Python dependencies failed to import — run: pip3 install -r requirements.txt"
+fi
 
 # Start the dashboard
 systemctl restart sorcc-dashboard 2>/dev/null || true

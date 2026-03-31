@@ -6,10 +6,14 @@ Wants=ModemManager.service
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-# Enable GPS NMEA output on the LTE modem
-ExecStart=/usr/bin/python3 /opt/sorcc/gps_lte.py
+# Enable GPS via ModemManager (preferred)
+ExecStart=/bin/bash -c 'MODEM=$(mmcli -L 2>/dev/null | grep -oP "/Modem/\\K[0-9]+" | head -1); if [ -n "$MODEM" ]; then mmcli -m $MODEM --location-enable-gps-nmea 2>/dev/null || true; mmcli -m $MODEM --location-enable-gps-raw 2>/dev/null || true; echo "GPS enabled via mmcli (modem $MODEM)"; else echo "No modem found for mmcli GPS"; fi'
+# Fallback: enable GPS via AT commands
+ExecStartPost=-/usr/bin/python3 /opt/sorcc/gps_lte.py
+# Create log directory
+ExecStartPost=/bin/mkdir -p /opt/sorcc/logs
 # Start mDNS for device discovery on the local network
-ExecStartPost=/usr/bin/systemctl start avahi-daemon
+ExecStartPost=-/usr/bin/systemctl start avahi-daemon
 
 [Install]
 WantedBy=multi-user.target

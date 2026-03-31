@@ -1364,6 +1364,13 @@
         flex-direction: column;
         align-items: center;
     }
+
+    .leaderboard-bar { width: 40px; }
+    .leaderboard-pkts { width: 40px; font-size: 10px; }
+    .leaderboard-info { font-size: 11px; }
+
+    .log-toolbar { flex-direction: column; align-items: flex-start; }
+    .log-viewer { min-height: 200px; max-height: 40vh; font-size: 10px; }
 }
 
 /* ── Map View ── */

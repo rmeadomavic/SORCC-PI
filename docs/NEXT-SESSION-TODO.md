@@ -6,22 +6,17 @@
 
 ---
 
-## Priority 1: Visual Polish (Palantir/Anduril Grade)
+## Priority 1: Visual Polish (Palantir/Anduril Grade) — DONE (2026-03-31)
 
-- [ ] **Map view overhaul** — Currently minimal. Add:
-  - Device proximity visualization (bubble map based on packet count)
-  - GPS track of Pi movement (bread crumb trail)
-  - Signal/activity heatmap overlay
-  - Auto-center on Pi position when GPS available
-- [ ] **Dashboard log viewer tab** — New tab or sub-tab showing /api/logs data in real-time
-  - Filter by level (INFO/WARNING/ERROR)
-  - Auto-scroll with pause button
-  - Monospace tactical styling
-- [ ] **Stat cards animation** — Animated count-up on page load, pulse on change
-- [ ] **Device type donut chart** — Replace or supplement the spectrum donut with category breakdown (phones vs wearables vs routers)
-- [ ] **Top-N activity leaderboard** — Sidebar showing most active devices with live re-ranking
+- [x] **Stat card animations** — Count-up with easeOutCubic, pulse glow on change
+- [x] **Device type donut chart** — Category breakdown (phones/IoT/network/laptop) in Spectrum tab
+- [x] **Top-N activity leaderboard** — Top 8 by packets, live re-ranking, bar charts
+- [x] **Dashboard log viewer tab** — Logs sub-tab with level filter, pause/resume, auto-scroll
+- [x] **Map bubble markers** — Packet-count-based sizing (log scale), translucent fill, rich popups
+- [ ] **Map heatmap overlay** — Signal/activity heatmap layer (needs GPS data to be useful)
+- [ ] **GPS breadcrumb trail polish** — Already works, needs styling refinement with outdoor test
 
-## Priority 2: TAK/ATAK Integration
+## Priority 2: TAK/ATAK Integration — NEEDS OUTDOOR GPS
 
 - [ ] **Test CoT outdoors** — Take Pi outside, get GPS fix, verify /api/cot produces valid XML
 - [ ] **TAK Server feed** — Test with an actual ATAK instance (or TAK Server simulator)
@@ -37,7 +32,7 @@
   - Toggle back to managed mode reconnects WiFi
 - [ ] **WiFi + BT simultaneous** — Verify both adapters feed Kismet in Full Spectrum mode
 
-## Priority 4: FPV Frequency Detection
+## Priority 4: FPV Frequency Detection — NEEDS SDR
 
 - [ ] **Research RTL-SDR profiles for FPV** — If SDR dongle available:
   - 915 MHz: LoRa/Meshtastic/CRSF (TBS Crossfire)
@@ -49,15 +44,16 @@
 - [ ] **2.4 GHz ELRS detection** — Research if BT adapter can detect ELRS presence
 - [ ] **5.8 GHz video** — Needs 5.8 GHz SDR (not current hardware)
 
-## Priority 5: Installer & Fresh Test
+## Priority 5: Installer & Fresh Test — PARTIALLY DONE
 
-- [ ] **Harden sorcc-setup.sh** — Add:
-  - GPS enable (mmcli --location-enable-gps-nmea) to boot service
-  - All new Python module files to install step
+- [x] **Harden sorcc-setup.sh** — Added:
+  - Uses requirements.txt for pip deps
+  - rsync instead of cp for module sync
   - Log directory creation (/opt/sorcc/logs/)
-  - Verify all pip deps installed
+  - Module file verification check
+  - Python import verification post-install
+- [x] **Boot service** — GPS auto-enables on boot via mmcli + AT command fallback
 - [ ] **Fresh install test** — Wipe SD card, flash Kali, run installer, verify everything works
-- [ ] **Boot service** — Ensure GPS auto-enables on boot
 
 ## Priority 6: MAVLink / Autonomous Hunt
 
@@ -69,7 +65,6 @@
 
 - [ ] **Update README** — Reflect new endpoints, modules, CoT capability
 - [ ] **API docs** — Auto-generate from FastAPI OpenAPI schema
-- [ ] **Inline comments** — Key algorithms (OUI lookup, packet-rate proximity, CoT generation)
 - [ ] **CLAUDE.md** — Update with new module structure and endpoints
 
 ---
