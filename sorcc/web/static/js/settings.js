@@ -49,23 +49,30 @@
     }
 
     function populateForm(config) {
-        // Map config keys to form field IDs
+        // Map config keys to form field IDs — must match all inputs in settings.html
         var mapping = {
-            "cfg-hostname":       { section: "general", key: "hostname" },
-            "cfg-callsign":       { section: "general", key: "callsign" },
-            "cfg-apn":            { section: "lte", key: "apn" },
-            "cfg-sim-pin":        { section: "lte", key: "sim_pin" },
-            "cfg-gps-port":       { section: "gps", key: "serial_port" },
-            "cfg-gps-baud":       { section: "gps", key: "serial_baud" },
-            "cfg-kismet-url":     { section: "kismet", key: "port" },
-            "cfg-kismet-user":    { section: "kismet", key: "user" },
-            "cfg-kismet-pass":    { section: "kismet", key: "pass" },
-            "cfg-dash-port":      { section: "dashboard", key: "port" },
-            "cfg-wifi-ssid":      { section: "wifi", key: "ssid" },
-            "cfg-wifi-pass":      { section: "wifi", key: "password" },
-            "cfg-wifi-country":   { section: "wifi", key: "country_code" },
-            "cfg-ts-enabled":     { section: "tailscale", key: "enabled" },
-            "cfg-pisugar-enabled": { section: "pisugar", key: "enabled" },
+            "cfg-hostname":         { section: "general", key: "hostname" },
+            "cfg-callsign":         { section: "general", key: "callsign" },
+            "cfg-apn":              { section: "lte", key: "apn" },
+            "cfg-sim-pin":          { section: "lte", key: "sim_pin" },
+            "cfg-gps-port":         { section: "gps", key: "serial_port" },
+            "cfg-gps-baud":         { section: "gps", key: "serial_baud" },
+            "cfg-kismet-url":       { section: "kismet", key: "port" },
+            "cfg-kismet-user":      { section: "kismet", key: "user" },
+            "cfg-kismet-pass":      { section: "kismet", key: "pass" },
+            "cfg-kismet-autostart": { section: "kismet", key: "autostart" },
+            "cfg-dash-port":        { section: "dashboard", key: "port" },
+            "cfg-dash-password":    { section: "dashboard", key: "password" },
+            "cfg-poll-interval":    { section: "dashboard", key: "poll_interval" },
+            "cfg-show-bt":          { section: "dashboard", key: "show_bluetooth" },
+            "cfg-show-sdr":         { section: "dashboard", key: "show_sdr" },
+            "cfg-ts-authkey":       { section: "tailscale", key: "authkey" },
+            "cfg-ts-enabled":       { section: "tailscale", key: "enabled" },
+            "cfg-pisugar-enabled":  { section: "pisugar", key: "enabled" },
+            "cfg-pisugar-warn":     { section: "pisugar", key: "low_battery_warn" },
+            "cfg-wifi-ssid":        { section: "wifi", key: "ssid" },
+            "cfg-wifi-pass":        { section: "wifi", key: "password" },
+            "cfg-wifi-country":     { section: "wifi", key: "country_code" },
         };
 
         Object.keys(mapping).forEach(function (fieldId) {
@@ -90,21 +97,28 @@
     function collectConfig() {
         var config = {};
         var mapping = {
-            "cfg-hostname":       { section: "general", key: "hostname" },
-            "cfg-callsign":       { section: "general", key: "callsign" },
-            "cfg-apn":            { section: "lte", key: "apn" },
-            "cfg-sim-pin":        { section: "lte", key: "sim_pin" },
-            "cfg-gps-port":       { section: "gps", key: "serial_port" },
-            "cfg-gps-baud":       { section: "gps", key: "serial_baud" },
-            "cfg-kismet-url":     { section: "kismet", key: "port" },
-            "cfg-kismet-user":    { section: "kismet", key: "user" },
-            "cfg-kismet-pass":    { section: "kismet", key: "pass" },
-            "cfg-dash-port":      { section: "dashboard", key: "port" },
-            "cfg-wifi-ssid":      { section: "wifi", key: "ssid" },
-            "cfg-wifi-pass":      { section: "wifi", key: "password" },
-            "cfg-wifi-country":   { section: "wifi", key: "country_code" },
-            "cfg-ts-enabled":     { section: "tailscale", key: "enabled" },
-            "cfg-pisugar-enabled": { section: "pisugar", key: "enabled" },
+            "cfg-hostname":         { section: "general", key: "hostname" },
+            "cfg-callsign":         { section: "general", key: "callsign" },
+            "cfg-apn":              { section: "lte", key: "apn" },
+            "cfg-sim-pin":          { section: "lte", key: "sim_pin" },
+            "cfg-gps-port":         { section: "gps", key: "serial_port" },
+            "cfg-gps-baud":         { section: "gps", key: "serial_baud" },
+            "cfg-kismet-url":       { section: "kismet", key: "port" },
+            "cfg-kismet-user":      { section: "kismet", key: "user" },
+            "cfg-kismet-pass":      { section: "kismet", key: "pass" },
+            "cfg-kismet-autostart": { section: "kismet", key: "autostart" },
+            "cfg-dash-port":        { section: "dashboard", key: "port" },
+            "cfg-dash-password":    { section: "dashboard", key: "password" },
+            "cfg-poll-interval":    { section: "dashboard", key: "poll_interval" },
+            "cfg-show-bt":          { section: "dashboard", key: "show_bluetooth" },
+            "cfg-show-sdr":         { section: "dashboard", key: "show_sdr" },
+            "cfg-ts-authkey":       { section: "tailscale", key: "authkey" },
+            "cfg-ts-enabled":       { section: "tailscale", key: "enabled" },
+            "cfg-pisugar-enabled":  { section: "pisugar", key: "enabled" },
+            "cfg-pisugar-warn":     { section: "pisugar", key: "low_battery_warn" },
+            "cfg-wifi-ssid":        { section: "wifi", key: "ssid" },
+            "cfg-wifi-pass":        { section: "wifi", key: "password" },
+            "cfg-wifi-country":     { section: "wifi", key: "country_code" },
         };
 
         Object.keys(mapping).forEach(function (fieldId) {
@@ -212,6 +226,43 @@
             });
     }
 
+    function importConfig() {
+        var input = document.createElement("input");
+        input.type = "file";
+        input.accept = ".json,application/json";
+        input.addEventListener("change", function () {
+            if (!input.files || !input.files[0]) return;
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    JSON.parse(e.target.result); // validate JSON
+                } catch (err) {
+                    window.SORCC.showToast("Invalid JSON file", "error");
+                    return;
+                }
+                fetch("/api/config/import", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: e.target.result
+                })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (data.status === "ok" || data.ok || data.success) {
+                            window.SORCC.showToast("Config imported — reloading...", "success");
+                            loadConfig();
+                        } else {
+                            window.SORCC.showToast("Import failed: " + (data.detail || "Unknown error"), "error");
+                        }
+                    })
+                    .catch(function (err) {
+                        window.SORCC.showToast("Import failed: " + err.message, "error");
+                    });
+            };
+            reader.readAsText(input.files[0]);
+        });
+        input.click();
+    }
+
     // ── Init ────────────────────────────────────────────────
 
     document.addEventListener("DOMContentLoaded", function () {
@@ -233,13 +284,33 @@
         var exportBtn = document.getElementById("btn-config-export");
         if (exportBtn) exportBtn.addEventListener("click", exportConfig);
 
+        var importBtn = document.getElementById("btn-config-import");
+        if (importBtn) importBtn.addEventListener("click", importConfig);
+
         var lteBtn = document.getElementById("btn-restart-lte");
         if (lteBtn) lteBtn.addEventListener("click", restartLte);
 
         var wifiBtn = document.getElementById("btn-apply-wifi");
         if (wifiBtn) wifiBtn.addEventListener("click", function () {
-            applyConfig();
-            setTimeout(applyWifi, 500);
+            // Save config first, then apply WiFi only on success
+            var config = collectConfig();
+            fetch("/api/config/full", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(config)
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.status === "ok" || data.ok || data.success) {
+                        window.SORCC.showToast("Config saved, applying WiFi...", "info");
+                        setTimeout(applyWifi, 500);
+                    } else {
+                        window.SORCC.showToast("Config save failed — WiFi not applied", "error");
+                    }
+                })
+                .catch(function (err) {
+                    window.SORCC.showToast("Config save failed: " + err.message, "error");
+                });
         });
 
         // Load config when settings tab is activated

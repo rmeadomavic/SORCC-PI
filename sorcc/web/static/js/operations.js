@@ -421,13 +421,16 @@
             return;
         }
 
-        // Build lookup map for detail panel
+        // Build lookup map from ALL devices (not just filtered) so detail panel works across filters
         deviceMap = {};
+        devices.forEach(function (d) {
+            var key = d.mac || d.key || ("dev-" + (d.name || "") + "-" + (d.phy || "") + "-" + (d.channel || ""));
+            deviceMap[key] = d;
+        });
 
         var html = "";
         filtered.forEach(function (d) {
             var key = d.mac || d.key || ("dev-" + (d.name || "") + "-" + (d.phy || "") + "-" + (d.channel || ""));
-            deviceMap[key] = d;
 
             var sig = d.signal || 0;
             var noSignal = (sig === 0 || sig === undefined || sig === null);

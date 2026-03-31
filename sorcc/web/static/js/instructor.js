@@ -238,7 +238,7 @@
 
             // Device count
             if (data.device_count !== undefined && data.device_count !== null) {
-                html += '    <span class="card-info-item">Devices: ' + data.device_count + '</span>';
+                html += '    <span class="card-info-item">Devices: ' + escapeHtml(String(data.device_count)) + '</span>';
             }
 
             // Active profile
