@@ -633,6 +633,48 @@ async def get_activity():
     }
 
 
+@app.get("/api/events")
+async def event_stream():
+    """Server-Sent Events stream for real-time dashboard updates.
+
+    Pushes device count changes, new discoveries, and status every 2s.
+    Clients connect with EventSource and get instant updates vs polling.
+    """
+    import asyncio
+
+    async def generate():
+        last_count = 0
+        last_status_hash = ""
+        while True:
+            try:
+                # Check device count
+                online, count = ks.check_online()
+                if count != last_count:
+                    yield f"event: device_count\ndata: {json.dumps({'count': count, 'delta': count - last_count})}\n\n"
+                    last_count = count
+
+                # Check for new devices in last 10 seconds
+                now = time.time()
+                new_macs = [mac for mac, t in _device_first_seen.items() if now - t < 10]
+                if new_macs:
+                    new_devices = []
+                    for mac in new_macs[:5]:
+                        cls = classify_device(mac, "", "")
+                        new_devices.append({"mac": mac, "manufacturer": cls["manufacturer"], "category": cls["category"]})
+                    yield f"event: new_devices\ndata: {json.dumps(new_devices)}\n\n"
+
+                # Heartbeat
+                yield f"event: heartbeat\ndata: {json.dumps({'ts': now, 'online': online})}\n\n"
+
+            except Exception:
+                yield f"event: error\ndata: {json.dumps({'msg': 'stream error'})}\n\n"
+
+            await asyncio.sleep(2)
+
+    return StreamingResponse(generate(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
 @app.get("/api/logs")
 async def get_logs(n: int = 100, level: str | None = None):
     """Return recent log entries from the in-memory ring buffer."""

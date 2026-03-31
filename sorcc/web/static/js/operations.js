@@ -520,6 +520,7 @@
         if (huntDisplay) huntDisplay.style.display = "";
         rssiHistory = [];
         prevSignal = -100;
+        huntDeltaHistory = [];
 
         huntInterval = setInterval(function () {
             pollTarget(ssid);
@@ -546,6 +547,7 @@
 
     var huntPollInFlight = false;
     var huntConsecutiveErrors = 0;
+    var huntDeltaHistory = [];
 
     function pollTarget(ssid) {
         if (huntPollInFlight) return;  // prevent stacking over slow connections
@@ -652,38 +654,57 @@
         var isBtHunt = (data.mode === "mac" && (sig === 0 || sig === -100));
 
         if (isBtHunt) {
-            // BT hunt: use packet activity as proximity indicator
+            // BT hunt: packet delta rate as proximity indicator
             var pkts = data.packets || 0;
             var delta = data.packet_delta || 0;
             var act = data.activity || 0;
-            // Map packet count to gauge: log scale
-            var pct = pkts > 0 ? Math.min(100, Math.log10(pkts) * 25) : 0;
+            var mfr = data.manufacturer || "";
+
+            // Track delta history for trend detection
+            if (!huntDeltaHistory) huntDeltaHistory = [];
+            huntDeltaHistory.push(delta);
+            if (huntDeltaHistory.length > 10) huntDeltaHistory.shift();
+
+            // Calculate trend: compare recent vs older deltas
+            var recentAvg = 0, olderAvg = 0;
+            var mid = Math.floor(huntDeltaHistory.length / 2);
+            if (huntDeltaHistory.length >= 4) {
+                for (var hi = mid; hi < huntDeltaHistory.length; hi++) recentAvg += huntDeltaHistory[hi];
+                recentAvg /= (huntDeltaHistory.length - mid);
+                for (var lo = 0; lo < mid; lo++) olderAvg += huntDeltaHistory[lo];
+                olderAvg /= mid;
+            }
+            var trending = recentAvg - olderAvg;
+
+            // Map activity level to gauge percentage (more responsive)
+            var pct = act >= 3 ? 85 : act >= 2 ? 60 : act >= 1 ? 35 : (pkts > 0 ? 10 : 0);
             updateGaugeArc(pct);
-            sigValue.textContent = pkts + " pkts";
+            sigValue.textContent = delta > 0 ? "+" + delta + " pkts/s" : pkts + " pkts";
 
             // Audio based on activity
             if (act >= 2) playTone(-40);
             else if (act >= 1) playTone(-65);
             else { if (audioGain) audioGain.gain.value = 0; }
 
-            // Hint based on activity
+            // Proximity hint with trend arrows
+            var arrow = trending > 2 ? " \u2191\u2191" : trending > 0.5 ? " \u2191" : trending < -2 ? " \u2193\u2193" : trending < -0.5 ? " \u2193" : "";
             if (act >= 3) {
-                sigHint.textContent = "HIGH ACTIVITY — CLOSE";
+                sigHint.textContent = "HIGH ACTIVITY — VERY CLOSE" + arrow;
                 sigHint.className = "signal-hint hot";
             } else if (act >= 2) {
-                sigHint.textContent = "ACTIVE — NEARBY";
+                sigHint.textContent = (trending > 0 ? "GETTING CLOSER" : "NEARBY") + arrow;
                 sigHint.className = "signal-hint hot";
             } else if (act >= 1) {
-                sigHint.textContent = "LOW ACTIVITY";
+                sigHint.textContent = (trending > 0 ? "WARMING UP" : "LOW ACTIVITY") + arrow;
                 sigHint.className = "signal-hint warm";
             } else {
-                sigHint.textContent = "IDLE — DEVICE QUIET";
+                sigHint.textContent = pkts > 0 ? "IDLE — DEVICE QUIET" : "NO PACKETS YET";
                 sigHint.className = "signal-hint cold";
             }
 
-            if (peak) peak.textContent = pkts + " total pkts";
-            // Track packet count in history chart instead of signal
-            rssiHistory.push(delta > 0 ? -40 - (3 - act) * 20 : -100);
+            if (peak) peak.textContent = pkts.toLocaleString() + " total" + (mfr ? " | " + mfr : "");
+            // Track activity level as chart value
+            rssiHistory.push(act >= 3 ? -30 : act >= 2 ? -50 : act >= 1 ? -70 : -100);
         } else {
             // WiFi hunt: use signal strength as before
             var pct = window.SORCC.signalToPercent(sig);

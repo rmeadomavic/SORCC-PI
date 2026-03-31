@@ -168,12 +168,53 @@
             });
     }
 
+    // ── Server-Sent Events ────────────────────────────────
+
+    var eventSource = null;
+    var sseReconnectTimer = null;
+
+    function connectSSE() {
+        if (eventSource) return;
+        try {
+            eventSource = new EventSource("/api/events");
+        } catch (e) { return; }
+
+        eventSource.addEventListener("device_count", function (e) {
+            try {
+                var data = JSON.parse(e.data);
+                var badge = document.getElementById("device-count");
+                if (badge) badge.textContent = data.count;
+                if (data.delta > 0) {
+                    showToast("+" + data.delta + " new device" + (data.delta > 1 ? "s" : ""), "info");
+                }
+            } catch (err) {}
+        });
+
+        eventSource.addEventListener("heartbeat", function () {
+            consecutiveFailures = 0;
+            lastSuccessTime = Date.now();
+            showConnectionBanner(true);
+        });
+
+        eventSource.addEventListener("error", function () {
+            if (eventSource) { eventSource.close(); eventSource = null; }
+            // Reconnect after 10s
+            if (!sseReconnectTimer) {
+                sseReconnectTimer = setTimeout(function () {
+                    sseReconnectTimer = null;
+                    connectSSE();
+                }, 10000);
+            }
+        });
+    }
+
     // ── Init ────────────────────────────────────────────────
 
     document.addEventListener("DOMContentLoaded", function () {
         initTabs();
         updateStatus();
         setInterval(updateStatus, 10000);
+        connectSSE();
     });
 
     // ── Export to global namespace ──────────────────────────
