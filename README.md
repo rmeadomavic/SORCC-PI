@@ -9,19 +9,41 @@ Software toolkit for the **Special Operations Robotics Capabilities Course (SORC
 Module 4.3: Raspberry Pi Payload Integrator. Transforms a Raspberry Pi 4 into a
 deployable RF survey payload for robotics platforms.
 
-```
-Student Browser ──:8080──▶ SORCC Dashboard (FastAPI)
-                                    │
-                              :2501 │
-                                    ▼
-                          Kismet Wireless Monitor
-                          ┌────┬────┬────┐
-                          │WiFi│ BT │SDR │
-                          └────┴────┴────┘
-                                    │
-                        LTE Modem ──┤── GPS
-                                    │
-                        PiSugar ────┘── Battery
+## Architecture
+
+```mermaid
+graph TD
+    Browser["Student Browser<br/>phone / laptop"]
+    Instructor["Instructor Browser"]
+    Dashboard["SORCC Dashboard<br/>FastAPI :8080"]
+    Kismet["Kismet<br/>Wireless Monitor :2501"]
+    WiFi["WiFi<br/>wlan0"]
+    BT["Bluetooth<br/>hci0"]
+    SDR["SDR<br/>RTL2832U"]
+    LTE["LTE Modem<br/>SixFab LE910Cx"]
+    GPS["GPS<br/>NMEA via modem"]
+    Battery["PiSugar<br/>5000mAh"]
+
+    Browser -- ":8080" --> Dashboard
+    Instructor -- ":8080/instructor" --> Dashboard
+    Dashboard -- ":2501" --> Kismet
+    Kismet --> WiFi
+    Kismet --> BT
+    Kismet --> SDR
+    Dashboard --> LTE
+    Dashboard --> GPS
+    Dashboard --> Battery
+
+    style Browser fill:#3a4a3b,color:#b8ccb0,stroke:#5a7751
+    style Instructor fill:#3a4a3b,color:#b8ccb0,stroke:#5a7751
+    style Dashboard fill:#2d3a2e,color:#c8d8c0,stroke:#4a6741
+    style Kismet fill:#2d3a2e,color:#c8d8c0,stroke:#4a6741
+    style WiFi fill:#404040,color:#c0c0c0,stroke:#606060
+    style BT fill:#404040,color:#c0c0c0,stroke:#606060
+    style SDR fill:#404040,color:#c0c0c0,stroke:#606060
+    style LTE fill:#404040,color:#c0c0c0,stroke:#606060
+    style GPS fill:#404040,color:#c0c0c0,stroke:#606060
+    style Battery fill:#404040,color:#c0c0c0,stroke:#606060
 ```
 
 ## Quick Start
@@ -50,7 +72,7 @@ sudo bash scripts/sorcc-setup.sh
 | SDR | Nooelec SMART (RTL2832U) | RF reception |
 | Storage | 128GB+ SD card | OS + capture data |
 
-## Dashboard Features
+## Dashboard
 
 ### Operations
 - **Live View** — Real-time device list with signal, MAC, type, packet count; animated stat cards with pulse glow
@@ -65,6 +87,7 @@ sudo bash scripts/sorcc-setup.sh
 ### Settings
 - **Config Editor** — Edit all settings from the browser (APN, Kismet sources, GPS, WiFi)
 - **APN Management** — Carrier dropdown with common APNs (T-Mobile, AT&T, Verizon, FirstNet)
+- **Password** — Set a dashboard login password for public network access
 - **Import/Export** — Share configurations between devices
 - **WiFi Capture Toggle** — Switch wlan0 between connectivity and monitor mode from the UI
 
@@ -77,6 +100,12 @@ sudo bash scripts/sorcc-setup.sh
 - **Multi-Device View** — Monitor all Pi payloads from a single browser tab
 - **Real-time Status** — Kismet, GPS, LTE, battery, device count per Pi
 - **Access:** `http://<any-pi-ip>:8080/instructor`
+
+### Password Protection
+
+Set `password` in `[dashboard]` of `sorcc.ini` to require login. Leave blank for open access.
+When set, all pages and APIs require authentication. `/api/status` stays open for instructor polling.
+Sessions expire after `session_timeout_min` minutes (default: 480 = 8 hours).
 
 ### Security
 - **Token Auth** — Optional bearer token for control endpoints; dashboard bypasses via same-origin
@@ -101,16 +130,18 @@ sudo bash scripts/sorcc-setup.sh
 
 ## Student Exercises
 
-1. **RF Survey** — Fly the payload, map all WiFi/BT devices, export KML
-2. **WiFi Hunt** — Locate a hidden access point using Hunt Mode signal tracking
-3. **RF Recording** — Capture signals with GQRX and RTL-SDR
-4. **TPMS Monitoring** — Detect vehicle tire pressure sensors at 433 MHz
-5. **Cellular Recon** — Use gr-gsm and IMSI-catcher (instructor-led)
-6. **KML Export** — Visualize survey results in Google Earth
+| # | Exercise | Objective | Expected Outcome |
+|---|----------|-----------|------------------|
+| 1 | RF Survey | Fly the payload over an area, map all WiFi/BT devices | KML file opens in Google Earth showing device locations with signal data |
+| 2 | WiFi Hunt | Locate a hidden access point using Hunt Mode | Signal strength reaches > -50 dBm; student identifies the AP's physical location |
+| 3 | RF Recording | Capture raw RF signals with GQRX and RTL-SDR | Saved `.raw` recording file viewable in GQRX waterfall display |
+| 4 | TPMS Monitoring | Detect vehicle tire pressure sensors at 433 MHz | TPMS device entries appear in the Live View device list |
+| 5 | Cellular Recon | Use gr-gsm and IMSI-catcher (instructor-led) | Cell tower list and subscriber data captured per instructor guidance |
+| 6 | KML Export | Export survey results to Google Earth | `.kml` file with placemarks rendered on the map at correct GPS coordinates |
 
 ## Configuration
 
-All settings live in `config/sorcc.ini`. Edit via the web dashboard (Settings tab)
+All settings live in `config/sorcc.ini`. Edit via the dashboard Settings tab
 or directly on the Pi:
 
 ```bash
@@ -118,9 +149,15 @@ nano /opt/sorcc/config/sorcc.ini
 ```
 
 Key settings:
-- `[lte] apn` — Your carrier's APN (blank for auto-detect)
-- `[kismet] source_wifi` — WiFi adapter for monitor mode
-- `[general] hostname` — mDNS hostname (e.g., `sorcc-pi.local`)
+
+| Key | Section | Purpose |
+|-----|---------|---------|
+| `apn` | `[lte]` | Carrier APN — blank for interactive prompt |
+| `source_wifi` | `[kismet]` | WiFi adapter for monitor mode |
+| `hostname` | `[general]` | mDNS hostname (e.g., `sorcc-pi.local`) |
+| `password` | `[dashboard]` | Dashboard login password (empty = no login) |
+
+See [docs/configuration.md](docs/configuration.md) for the full reference.
 
 ## Remote Access
 
@@ -137,7 +174,7 @@ http://<tailscale-ip>:8080
 
 ## Headless Field-Boot
 
-Configure zero-touch operation — power on and the dashboard is ready:
+Power on and the dashboard is ready — no monitor, no keyboard.
 
 ```bash
 # With WiFi
@@ -157,6 +194,21 @@ sudo bash scripts/sorcc-headless.sh --hostname sorcc-pi-03
 | `sorcc-boot` | GPS init, Avahi startup | ModemManager |
 | `kismet` | Wireless monitoring | sorcc-boot |
 | `sorcc-dashboard` | Web UI on :8080 | kismet |
+
+```mermaid
+graph LR
+    MM["ModemManager"]
+    Boot["sorcc-boot<br/>GPS + Avahi"]
+    K["kismet<br/>RF monitoring"]
+    Dash["sorcc-dashboard<br/>Web UI :8080"]
+
+    MM --> Boot --> K --> Dash
+
+    style MM fill:#404040,color:#c0c0c0,stroke:#606060
+    style Boot fill:#2d3a2e,color:#c8d8c0,stroke:#4a6741
+    style K fill:#2d3a2e,color:#c8d8c0,stroke:#4a6741
+    style Dash fill:#2d3a2e,color:#c8d8c0,stroke:#4a6741
+```
 
 ```bash
 # Check all services
@@ -203,9 +255,11 @@ Full OpenAPI schema available at `/docs` when running.
 | LTE not connecting | Verify APN in Settings tab. Modem index auto-detected. |
 | No GPS fix | Move to open sky area, check preflight GPS Fix status |
 | Dashboard not loading | Check: `systemctl status sorcc-dashboard` |
+| Dashboard requires login | Password is set in `[dashboard] password`. Clear it to disable. |
 | SDR not detected | Replug the Nooelec dongle, check `lsusb` |
-| Bluetooth missing | Check `hciconfig` — may need `sudo hciconfig hci0 up` |
+| Bluetooth missing | Run `sudo hciconfig hci0 up`, check `hciconfig` |
 | WiFi capture 0 packets | Onboard brcmfmac is unreliable; use external USB adapter (Alpha cards) |
+| Session expired | Re-enter password at `/login`. Timeout is `session_timeout_min` in config. |
 
 ## Validation
 
@@ -219,6 +273,6 @@ bash scripts/sorcc-preflight.sh --json
 
 ## Course Materials
 
-Presentation slides are in the `courseware/` directory:
+Slides are in `courseware/`:
 - `4.3 Raspberry Pi Payload Integrator_v2 - Copy.pptx` — Full lesson plan
 - `Slide1.JPG` through `Slide29.JPG` — Individual slides for reference

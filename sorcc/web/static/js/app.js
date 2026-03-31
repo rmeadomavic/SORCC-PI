@@ -226,6 +226,28 @@
         connectSSE();
     });
 
+    // ── Auth-aware fetch wrapper ──────────────────────────
+
+    var _origFetch = window.fetch;
+    window.fetch = function (url, opts) {
+        return _origFetch(url, opts).then(function (response) {
+            // Redirect to login on 401 when X-Login-Required header is set
+            if (response.status === 401 && url !== "/api/login" &&
+                response.headers.get("X-Login-Required") === "true") {
+                window.location.href = "/login";
+            }
+            return response;
+        });
+    };
+
+    // ── Logout ─────────────────────────────────────────────
+
+    function logout() {
+        _origFetch("/api/logout", { method: "POST" })
+            .then(function () { window.location.href = "/login"; })
+            .catch(function () { window.location.href = "/login"; });
+    }
+
     // ── Export to global namespace ──────────────────────────
 
     window.SORCC = {
@@ -233,7 +255,8 @@
         escapeHtml: escapeHtml,
         signalToPercent: signalToPercent,
         getActiveTab: function () { return activeTab; },
-        setActiveTab: function (tab) { activeTab = tab; }
+        setActiveTab: function (tab) { activeTab = tab; },
+        logout: logout
     };
 
 })();

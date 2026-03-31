@@ -56,6 +56,8 @@ Factory defaults are in `config/sorcc.ini.factory`.
 |-----|---------|-------------|
 | `host` | `0.0.0.0` | Dashboard bind address |
 | `port` | `8080` | Dashboard port |
+| `password` | *(blank)* | Login password for browser access. Empty = no login required. |
+| `session_timeout_min` | `480` | Login session timeout in minutes (default 8 hours) |
 
 ### [tailscale]
 
@@ -101,6 +103,19 @@ sudo systemctl restart sorcc-dashboard  # to pick up changes
 - **Export:** Settings tab → Export button (downloads JSON)
 - **Import:** Settings tab → Import button (upload JSON from another Pi)
 - **Factory Reset:** Settings tab → Factory Reset button
+
+## Password Protection
+
+Set `password` under `[dashboard]` to require login for all dashboard pages and APIs.
+Leave blank to allow open access (default).
+
+When a password is set:
+- All routes redirect to `/login` for unauthenticated users.
+- `/api/status` stays open for instructor polling.
+- Sessions use HMAC-signed cookies. They expire after `session_timeout_min` minutes.
+- Failed login attempts are rate-limited (10 failures = 5 minute lockout).
+
+Change the password via the Settings tab or by editing `sorcc.ini` directly.
 
 ## Config File Locations
 

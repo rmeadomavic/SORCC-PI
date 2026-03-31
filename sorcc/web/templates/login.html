@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SORCC Login</title>
+    <link rel="stylesheet" href="/static/css/variables.css">
+    <link rel="stylesheet" href="/static/css/base.css">
+    <style>
+        body {
+            justify-content: center;
+            align-items: center;
+        }
+        .login-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            padding: var(--sp-8);
+            width: 100%;
+            max-width: 380px;
+            text-align: center;
+        }
+        .login-logo {
+            font-size: var(--font-xl);
+            font-weight: 900;
+            color: var(--text-bright);
+            background: var(--sorcc-green);
+            display: inline-block;
+            padding: var(--sp-2) var(--sp-4);
+            border-radius: var(--radius-md);
+            letter-spacing: 3px;
+            margin-bottom: var(--sp-4);
+        }
+        .login-title {
+            color: var(--text-secondary);
+            font-size: var(--font-sm);
+            margin-bottom: var(--sp-6);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .login-input {
+            width: 100%;
+            padding: var(--sp-4);
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: var(--font-md);
+            margin-bottom: var(--sp-4);
+            text-align: center;
+        }
+        .login-input:focus {
+            outline: none;
+            border-color: var(--sorcc-green);
+        }
+        .login-btn {
+            width: 100%;
+            padding: var(--sp-4);
+            background: var(--sorcc-green);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: var(--font-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: background var(--transition-normal);
+        }
+        .login-btn:hover { background: var(--sorcc-green-light); }
+        .login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .login-error {
+            color: var(--danger);
+            font-size: var(--font-sm);
+            margin-bottom: var(--sp-4);
+            display: none;
+        }
+        .login-error.visible { display: block; }
+        .login-footer {
+            margin-top: var(--sp-6);
+            color: var(--text-dim);
+            font-size: var(--font-xs);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="login-logo">SORCC</div>
+        <div class="login-title">RF Survey Dashboard</div>
+        <div class="login-error" id="login-error">Wrong password</div>
+        <form id="login-form">
+            <input type="password"
+                   class="login-input"
+                   id="login-password"
+                   placeholder="Enter password"
+                   autocomplete="current-password"
+                   autofocus
+                   required>
+            <button type="submit" class="login-btn" id="login-btn">Log In</button>
+        </form>
+        <div class="login-footer">UNCLASSIFIED</div>
+    </div>
+    <script>
+    (function () {
+        var form = document.getElementById("login-form");
+        var input = document.getElementById("login-password");
+        var btn = document.getElementById("login-btn");
+        var errorEl = document.getElementById("login-error");
+
+        form.addEventListener("submit", function (e) {
+            e.preventDefault();
+            errorEl.classList.remove("visible");
+            btn.disabled = true;
+            btn.textContent = "Authenticating...";
+
+            fetch("/api/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ password: input.value })
+            })
+            .then(function (r) {
+                if (r.ok) {
+                    window.location.href = "/";
+                } else if (r.status === 429) {
+                    errorEl.textContent = "Too many attempts -- try again later";
+                    errorEl.classList.add("visible");
+                    btn.disabled = false;
+                    btn.textContent = "Log In";
+                } else {
+                    return r.json().then(function (data) {
+                        errorEl.textContent = data.detail || "Wrong password";
+                        errorEl.classList.add("visible");
+                        btn.disabled = false;
+                        btn.textContent = "Log In";
+                        input.value = "";
+                        input.focus();
+                    });
+                }
+            })
+            .catch(function () {
+                errorEl.textContent = "Connection error -- try again";
+                errorEl.classList.add("visible");
+                btn.disabled = false;
+                btn.textContent = "Log In";
+            });
+        });
+    })();
+    </script>
+</body>
+</html>

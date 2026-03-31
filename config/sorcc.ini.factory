@@ -34,6 +34,8 @@ log_dir = /opt/sorcc/output_data        ; Kismet capture data directory
 [dashboard]
 host = 0.0.0.0                         ; Dashboard bind address
 port = 8080                             ; Dashboard port
+password =                              ; password for browser access (empty = no login required)
+session_timeout_min = 480               ; session timeout in minutes (default 8 hours)
 
 [tailscale]
 enabled = true                          ; Install/enable Tailscale
