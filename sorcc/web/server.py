@@ -220,7 +220,7 @@ async def restart_lte():
 
 def _wifi_capture_status() -> dict[str, Any]:
     """Check current wlan0 state: managed (connectivity) vs monitor (capture)."""
-    result: dict[str, Any] = {"active": False, "mode": "unknown", "interface": "wlan0"}
+    result: dict[str, Any] = {"active": False, "mode": "unknown", "interface": "wlan0", "adapter": "onboard"}
     try:
         r = subprocess.run(["iw", "dev", "wlan0", "info"], capture_output=True, text=True, timeout=5)
         for line in r.stdout.splitlines():
@@ -229,6 +229,14 @@ def _wifi_capture_status() -> dict[str, Any]:
                 result["mode"] = mode
                 result["active"] = mode == "monitor"
                 break
+        # Check if external USB WiFi adapter is available
+        r2 = subprocess.run(["iw", "dev"], capture_output=True, text=True, timeout=5)
+        ifaces = [l.strip().split()[-1] for l in r2.stdout.splitlines() if "Interface" in l]
+        if len(ifaces) > 1:
+            result["adapter"] = "external"
+            result["interfaces"] = ifaces
+        else:
+            result["note"] = "Onboard WiFi (brcmfmac) — external USB adapter recommended for reliable capture"
     except Exception:
         pass
     return result
@@ -301,8 +309,15 @@ async def wifi_capture_toggle():
         except Exception as e:
             log.warning("WiFi reconnect failed (LTE still available): %s", e)
 
+        # 4. Restart Kismet to restore clean source state (BT adapter)
+        try:
+            subprocess.run(["systemctl", "restart", "kismet"], timeout=30)
+            log.info("Kismet restarted after WiFi capture disable")
+        except Exception as e:
+            log.warning("Kismet restart failed after WiFi disable: %s", e)
+
         events.log("wifi_capture_disabled")
-        return {"status": "ok", "active": False, "detail": "WiFi capture disabled — connectivity restored"}
+        return {"status": "ok", "active": False, "detail": "WiFi capture disabled — connectivity restored, Kismet restarting"}
     else:
         # ── Enable capture: managed → monitor ──
         # 1. Disconnect WiFi
@@ -322,16 +337,32 @@ async def wifi_capture_toggle():
             subprocess.run(["ip", "link", "set", "wlan0", "up"], capture_output=True, timeout=5)
             raise HTTPException(status_code=500, detail=f"Failed to set monitor mode: {e}")
 
-        # 3. Add wlan0 as Kismet source
+        # 3. Restart Kismet so it picks up wlan0 in monitor mode as a source
+        #    Hot-adding sources is unreliable with brcmfmac — clean restart is safer
         source_added = False
         try:
-            s = ks.session()
-            r = s.post(
-                f"{ks.KISMET_URL}/datasource/add_source.cmd",
-                json={"definition": "wlan0:name=WiFi-Capture,hop=true"},
-                timeout=10,
-            )
-            source_added = r.status_code == 200
+            subprocess.run(["systemctl", "restart", "kismet"], timeout=30)
+            time.sleep(3)
+            # Verify wlan0 source appeared
+            try:
+                s = ks.session()
+                r = s.get(f"{ks.KISMET_URL}/datasource/all_sources.json", timeout=5)
+                if r.status_code == 200:
+                    for src in r.json() if isinstance(r.json(), list) else []:
+                        if "wlan0" in src.get("kismet.datasource.interface", ""):
+                            source_added = True
+                            break
+            except Exception:
+                pass
+            if not source_added:
+                # Fallback: try hot-add
+                s = ks.session()
+                r = s.post(
+                    f"{ks.KISMET_URL}/datasource/add_source.cmd",
+                    json={"definition": "wlan0:name=WiFi-Capture,hop=true"},
+                    timeout=10,
+                )
+                source_added = r.status_code == 200
         except Exception as e:
             log.warning("Could not add wlan0 to Kismet: %s", e)
 

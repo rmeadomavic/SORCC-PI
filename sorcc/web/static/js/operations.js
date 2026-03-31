@@ -173,6 +173,22 @@
 
         // Update leaderboard — top 8 by packet count
         renderLeaderboard(devices);
+
+        // Update export tab status bar
+        var exportCount = document.getElementById("export-device-count");
+        if (exportCount) exportCount.textContent = devices.length;
+        var exportLocated = document.getElementById("export-located-count");
+        if (exportLocated) {
+            var located = devices.filter(function (d) { return d.lat && d.lon && d.lat !== 0; });
+            exportLocated.textContent = located.length;
+        }
+        var exportGps = document.getElementById("export-gps-state");
+        if (exportGps) {
+            // GPS state comes from status polling — just show device-based info
+            var hasLocated = devices.some(function (d) { return d.lat && d.lon && d.lat !== 0; });
+            exportGps.textContent = hasLocated ? "Fix available" : "No fix (indoor)";
+            exportGps.style.color = hasLocated ? "var(--sorcc-green-light)" : "var(--signal-warm)";
+        }
     }
 
     function renderLeaderboard(devices) {
@@ -1815,9 +1831,11 @@
             .then(function (data) {
                 renderLogs(data.entries || data);
             })
-            .catch(function () {
+            .catch(function (err) {
                 var statusEl = document.getElementById("log-status");
-                if (statusEl) statusEl.textContent = "Connection error";
+                if (statusEl) statusEl.textContent = "Retrying... (" + (err.message || "connection error") + ")";
+                // Auto-retry once after 3s
+                setTimeout(fetchLogs, 3000);
             });
     }
 
