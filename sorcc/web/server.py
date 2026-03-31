@@ -524,11 +524,28 @@ async def get_active_profile():
             return {"active": _active_profile, "profile": p}
     return {"active": _active_profile, "profile": None}
 
+def _iface_has_active_connection(iface: str) -> bool:
+    """Check if a network interface has an active NetworkManager connection."""
+    try:
+        r = subprocess.run(
+            ["nmcli", "-t", "-f", "DEVICE,STATE", "device", "status"],
+            capture_output=True, text=True, timeout=5,
+        )
+        for line in r.stdout.strip().splitlines():
+            parts = line.split(":", 1)
+            if len(parts) == 2 and parts[0] == iface and parts[1] == "connected":
+                return True
+    except Exception:
+        pass
+    return False
+
+
 @app.post("/api/profiles/switch")
 async def switch_profile(request: Request):
     global _active_profile
     body = await request.json()
     profile_id = body.get("id")
+    force = body.get("force", False)
     if not profile_id:
         raise HTTPException(status_code=400, detail="Missing 'id' in request body")
     profiles = _load_profiles()
@@ -537,6 +554,28 @@ async def switch_profile(request: Request):
         raise HTTPException(status_code=404, detail=f"Profile '{profile_id}' not found")
     sources = target.get("kismet_sources", {})
     errors: list[str] = []
+    warnings: list[str] = []
+
+    # Guard: prevent Kismet from stealing wlan0 if it's the active connectivity interface
+    wifi_source = sources.get("wifi", "")
+    if wifi_source and not force:
+        # Extract interface name from source definition (e.g. "wlan0" or "wlan0:name=foo")
+        iface = wifi_source.split(":")[0]
+        if _iface_has_active_connection(iface):
+            return JSONResponse(
+                status_code=409,
+                content={
+                    "status": "blocked",
+                    "detail": (
+                        f"'{iface}' is your active network connection. "
+                        f"Switching to '{target['name']}' will put it into monitor mode "
+                        f"and kill WiFi connectivity. Use a second USB WiFi adapter for "
+                        f"monitoring, or pass {{\"force\": true}} to override."
+                    ),
+                    "active": _active_profile,
+                },
+            )
+
     try:
         s = kismet_session()
         try:
@@ -558,4 +597,5 @@ async def switch_profile(request: Request):
     _active_profile = profile_id
     result: dict[str, Any] = {"status": "ok" if not errors else "partial", "active": _active_profile, "profile": target}
     if errors: result["errors"] = errors
+    if warnings: result["warnings"] = warnings
     return result

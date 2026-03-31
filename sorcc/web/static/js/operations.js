@@ -327,17 +327,31 @@
         });
     }
 
-    function switchProfile(id) {
+    function switchProfile(id, force) {
+        var payload = { id: id };
+        if (force) payload.force = true;
+
         fetch("/api/profiles/switch", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id: id })
+            body: JSON.stringify(payload)
         })
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
-                if (data.ok || data.success) {
+            .then(function (r) { return r.json().then(function (d) { return { status: r.status, data: d }; }); })
+            .then(function (result) {
+                var data = result.data;
+                if (result.status === 409 && data.status === "blocked") {
+                    // WiFi interface conflict — ask the user before forcing
+                    if (confirm(data.detail + "\n\nForce switch anyway? This WILL disconnect WiFi.")) {
+                        switchProfile(id, true);
+                    }
+                    return;
+                }
+                if (data.status === "ok" || data.status === "partial") {
                     window.SORCC.showToast("Switched to profile: " + id, "success");
                     fetchProfiles();
+                    if (data.errors && data.errors.length) {
+                        window.SORCC.showToast("Warning: " + data.errors[0], "info");
+                    }
                 } else {
                     window.SORCC.showToast("Failed to switch profile: " + (data.detail || data.error || "Unknown error"), "error");
                 }
