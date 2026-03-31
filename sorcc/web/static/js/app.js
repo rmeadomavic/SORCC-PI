@@ -142,8 +142,9 @@
     var _origFetch = window.fetch;
     window.fetch = function (url, opts) {
         return _origFetch(url, opts).then(function (response) {
-            // Redirect to login on 401 (session expired or not authenticated)
-            if (response.status === 401 && url !== "/api/login") {
+            // Redirect to login on 401 when X-Login-Required header is set
+            if (response.status === 401 && url !== "/api/login" &&
+                response.headers.get("X-Login-Required") === "true") {
                 window.location.href = "/login";
             }
             return response;

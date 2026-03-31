@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import configparser
 import csv
+import hashlib
+import hmac
 import io
 import json
 import logging
@@ -16,14 +18,12 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any
 
-import bcrypt
 import requests
 from fastapi import FastAPI, HTTPException, Request, Response, UploadFile, File
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.middleware.sessions import SessionMiddleware
 
 try:
     from sorcc.config_api import (
@@ -47,58 +47,78 @@ PROJECT_ROOT = BASE_DIR.parent.parent
 PROFILES_PATH = PROJECT_ROOT / "profiles.json"
 
 # ---------------------------------------------------------------------------
-# Session secret — generated once, persisted to disk
+# Web password auth — matches Hydra's pattern
 # ---------------------------------------------------------------------------
 
-_SESSION_SECRET_PATH = Path("/opt/sorcc/config/.session_secret")
+_web_password: str | None = None
+_session_secret: bytes = secrets.token_bytes(32)  # rotates each boot
+_session_timeout_sec: int = 8 * 3600  # 8 hours default
+
+# Rate limiting for login attempts  {ip: (fail_count, last_fail_time)}
+_auth_failures: dict[str, tuple[int, float]] = {}
+_AUTH_MAX_FAILURES = 10
+_AUTH_LOCKOUT_SEC = 300  # 5 minutes
 
 
-def _get_session_secret() -> str:
-    """Return a stable session secret, creating one on first boot."""
-    # Try the standard location first
-    for path in [_SESSION_SECRET_PATH, PROJECT_ROOT / ".session_secret"]:
-        if path.exists():
-            secret = path.read_text().strip()
-            if secret:
-                return secret
-    # Generate and persist
-    secret = secrets.token_hex(32)
-    for path in [_SESSION_SECRET_PATH, PROJECT_ROOT / ".session_secret"]:
-        try:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(secret)
-            path.chmod(0o600)
-            log.info("Session secret created at %s", path)
-            break
-        except OSError:
-            continue
-    return secret
+def configure_web_password(password: str | None, timeout_min: int = 480) -> None:
+    """Set the dashboard password and session timeout. Called at startup."""
+    global _web_password, _session_timeout_sec
+    _web_password = password if password else None
+    _session_timeout_sec = timeout_min * 60
+    if _web_password:
+        log.info("Web password auth enabled (session timeout: %d min).", timeout_min)
+    else:
+        log.info("Web password auth disabled (no password configured).")
 
 
-# ---------------------------------------------------------------------------
-# Auth helpers
-# ---------------------------------------------------------------------------
+def _make_session_cookie() -> str:
+    """Create a signed session cookie: nonce:expires:signature."""
+    nonce = secrets.token_hex(16)
+    expires = int(time.time()) + _session_timeout_sec
+    payload = f"{nonce}:{expires}"
+    sig = hmac.new(_session_secret, payload.encode(), hashlib.sha256).hexdigest()
+    return f"{payload}:{sig}"
 
-# Paths that never require authentication
-_AUTH_EXEMPT_PATHS = {"/login", "/api/login", "/api/status"}
-_AUTH_EXEMPT_PREFIXES = ("/static/",)
 
-
-def _get_dashboard_password_hash() -> str:
-    """Read the bcrypt password hash from sorcc.ini. Empty = auth disabled."""
-    if not _HAS_CONFIG_API:
-        return ""
+def _validate_session_cookie(cookie: str) -> bool:
+    """Verify HMAC signature and expiry of a session cookie."""
+    parts = cookie.split(":")
+    if len(parts) != 3:
+        return False
+    payload = f"{parts[0]}:{parts[1]}"
+    expected_sig = hmac.new(_session_secret, payload.encode(), hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(parts[2], expected_sig):
+        return False
     try:
-        cfg = configparser.ConfigParser(inline_comment_prefixes=(";", "#"))
-        cfg.read(get_config_path())
-        return cfg.get("dashboard", "password", fallback="").strip()
-    except Exception:
-        return ""
+        return int(parts[1]) > time.time()
+    except ValueError:
+        return False
 
 
-def _is_bcrypt_hash(value: str) -> bool:
-    """Check if a string looks like a bcrypt hash."""
-    return value.startswith("$2b$") or value.startswith("$2a$")
+def _check_rate_limit(client_ip: str) -> bool:
+    """Return True if the client is rate-limited (too many failures)."""
+    if client_ip not in _auth_failures:
+        return False
+    count, last_time = _auth_failures[client_ip]
+    if time.time() - last_time > _AUTH_LOCKOUT_SEC:
+        del _auth_failures[client_ip]
+        return False
+    return count >= _AUTH_MAX_FAILURES
+
+
+def _record_auth_failure(client_ip: str) -> None:
+    """Record a failed login attempt for rate limiting."""
+    now = time.time()
+    if client_ip in _auth_failures:
+        count, _ = _auth_failures[client_ip]
+        _auth_failures[client_ip] = (count + 1, now)
+    else:
+        _auth_failures[client_ip] = (1, now)
+
+
+# Paths that skip password auth entirely
+_AUTH_EXEMPT_PATHS = {"/login", "/api/login", "/api/logout", "/api/status"}
+_AUTH_EXEMPT_PREFIXES = ("/static/",)
 
 
 # ---------------------------------------------------------------------------
@@ -129,28 +149,26 @@ class _AuthMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         # If no password configured, allow everything
-        pw_hash = _get_dashboard_password_hash()
-        if not pw_hash:
+        if _web_password is None:
             return await call_next(request)
 
-        # Check session
-        if request.session.get("authenticated"):
+        # Check session cookie
+        cookie = request.cookies.get("sorcc_session", "")
+        if cookie and _validate_session_cookie(cookie):
             return await call_next(request)
 
         # Not authenticated — return 401 for API, redirect for pages
         if path.startswith("/api/"):
             return JSONResponse(
                 status_code=401,
-                content={"detail": "Authentication required"},
+                content={"detail": "Login required"},
+                headers={"X-Login-Required": "true"},
             )
         return RedirectResponse(url="/login", status_code=302)
 
 
-# Middleware order matters: session must be added first (outermost),
-# then auth, then CORS
 app.add_middleware(_AuthMiddleware)
 app.add_middleware(_InstructorCORSMiddleware)
-app.add_middleware(SessionMiddleware, secret_key=_get_session_secret())
 
 if STATIC_DIR.is_dir():
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
@@ -160,6 +178,21 @@ KISMET_URL = "http://localhost:2501"
 KISMET_USER = "kismet"
 KISMET_PASS = "kismet"
 _active_profile: str = "wifi-survey"
+
+
+@app.on_event("startup")
+async def _startup_load_web_password():
+    """Read web password from config on startup."""
+    if not _HAS_CONFIG_API:
+        return
+    try:
+        cfg = configparser.ConfigParser(inline_comment_prefixes=(";", "#"))
+        cfg.read(get_config_path())
+        password = cfg.get("dashboard", "password", fallback="").strip()
+        timeout = cfg.getint("dashboard", "session_timeout_min", fallback=480)
+        configure_web_password(password or None, timeout)
+    except Exception as e:
+        log.warning("Could not read dashboard password config: %s", e)
 
 
 def kismet_session() -> requests.Session:
@@ -241,10 +274,11 @@ async def instructor_page(request: Request):
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
     # If no password set, just redirect to dashboard
-    if not _get_dashboard_password_hash():
+    if _web_password is None:
         return RedirectResponse(url="/", status_code=302)
     # If already authenticated, go to dashboard
-    if request.session.get("authenticated"):
+    cookie = request.cookies.get("sorcc_session", "")
+    if cookie and _validate_session_cookie(cookie):
         return RedirectResponse(url="/", status_code=302)
     return templates.TemplateResponse("login.html", {
         "request": request,
@@ -254,9 +288,14 @@ async def login_page(request: Request):
 
 @app.post("/api/login")
 async def api_login(request: Request):
-    pw_hash = _get_dashboard_password_hash()
-    if not pw_hash:
+    if _web_password is None:
         return {"status": "ok", "detail": "No password required"}
+
+    client_ip = request.client.host if request.client else "unknown"
+
+    # Rate limiting
+    if _check_rate_limit(client_ip):
+        raise HTTPException(status_code=429, detail="Too many attempts, try again later")
 
     try:
         body = await request.json()
@@ -267,20 +306,30 @@ async def api_login(request: Request):
     if not password:
         raise HTTPException(status_code=401, detail="Password required")
 
-    try:
-        if bcrypt.checkpw(password.encode("utf-8"), pw_hash.encode("utf-8")):
-            request.session["authenticated"] = True
-            return {"status": "ok"}
-    except Exception:
-        pass
+    if hmac.compare_digest(password, _web_password):
+        cookie_value = _make_session_cookie()
+        response = JSONResponse(content={"status": "ok"})
+        response.set_cookie(
+            key="sorcc_session",
+            value=cookie_value,
+            httponly=True,
+            samesite="lax",
+            path="/",
+            max_age=_session_timeout_sec,
+        )
+        # Clear failure count on success
+        _auth_failures.pop(client_ip, None)
+        return response
 
+    _record_auth_failure(client_ip)
     raise HTTPException(status_code=401, detail="Wrong password")
 
 
 @app.post("/api/logout")
 async def api_logout(request: Request):
-    request.session.clear()
-    return {"status": "ok"}
+    response = JSONResponse(content={"status": "ok"})
+    response.delete_cookie(key="sorcc_session", path="/")
+    return response
 
 
 @app.get("/api/status")
@@ -506,14 +555,13 @@ async def config_write(request: Request):
         raise HTTPException(status_code=501, detail="Config API module not available")
     try:
         updates = await request.json()
-        # Hash plaintext dashboard password before saving
-        dash = updates.get("dashboard", {})
-        if isinstance(dash, dict):
-            pw = dash.get("password", "")
-            if pw and pw != REDACTED_VALUE and not _is_bcrypt_hash(pw):
-                hashed = bcrypt.hashpw(pw.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-                updates["dashboard"]["password"] = hashed
         write_config(updates)
+        # Reload web password if it was changed
+        dash = updates.get("dashboard", {})
+        if isinstance(dash, dict) and "password" in dash:
+            pw = dash["password"]
+            if pw and pw != REDACTED_VALUE:
+                configure_web_password(pw, _session_timeout_sec // 60)
         return {"status": "ok"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to write config: {e}")

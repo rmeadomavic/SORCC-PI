@@ -202,9 +202,17 @@ SCHEMA: dict[str, dict[str, FieldSpec]] = {
             required=False,
             default="",
             description=(
-                "Dashboard login password (bcrypt hash). "
-                "Leave blank to disable password protection."
+                "Password for web dashboard access. "
+                "Leave blank to disable password protection (not recommended "
+                "on open networks)."
             ),
+        ),
+        "session_timeout_min": FieldSpec(
+            FieldType.INT,
+            min_val=5,
+            max_val=1440,
+            default=480,
+            description="Login session timeout in minutes (default 8 hours)",
         ),
     },
     "tailscale": {

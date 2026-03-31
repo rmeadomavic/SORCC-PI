@@ -121,6 +121,11 @@
             .then(function (r) {
                 if (r.ok) {
                     window.location.href = "/";
+                } else if (r.status === 429) {
+                    errorEl.textContent = "Too many attempts -- try again later";
+                    errorEl.classList.add("visible");
+                    btn.disabled = false;
+                    btn.textContent = "Log In";
                 } else {
                     return r.json().then(function (data) {
                         errorEl.textContent = data.detail || "Wrong password";
