@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="6" fill="#385723"/>
+  <g fill="none" stroke="#EFF5EB" stroke-width="1.5" stroke-linecap="round">
+    <!-- Signal waves -->
+    <path d="M16 22 L16 10" stroke-width="2"/>
+    <path d="M11 18 Q16 8 21 18" fill="none"/>
+    <path d="M8 20 Q16 5 24 20" fill="none"/>
+    <path d="M5 22 Q16 2 27 22" fill="none"/>
+  </g>
+  <!-- Base dot -->
+  <circle cx="16" cy="24" r="2" fill="#EFF5EB"/>
+</svg>

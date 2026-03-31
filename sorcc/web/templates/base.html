@@ -4,21 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SORCC RF Survey Dashboard</title>
-    <link rel="stylesheet" href="/static/css/variables.css">
-    <link rel="stylesheet" href="/static/css/base.css">
-    <link rel="stylesheet" href="/static/css/operations.css">
-    <link rel="stylesheet" href="/static/css/settings.css">
-    <link rel="stylesheet" href="/static/css/preflight.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="stylesheet" href="/static/css/variables.css?v=11">
+    <link rel="stylesheet" href="/static/css/base.css?v=11">
+    <link rel="stylesheet" href="/static/css/operations.css?v=11">
+    <link rel="stylesheet" href="/static/css/settings.css?v=11">
+    <link rel="stylesheet" href="/static/css/preflight.css?v=11">
+    <link rel="stylesheet" href="/static/lib/leaflet/leaflet.css">
 </head>
 <body>
+    <!-- ── Loading Splash ── -->
+    <div id="splash-screen" style="position:fixed;inset:0;z-index:9999;background:#0c0c0c;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.4s ease;">
+        <div style="font-size:2rem;font-weight:900;color:#EFF5EB;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;">SORCC</div>
+        <div style="font-size:0.75rem;color:#888;text-transform:uppercase;letter-spacing:0.15em;margin-bottom:24px;">RF Survey Dashboard</div>
+        <div style="width:120px;height:3px;background:#262626;border-radius:2px;overflow:hidden;">
+            <div style="width:40%;height:100%;background:#385723;border-radius:2px;animation:splash-bar 1.2s ease-in-out infinite;"></div>
+        </div>
+        <style>@keyframes splash-bar{0%{transform:translateX(-100%)}50%{transform:translateX(150%)}100%{transform:translateX(-100%)}}</style>
+    </div>
+
     <!-- ── Topbar ── -->
     <header>
         <div class="header-left">
             <div class="logo-text">SORCC</div>
             <h1>RF Survey Dashboard</h1>
-            <span class="profile-badge" id="active-profile">WiFi Survey</span>
+            <span class="profile-badge" id="active-profile" title="Current RF Mission Profile">WiFi Survey</span>
         </div>
         <div class="header-right">
+            <span class="header-device-count" id="header-device-count" title="Total devices tracked">
+                <span class="header-count-value" id="header-count-value">--</span>
+                <span class="header-count-label">DEVICES</span>
+            </span>
             <span class="status-pill"><span class="status-dot" id="kismet-dot"></span> Kismet</span>
             <span class="status-pill"><span class="status-dot" id="gps-dot"></span> GPS</span>
             <span class="status-pill"><span class="status-dot" id="modem-dot"></span> LTE</span>
@@ -59,9 +75,22 @@
     </footer>
 
     <!-- ── Scripts ── -->
-    <script src="/static/js/app.js"></script>
-    <script src="/static/js/operations.js"></script>
-    <script src="/static/js/settings.js"></script>
-    <script src="/static/js/preflight.js"></script>
+    <script src="/static/lib/leaflet/leaflet.js"></script>
+    <script src="/static/js/app.js?v=11"></script>
+    <script src="/static/js/operations.js?v=11"></script>
+    <script src="/static/js/map.js?v=11"></script>
+    <script src="/static/js/settings.js?v=11"></script>
+    <script src="/static/js/preflight.js?v=11"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var splash = document.getElementById("splash-screen");
+            if (splash) {
+                setTimeout(function() {
+                    splash.style.opacity = "0";
+                    setTimeout(function() { splash.remove(); }, 400);
+                }, 600);
+            }
+        });
+    </script>
 </body>
 </html>

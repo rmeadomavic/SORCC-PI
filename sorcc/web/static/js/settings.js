@@ -3,151 +3,120 @@
 (function () {
     "use strict";
 
-    // ── State ───────────────────────────────────────────────
-    var currentConfig = null;
-    var activeSection = null;
-
-    // Common APN values for datalist
-    var commonApns = [
-        "b2b.static",
-        "fast.t-mobile.com",
-        "wholesale",
-        "hologram",
-        "iot.1nce.net",
-        "super",
-        "broadband",
-        "internet"
-    ];
-
-    // Fields that require a service restart when changed
-    var restartFields = [
-        "kismet.port", "kismet.sources", "gps.port", "gps.baud",
-        "modem.apn", "network.hostname"
-    ];
+    var activeSection = "general";
 
     // ── Section Navigation ──────────────────────────────────
 
     function initSections() {
-        document.querySelectorAll(".settings-section-btn").forEach(function (btn) {
+        document.querySelectorAll(".settings-nav-btn").forEach(function (btn) {
             btn.addEventListener("click", function () {
                 var target = this.dataset.section;
-                document.querySelectorAll(".settings-section-btn").forEach(function (b) {
+                document.querySelectorAll(".settings-nav-btn").forEach(function (b) {
                     b.classList.remove("active");
                 });
                 document.querySelectorAll(".settings-section").forEach(function (s) {
                     s.classList.remove("active");
                 });
                 this.classList.add("active");
-                var panel = document.getElementById("section-" + target);
+                var panel = document.getElementById("settings-" + target);
                 if (panel) panel.classList.add("active");
                 activeSection = target;
             });
         });
     }
 
-    // ── Load Config ─────────────────────────────────────────
+    // ── Load Config into static form fields ─────────────────
 
-    function loadConfig() {
-        fetch("/api/config/full")
-            .then(function (r) { return r.json(); })
+    function loadConfig(retries) {
+        retries = retries === undefined ? 2 : retries;
+        fetch("/api/config/full", {
+            signal: AbortSignal.timeout ? AbortSignal.timeout(10000) : undefined
+        })
+            .then(function (r) {
+                if (!r.ok) throw new Error("HTTP " + r.status);
+                return r.json();
+            })
             .then(function (config) {
-                currentConfig = config;
-                renderAllSections(config);
+                populateForm(config);
             })
             .catch(function (err) {
-                window.SORCC.showToast("Failed to load config: " + err.message, "error");
-            });
-    }
-
-    // ── Dynamic Form Rendering ──────────────────────────────
-
-    function renderAllSections(config) {
-        var container = document.getElementById("settings-forms");
-        if (!container) return;
-
-        var escapeHtml = window.SORCC.escapeHtml;
-        var html = "";
-
-        var sections = Object.keys(config);
-        sections.forEach(function (sectionKey) {
-            var sectionData = config[sectionKey];
-            if (typeof sectionData !== "object" || sectionData === null) return;
-
-            html += '<div class="settings-section" id="section-' + escapeHtml(sectionKey) + '">';
-            html += '  <h3>' + escapeHtml(sectionKey.charAt(0).toUpperCase() + sectionKey.slice(1)) + '</h3>';
-
-            var fields = Object.keys(sectionData);
-            fields.forEach(function (fieldKey) {
-                var value = sectionData[fieldKey];
-                var fieldId = sectionKey + "." + fieldKey;
-                var label = fieldKey.replace(/_/g, " ").replace(/\b\w/g, function (c) { return c.toUpperCase(); });
-
-                html += '<div class="form-group">';
-                html += '  <label for="cfg-' + escapeHtml(fieldId) + '">' + escapeHtml(label) + '</label>';
-
-                if (typeof value === "boolean") {
-                    // Toggle switch for booleans
-                    html += '  <label class="toggle-switch">';
-                    html += '    <input type="checkbox" id="cfg-' + escapeHtml(fieldId) + '" data-field="' + escapeHtml(fieldId) + '"' + (value ? " checked" : "") + '>';
-                    html += '    <span class="toggle-slider"></span>';
-                    html += '  </label>';
-                } else if (typeof value === "number") {
-                    // Number input
-                    html += '  <input type="number" id="cfg-' + escapeHtml(fieldId) + '" data-field="' + escapeHtml(fieldId) + '" value="' + value + '" class="form-input">';
-                } else if (fieldKey === "password" || fieldKey === "pass" || fieldKey === "wifi_password" || fieldKey === "psk") {
-                    // Password field
-                    html += '  <input type="password" id="cfg-' + escapeHtml(fieldId) + '" data-field="' + escapeHtml(fieldId) + '" value="' + escapeHtml(String(value || "")) + '" class="form-input" autocomplete="off">';
-                } else if (fieldKey === "apn") {
-                    // APN with datalist
-                    html += '  <input type="text" id="cfg-' + escapeHtml(fieldId) + '" data-field="' + escapeHtml(fieldId) + '" value="' + escapeHtml(String(value || "")) + '" class="form-input" list="apn-list">';
-                    html += '  <datalist id="apn-list">';
-                    commonApns.forEach(function (apn) {
-                        html += '    <option value="' + escapeHtml(apn) + '">';
-                    });
-                    html += '  </datalist>';
+                if (retries > 0) {
+                    setTimeout(function () { loadConfig(retries - 1); }, 2000);
                 } else {
-                    // Default text input
-                    html += '  <input type="text" id="cfg-' + escapeHtml(fieldId) + '" data-field="' + escapeHtml(fieldId) + '" value="' + escapeHtml(String(value || "")) + '" class="form-input">';
+                    window.SORCC.showToast("Failed to load config: " + err.message, "error");
                 }
-
-                html += '</div>';
             });
-
-            html += '</div>';
-        });
-
-        container.innerHTML = html;
-
-        // Activate first section or previously active section
-        var sectionBtns = document.querySelectorAll(".settings-section-btn");
-        if (sectionBtns.length > 0) {
-            var targetSection = activeSection || sectionBtns[0].dataset.section;
-            sectionBtns.forEach(function (b) {
-                b.classList.remove("active");
-                if (b.dataset.section === targetSection) b.classList.add("active");
-            });
-            var panel = document.getElementById("section-" + targetSection);
-            if (panel) panel.classList.add("active");
-        }
     }
 
-    // ── Collect Form Values ─────────────────────────────────
+    function populateForm(config) {
+        // Map config keys to form field IDs
+        var mapping = {
+            "cfg-hostname":       { section: "general", key: "hostname" },
+            "cfg-callsign":       { section: "general", key: "callsign" },
+            "cfg-apn":            { section: "lte", key: "apn" },
+            "cfg-sim-pin":        { section: "lte", key: "sim_pin" },
+            "cfg-gps-port":       { section: "gps", key: "serial_port" },
+            "cfg-gps-baud":       { section: "gps", key: "serial_baud" },
+            "cfg-kismet-url":     { section: "kismet", key: "port" },
+            "cfg-kismet-user":    { section: "kismet", key: "user" },
+            "cfg-kismet-pass":    { section: "kismet", key: "pass" },
+            "cfg-dash-port":      { section: "dashboard", key: "port" },
+            "cfg-wifi-ssid":      { section: "wifi", key: "ssid" },
+            "cfg-wifi-pass":      { section: "wifi", key: "password" },
+            "cfg-wifi-country":   { section: "wifi", key: "country_code" },
+            "cfg-ts-enabled":     { section: "tailscale", key: "enabled" },
+            "cfg-pisugar-enabled": { section: "pisugar", key: "enabled" },
+        };
 
-    function collectFormValues() {
-        var config = {};
-        document.querySelectorAll("[data-field]").forEach(function (el) {
-            var parts = el.dataset.field.split(".");
-            var section = parts[0];
-            var field = parts[1];
-
-            if (!config[section]) config[section] = {};
+        Object.keys(mapping).forEach(function (fieldId) {
+            var m = mapping[fieldId];
+            var el = document.getElementById(fieldId);
+            if (!el) return;
+            var section = config[m.section];
+            if (!section) return;
+            var val = section[m.key];
+            if (val === undefined || val === null) return;
 
             if (el.type === "checkbox") {
-                config[section][field] = el.checked;
-            } else if (el.type === "number") {
-                config[section][field] = Number(el.value);
+                el.checked = (val === true || val === "true" || val === "1");
             } else {
-                config[section][field] = el.value;
+                el.value = val;
+            }
+        });
+    }
+
+    // ── Collect form values back to config ──────────────────
+
+    function collectConfig() {
+        var config = {};
+        var mapping = {
+            "cfg-hostname":       { section: "general", key: "hostname" },
+            "cfg-callsign":       { section: "general", key: "callsign" },
+            "cfg-apn":            { section: "lte", key: "apn" },
+            "cfg-sim-pin":        { section: "lte", key: "sim_pin" },
+            "cfg-gps-port":       { section: "gps", key: "serial_port" },
+            "cfg-gps-baud":       { section: "gps", key: "serial_baud" },
+            "cfg-kismet-url":     { section: "kismet", key: "port" },
+            "cfg-kismet-user":    { section: "kismet", key: "user" },
+            "cfg-kismet-pass":    { section: "kismet", key: "pass" },
+            "cfg-dash-port":      { section: "dashboard", key: "port" },
+            "cfg-wifi-ssid":      { section: "wifi", key: "ssid" },
+            "cfg-wifi-pass":      { section: "wifi", key: "password" },
+            "cfg-wifi-country":   { section: "wifi", key: "country_code" },
+            "cfg-ts-enabled":     { section: "tailscale", key: "enabled" },
+            "cfg-pisugar-enabled": { section: "pisugar", key: "enabled" },
+        };
+
+        Object.keys(mapping).forEach(function (fieldId) {
+            var m = mapping[fieldId];
+            var el = document.getElementById(fieldId);
+            if (!el) return;
+            if (!config[m.section]) config[m.section] = {};
+
+            if (el.type === "checkbox") {
+                config[m.section][m.key] = el.checked ? "true" : "false";
+            } else {
+                config[m.section][m.key] = el.value;
             }
         });
         return config;
@@ -156,36 +125,17 @@
     // ── Apply Config ────────────────────────────────────────
 
     function applyConfig() {
-        var newConfig = collectFormValues();
-
-        // Check if any restart-required fields changed
-        var needsRestart = false;
-        if (currentConfig) {
-            restartFields.forEach(function (fieldPath) {
-                var parts = fieldPath.split(".");
-                var section = parts[0];
-                var field = parts[1];
-                var oldVal = currentConfig[section] && currentConfig[section][field];
-                var newVal = newConfig[section] && newConfig[section][field];
-                if (oldVal !== undefined && String(oldVal) !== String(newVal)) {
-                    needsRestart = true;
-                }
-            });
-        }
+        var config = collectConfig();
 
         fetch("/api/config/full", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(newConfig)
+            body: JSON.stringify(config)
         })
             .then(function (r) { return r.json(); })
             .then(function (data) {
-                if (data.ok || data.success) {
+                if (data.status === "ok" || data.ok || data.success) {
                     window.SORCC.showToast("Configuration saved", "success");
-                    if (needsRestart) {
-                        window.SORCC.showToast("Some changes require a service restart to take effect", "info");
-                    }
-                    currentConfig = newConfig;
                 } else {
                     window.SORCC.showToast("Failed to save: " + (data.detail || data.error || "Unknown error"), "error");
                 }
@@ -195,30 +145,17 @@
             });
     }
 
-    // ── Reset ───────────────────────────────────────────────
-
-    function resetConfig() {
-        loadConfig();
-        window.SORCC.showToast("Configuration reloaded from server", "info");
-    }
-
-    // ── Factory Reset ───────────────────────────────────────
-
     function factoryReset() {
-        if (!window.confirm("Are you sure you want to factory reset all configuration? This cannot be undone.")) {
-            return;
-        }
+        if (!window.confirm("Factory reset all configuration? This cannot be undone.")) return;
 
-        fetch("/api/config/factory-reset", {
-            method: "POST"
-        })
+        fetch("/api/config/factory-reset", { method: "POST" })
             .then(function (r) { return r.json(); })
             .then(function (data) {
-                if (data.ok || data.success) {
-                    window.SORCC.showToast("Factory reset complete. Reloading config...", "success");
+                if (data.status === "ok" || data.ok || data.success) {
+                    window.SORCC.showToast("Factory reset complete", "success");
                     loadConfig();
                 } else {
-                    window.SORCC.showToast("Factory reset failed: " + (data.detail || data.error || "Unknown error"), "error");
+                    window.SORCC.showToast("Factory reset failed", "error");
                 }
             })
             .catch(function (err) {
@@ -226,7 +163,34 @@
             });
     }
 
-    // ── Import / Export Config ───────────────────────────────
+    function applyWifi() {
+        fetch("/api/wifi/apply", { method: "POST" })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.status === "ok") {
+                    window.SORCC.showToast(data.detail, "success");
+                } else {
+                    window.SORCC.showToast(data.detail || "WiFi apply failed", "error");
+                }
+            })
+            .catch(function (err) {
+                window.SORCC.showToast("WiFi apply failed: " + err.message, "error");
+            });
+    }
+
+    function restartLte() {
+        fetch("/api/lte/restart", { method: "POST" })
+            .then(function (r) {
+                if (!r.ok) throw new Error("Not available");
+                return r.json();
+            })
+            .then(function () {
+                window.SORCC.showToast("LTE modem restarting...", "success");
+            })
+            .catch(function () {
+                window.SORCC.showToast("Use terminal: sudo mmcli -m 0 --reset", "info");
+            });
+    }
 
     function exportConfig() {
         fetch("/api/config/export")
@@ -248,104 +212,44 @@
             });
     }
 
-    function importConfig() {
-        var fileInput = document.getElementById("config-import-file");
-        if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-            window.SORCC.showToast("Please select a config file first", "info");
-            return;
-        }
-
-        var reader = new FileReader();
-        reader.onload = function (e) {
-            var configData;
-            try {
-                configData = JSON.parse(e.target.result);
-            } catch (err) {
-                window.SORCC.showToast("Invalid JSON file", "error");
-                return;
-            }
-
-            fetch("/api/config/import", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(configData)
-            })
-                .then(function (r) { return r.json(); })
-                .then(function (data) {
-                    if (data.ok || data.success) {
-                        window.SORCC.showToast("Config imported successfully", "success");
-                        loadConfig();
-                    } else {
-                        window.SORCC.showToast("Import failed: " + (data.detail || data.error || "Unknown error"), "error");
-                    }
-                })
-                .catch(function (err) {
-                    window.SORCC.showToast("Import failed: " + err.message, "error");
-                });
-        };
-        reader.readAsText(fileInput.files[0]);
-    }
-
-    // ── Restart LTE ─────────────────────────────────────────
-
-    function restartLte() {
-        fetch("/api/lte/restart", { method: "POST" })
-            .then(function (r) {
-                if (!r.ok) throw new Error("LTE restart endpoint not available");
-                return r.json();
-            })
-            .then(function (data) {
-                if (data.ok || data.success) {
-                    window.SORCC.showToast("LTE modem restarting...", "success");
-                } else {
-                    window.SORCC.showToast("LTE restart failed: " + (data.detail || data.error || "Unknown error"), "error");
-                }
-            })
-            .catch(function () {
-                window.SORCC.showToast("LTE restart requires terminal access (sudo mmcli -m 0 --reset)", "info");
-            });
-    }
-
     // ── Init ────────────────────────────────────────────────
-
-    function bindButtons() {
-        var applyBtn = document.getElementById("settings-apply");
-        if (applyBtn) applyBtn.addEventListener("click", applyConfig);
-
-        var resetBtn = document.getElementById("settings-reset");
-        if (resetBtn) resetBtn.addEventListener("click", resetConfig);
-
-        var factoryBtn = document.getElementById("settings-factory-reset");
-        if (factoryBtn) factoryBtn.addEventListener("click", factoryReset);
-
-        var exportBtn = document.getElementById("config-export");
-        if (exportBtn) exportBtn.addEventListener("click", exportConfig);
-
-        var importBtn = document.getElementById("config-import");
-        if (importBtn) importBtn.addEventListener("click", importConfig);
-
-        var lteBtn = document.getElementById("restart-lte");
-        if (lteBtn) lteBtn.addEventListener("click", restartLte);
-    }
 
     document.addEventListener("DOMContentLoaded", function () {
         initSections();
-        bindButtons();
+
+        // Bind buttons (matching HTML IDs)
+        var applyBtn = document.getElementById("btn-settings-apply");
+        if (applyBtn) applyBtn.addEventListener("click", applyConfig);
+
+        var resetBtn = document.getElementById("btn-settings-reset");
+        if (resetBtn) resetBtn.addEventListener("click", function () {
+            loadConfig();
+            window.SORCC.showToast("Config reloaded", "info");
+        });
+
+        var factoryBtn = document.getElementById("btn-factory-reset");
+        if (factoryBtn) factoryBtn.addEventListener("click", factoryReset);
+
+        var exportBtn = document.getElementById("btn-config-export");
+        if (exportBtn) exportBtn.addEventListener("click", exportConfig);
+
+        var lteBtn = document.getElementById("btn-restart-lte");
+        if (lteBtn) lteBtn.addEventListener("click", restartLte);
+
+        var wifiBtn = document.getElementById("btn-apply-wifi");
+        if (wifiBtn) wifiBtn.addEventListener("click", function () {
+            applyConfig();
+            setTimeout(applyWifi, 500);
+        });
 
         // Load config when settings tab is activated
-        // Also watch for tab switches to reload config on entry
-        document.querySelectorAll(".main-tab").forEach(function (tab) {
+        document.querySelectorAll(".tab").forEach(function (tab) {
             tab.addEventListener("click", function () {
                 if (this.dataset.tab === "settings") {
                     loadConfig();
                 }
             });
         });
-
-        // If settings tab is already active on load, fetch config
-        if (window.SORCC.getActiveTab() === "settings") {
-            loadConfig();
-        }
     });
 
 })();

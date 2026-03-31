@@ -1,43 +1,85 @@
-/* SORCC Design System — RF Survey Dashboard v2.0 */
+/* SORCC Design System — RF Survey Dashboard (Hydra-aligned) */
 :root {
-    --sorcc-green: #4a7c3f;
-    --sorcc-green-dark: #385723;
+    /* ── Brand Greens (from Hydra) ── */
+    --sorcc-green: #385723;
+    --sorcc-green-dark: #2a4118;
     --sorcc-green-light: #5a9c4f;
     --sorcc-muted: #A6BC92;
     --sorcc-warm: #D8E2D0;
-    --bg-dark: #1a1a1a;
-    --bg-panel: #2a2a2a;
-    --bg-input: #333;
-    --bg-hover: rgba(74, 124, 63, 0.1);
-    --text-primary: #e0e0e0;
-    --text-secondary: #999;
+    --sorcc-light: #EFF5EB;
+
+    /* ── Dark Base (deeper blacks from Hydra) ── */
+    --bg-dark: #0c0c0c;
+    --bg-panel: #1c1c1c;
+    --bg-panel-gradient: linear-gradient(145deg, #1c1c1c, #1a1f18);
+    --bg-input: #111;
+    --bg-sidebar: #141414;
+    --bg-hover: rgba(56, 87, 35, 0.1);
+    --card-border: #262626;
+
+    /* ── Text ── */
+    --text-primary: #e8e8e8;
+    --text-secondary: #888;
     --text-bright: #fff;
-    --text-dim: #666;
-    --border: #444;
-    --border-light: #555;
-    --signal-cold: #e74c3c;
-    --signal-warm: #f39c12;
-    --signal-hot: #2ecc71;
-    --danger: #e74c3c;
+    --text-dim: #555;
+
+    /* ── Legacy aliases (for existing CSS that uses these) ── */
+    --border: #262626;
+    --border-light: #333;
+
+    /* ── Signal Colors (RF-specific) ── */
+    --signal-cold: #42a5f5;
+    --signal-warm: #ff9800;
+    --signal-hot: #ef5350;
+
+    /* ── Status Colors ── */
+    --danger: #c53030;
     --danger-bg: #2a1010;
-    --info: #3498db;
-    --info-bg: #102030;
-    --success: #2ecc71;
-    --success-bg: #102a18;
-    --warning: #f39c12;
+    --info: #3b82f6;
+    --info-bg: rgba(30, 58, 95, 0.95);
+    --success: #385723;
+    --success-bg: rgba(20, 60, 30, 0.95);
+    --warning: #b45309;
     --warning-bg: #2a2010;
+
+    /* ── Accent Glow ── */
+    --glow-green: 0 0 12px rgba(56, 87, 35, 0.3);
+    --glow-danger: 0 0 12px rgba(197, 48, 48, 0.3);
+
+    /* ── Spacing ── */
     --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px;
     --sp-5: 20px; --sp-6: 24px; --sp-7: 28px; --sp-8: 32px;
-    --font-xs: 0.7rem; --font-sm: 0.8rem; --font-base: 0.9rem;
+    --gap-xs: 4px; --gap-sm: 8px; --gap-md: 12px;
+    --gap-lg: 16px; --gap-xl: 24px;
+
+    /* ── Type Scale ── */
+    --font-xs: 0.75rem; --font-sm: 0.85rem; --font-base: 1rem;
     --font-md: 1rem; --font-lg: 1.2rem; --font-xl: 1.5rem;
     --font-2xl: 2rem; --font-3xl: 3rem;
+
+    /* ── Letter Spacing ── */
+    --ls-condensed: 0.08em;
+    --ls-wide: 0.12em;
+    --ls-mono: 0.02em;
+
+    /* ── Border Radii ── */
     --radius-sm: 4px; --radius-md: 6px; --radius-lg: 8px;
-    --radius-xl: 12px; --radius-pill: 20px;
+    --radius-xl: 12px; --radius-pill: 999px;
+
+    /* ── Transitions ── */
     --transition-fast: 100ms ease-out;
     --transition-normal: 200ms ease-out;
     --transition-slow: 300ms ease-out;
-    --topbar-height: 52px; --footer-height: 32px; --tab-height: 48px;
+
+    /* ── Layout ── */
+    --topbar-height: 48px;
+    --footer-height: 28px;
+
+    /* ── Fonts (system stack with Hydra-style fallbacks) ── */
     --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    --font-mono: 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
-    --overlay-bg: rgba(0, 0, 0, 0.7);
+    --font-heading: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-mono: 'SF Mono', 'Cascadia Code', 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+
+    /* ── Overlay ── */
+    --overlay-bg: rgba(0, 0, 0, 0.75);
 }

@@ -2,8 +2,17 @@
 # SORCC-PI — One-script Raspberry Pi payload setup
 # Installs everything needed for the SORCC RF Survey payload.
 #
-# Usage: sudo bash scripts/sorcc-setup.sh
+# Usage: sudo bash scripts/sorcc-setup.sh [--skip-upgrade]
 set -euo pipefail
+
+# ── Parse command-line flags ────────────────────────────────
+SKIP_UPGRADE=false
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --skip-upgrade) SKIP_UPGRADE=true; shift ;;
+        *) echo "Unknown option: $1"; echo "Usage: sorcc-setup.sh [--skip-upgrade]"; exit 1 ;;
+    esac
+done
 
 # ── Helpers ──────────────────────────────────────────────────
 GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; CYAN='\033[0;36m'; NC='\033[0m'
@@ -15,6 +24,11 @@ info() { echo -e "${CYAN}[INFO]${NC} $1"; }
 ask() {
     local prompt="$1" default="${2:-Y}"
     local yn
+    # Non-interactive mode: use the default answer
+    if [ ! -t 0 ]; then
+        [[ "$default" == "Y" ]]
+        return
+    fi
     if [[ "$default" == "Y" ]]; then
         read -rp "$prompt [Y/n]: " yn
         yn="${yn:-Y}"
@@ -192,7 +206,11 @@ info "Step 2/8: System update & base packages"
 echo ""
 
 apt-get update -y
-apt-get upgrade -y
+if [ "$SKIP_UPGRADE" = true ]; then
+    info "Skipping apt-get upgrade (--skip-upgrade flag set)"
+else
+    apt-get upgrade -y
+fi
 apt-get install -y \
     build-essential \
     cmake \
@@ -210,6 +228,18 @@ apt-get install -y \
     network-manager \
     modemmanager
 ok "Base packages installed"
+
+systemctl enable --now avahi-daemon 2>/dev/null || true
+ok "Avahi mDNS daemon enabled and started"
+
+# Set WiFi regulatory domain and ensure NM manages wlan0
+WIFI_COUNTRY=$(cfg_get wifi country_code "US")
+iw reg set "$WIFI_COUNTRY" 2>/dev/null || true
+echo "REGDOMAIN=$WIFI_COUNTRY" > /etc/default/crda 2>/dev/null || true
+echo "options cfg80211 ieee80211_regdom=$WIFI_COUNTRY" > /etc/modprobe.d/wifi-regdom.conf 2>/dev/null || true
+mkdir -p /etc/NetworkManager/conf.d
+printf '[device-wifi]\nmatch-device=interface-name:wlan0\nmanaged=1\n' > /etc/NetworkManager/conf.d/sorcc-wifi.conf
+ok "WiFi regulatory domain set to $WIFI_COUNTRY, wlan0 managed by NetworkManager"
 echo ""
 
 # ══════════════════════════════════════════════════════════════
@@ -305,6 +335,9 @@ info "Generating Kismet site config from sorcc.ini..."
         echo "source=$BT_SOURCE"
     fi
     if [ -n "$WIFI_SOURCE" ]; then
+        # WARNING: Using the onboard WiFi (wlan0) for Kismet monitor mode
+        # disables all WiFi connectivity. Only set source_wifi if using an
+        # external USB WiFi adapter dedicated to monitoring.
         echo "source=$WIFI_SOURCE"
     fi
     if [ -n "$RTL433_SOURCE" ]; then
@@ -353,20 +386,27 @@ if [ -n "$MODEM_NUM" ]; then
         APN=$(cfg_get lte apn "")
 
         if [ -z "$APN" ]; then
-            echo ""
-            echo "  Common APNs by carrier:"
-            echo "    T-Mobile:  b2b.static"
-            echo "    AT&T:      broadband"
-            echo "    Verizon:   vzwinternet"
-            echo "    FirstNet:  firstnet"
-            echo ""
-            read -rp "  Enter APN for your SIM card (or leave blank for auto-detect): " APN_INPUT
-            APN="${APN_INPUT:-}"
+            if [ -t 0 ]; then
+                # Interactive — prompt user
+                echo ""
+                echo "  Common APNs by carrier:"
+                echo "    T-Mobile:  b2b.static"
+                echo "    AT&T:      broadband"
+                echo "    Verizon:   vzwinternet"
+                echo "    FirstNet:  firstnet"
+                echo ""
+                read -rp "  Enter APN for your SIM card (or leave blank for auto-detect): " APN_INPUT
+                APN="${APN_INPUT:-}"
 
-            # Save APN to config for future reference
-            if [ -n "$APN" ]; then
-                cfg_set lte apn "$APN"
-                info "APN '$APN' saved to config"
+                # Save APN to config for future reference
+                if [ -n "$APN" ]; then
+                    cfg_set lte apn "$APN"
+                    info "APN '$APN' saved to config"
+                fi
+            else
+                # Non-interactive — use auto-detect
+                info "Non-interactive mode: using APN auto-detect"
+                APN=""
             fi
         else
             info "Using APN from config: $APN"
@@ -451,20 +491,41 @@ else
     info "Tailscale disabled in config — skipping"
 fi
 
-# PiSugar
+# PiSugar (optional — wrapped in subshell so failure doesn't kill the install)
 PISUGAR_ENABLED=$(cfg_get pisugar enabled "true")
 if [ "$PISUGAR_ENABLED" = "true" ]; then
     if systemctl is-active --quiet pisugar-server 2>/dev/null; then
         ok "PiSugar server already running"
     else
         if ask "Install PiSugar power manager?" "Y"; then
-            info "Downloading PiSugar installer..."
-            curl -fsSL https://cdn.pisugar.com/release/pisugar-power-manager.sh -o /tmp/pisugar-install.sh
-            bash /tmp/pisugar-install.sh -c release
-            systemctl enable pisugar-server 2>/dev/null || true
-            systemctl start pisugar-server 2>/dev/null || true
-            rm -f /tmp/pisugar-install.sh
-            ok "PiSugar power manager installed and running"
+            (
+                # Create raspi-config stub if missing (Kali doesn't ship it;
+                # pisugar-poweroff postinst expects it)
+                if ! command -v raspi-config >/dev/null 2>&1; then
+                    info "Creating raspi-config stub for PiSugar compatibility"
+                    cat > /usr/local/bin/raspi-config << 'STUB'
+#!/bin/bash
+# Stub for Kali Linux — PiSugar postinst expects this
+exit 0
+STUB
+                    chmod +x /usr/local/bin/raspi-config
+                fi
+
+                # Pre-seed PiSugar model selection to avoid whiptail dialog
+                echo "pisugar-server pisugar-server/model select PiSugar 2 (2-LEDs)" | debconf-set-selections 2>/dev/null || true
+                export DEBIAN_FRONTEND=noninteractive
+
+                info "Downloading PiSugar installer..."
+                curl -fsSL https://cdn.pisugar.com/release/pisugar-power-manager.sh -o /tmp/pisugar-install.sh
+                bash /tmp/pisugar-install.sh -c release
+
+                unset DEBIAN_FRONTEND
+
+                systemctl enable pisugar-server 2>/dev/null || true
+                systemctl start pisugar-server 2>/dev/null || true
+                rm -f /tmp/pisugar-install.sh
+                ok "PiSugar power manager installed and running"
+            ) || warn "PiSugar install failed — skipping (not critical)"
         else
             info "Skipping PiSugar setup."
         fi
@@ -481,25 +542,27 @@ echo ""
 info "Step 7/8: Boot services & headless setup"
 echo ""
 
-# Cellular recon tools (optional)
+# Cellular recon tools (optional — wrapped so failure doesn't kill the install)
 RECON_ENABLED=$(cfg_get recon_tools enabled "true")
 if [ "$RECON_ENABLED" = "true" ]; then
     if ask "Install cellular recon tools (gr-gsm, kalibrate, GQRX, IMSI-catcher)?" "Y"; then
-        apt-get install -y gr-gsm kalibrate-rtl 2>/dev/null || {
-            warn "gr-gsm/kalibrate-rtl not available — may need manual install"
-        }
-        apt-get install -y gqrx-sdr 2>/dev/null || {
-            warn "gqrx-sdr not available"
-        }
+        (
+            apt-get install -y gr-gsm kalibrate-rtl 2>/dev/null || {
+                warn "gr-gsm/kalibrate-rtl not available — may need manual install"
+            }
+            apt-get install -y gqrx-sdr 2>/dev/null || {
+                warn "gqrx-sdr not available"
+            }
 
-        IMSI_DIR="$SORCC_HOME/IMSI-catcher"
-        if [ -d "$IMSI_DIR" ]; then
-            ok "IMSI-catcher already cloned at $IMSI_DIR"
-        else
-            git clone https://github.com/Oros42/IMSI-catcher.git "$IMSI_DIR"
-            chown -R "$SORCC_USER:$SORCC_USER" "$IMSI_DIR"
-            ok "IMSI-catcher cloned to $IMSI_DIR"
-        fi
+            IMSI_DIR="$SORCC_HOME/IMSI-catcher"
+            if [ -d "$IMSI_DIR" ]; then
+                ok "IMSI-catcher already cloned at $IMSI_DIR"
+            else
+                git clone https://github.com/Oros42/IMSI-catcher.git "$IMSI_DIR"
+                chown -R "$SORCC_USER:$SORCC_USER" "$IMSI_DIR"
+                ok "IMSI-catcher cloned to $IMSI_DIR"
+            fi
+        ) || warn "Recon tools install failed — skipping (not critical)"
     fi
 fi
 
@@ -543,15 +606,43 @@ echo ""
 
 # Install the sorcc Python package
 mkdir -p "$INSTALL_DIR"
-cp -r "$REPO_DIR/sorcc" "$INSTALL_DIR/sorcc"
-cp -r "$REPO_DIR/profiles.json" "$INSTALL_DIR/profiles.json"
-cp -r "$REPO_DIR/config/sorcc.ini.factory" "$CONFIG_DIR/sorcc.ini.factory"
+mkdir -p "$INSTALL_DIR/logs"
+rsync -a --exclude='__pycache__' "$REPO_DIR/sorcc/" "$INSTALL_DIR/sorcc/"
+cp "$REPO_DIR/profiles.json" "$INSTALL_DIR/profiles.json"
+cp "$REPO_DIR/config/sorcc.ini.factory" "$CONFIG_DIR/sorcc.ini.factory"
+ok "Dashboard files synced to $INSTALL_DIR"
 
-# Install Python dependencies
-REQUIREMENTS="fastapi uvicorn requests jinja2"
-pip3 install --break-system-packages $REQUIREMENTS 2>/dev/null \
-    || pip3 install $REQUIREMENTS
+# Verify all expected modules exist
+EXPECTED_MODULES="server.py kismet.py oui.py logging_config.py"
+MISSING=""
+for mod in $EXPECTED_MODULES; do
+    if [ ! -f "$INSTALL_DIR/sorcc/web/$mod" ]; then
+        MISSING="$MISSING $mod"
+    fi
+done
+if [ -n "$MISSING" ]; then
+    warn "Missing modules in sorcc/web/:$MISSING"
+else
+    ok "All expected modules present"
+fi
+
+# Install Python dependencies from requirements.txt
+if [ -f "$REPO_DIR/requirements.txt" ]; then
+    pip3 install --break-system-packages -r "$REPO_DIR/requirements.txt" 2>/dev/null \
+        || pip3 install -r "$REPO_DIR/requirements.txt"
+else
+    REQUIREMENTS="fastapi uvicorn requests jinja2"
+    pip3 install --break-system-packages $REQUIREMENTS 2>/dev/null \
+        || pip3 install $REQUIREMENTS
+fi
 ok "Dashboard dependencies installed"
+
+# Verify critical imports
+if python3 -c "import fastapi, uvicorn, requests, jinja2" 2>/dev/null; then
+    ok "All Python dependencies verified"
+else
+    warn "Some Python dependencies failed to import — run: pip3 install -r requirements.txt"
+fi
 
 # Start the dashboard
 systemctl restart sorcc-dashboard 2>/dev/null || true

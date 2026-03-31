@@ -44,3 +44,4 @@ Thumbs.db
 # Temporary
 /tmp/
 *.tmp
+docs/guides/PROMPTS.pdf

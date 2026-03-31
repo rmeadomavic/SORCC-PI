@@ -47,6 +47,7 @@ enabled = true                          ; Install PiSugar battery manager
 [wifi]
 ssid =                                  ; WiFi network to auto-connect (for headless boot)
 password =                              ; WiFi password
+country_code = US                       ; WiFi regulatory country code (2-letter ISO 3166)
 
 [recon_tools]
 enabled = true                          ; Install gr-gsm, kalibrate, IMSI-catcher, GQRX

@@ -22,11 +22,12 @@
 
 .preflight-banner.status-pass {
     background: var(--success-bg);
-    border-color: var(--success);
+    border-color: var(--sorcc-green);
+    box-shadow: var(--glow-green);
 }
 
 .preflight-banner.status-pass h2 {
-    color: var(--success);
+    color: var(--sorcc-muted);
 }
 
 .preflight-banner.status-warn {
@@ -41,15 +42,16 @@
 .preflight-banner.status-fail {
     background: var(--danger-bg);
     border-color: var(--danger);
+    box-shadow: var(--glow-danger);
 }
 
 .preflight-banner.status-fail h2 {
-    color: var(--danger);
+    color: #fca5a5;
 }
 
 .preflight-banner.status-unknown {
     background: var(--bg-panel);
-    border-color: var(--border);
+    border-color: var(--card-border);
 }
 
 .preflight-banner.status-unknown h2 {
@@ -93,8 +95,8 @@
 }
 
 .preflight-card {
-    background: var(--bg-panel);
-    border: 1px solid var(--border);
+    background: var(--bg-panel-gradient);
+    border: 1px solid var(--card-border);
     border-radius: var(--radius-lg);
     overflow: hidden;
 }
@@ -104,8 +106,9 @@
     justify-content: space-between;
     align-items: center;
     padding: var(--sp-3) var(--sp-4);
-    background: var(--bg-input);
-    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(42, 65, 24, 0.12), rgba(0, 0, 0, 0.25));
+    border-bottom: 1px solid var(--card-border);
+    border-top: 2px solid var(--sorcc-green);
 }
 
 .preflight-card-header h3 {
@@ -169,15 +172,21 @@
 }
 
 .check-indicator.pass {
-    background: var(--success-bg);
-    color: var(--success);
-    border: 1px solid var(--success);
+    background: rgba(56, 87, 35, 0.2);
+    color: var(--sorcc-muted);
+    border: 1px solid var(--sorcc-green);
 }
 
 .check-indicator.warn {
     background: var(--warning-bg);
     color: var(--warning);
     border: 1px solid var(--warning);
+}
+
+.check-indicator.info {
+    background: rgba(100, 100, 100, 0.1);
+    color: #777;
+    border: 1px solid #444;
 }
 
 .check-indicator.fail {

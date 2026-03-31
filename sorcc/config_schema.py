@@ -248,6 +248,15 @@ SCHEMA: dict[str, dict[str, FieldSpec]] = {
             default="",
             description="WiFi password for the SSID above",
         ),
+        "country_code": FieldSpec(
+            FieldType.STRING,
+            default="US",
+            description=(
+                "WiFi regulatory country code (2-letter ISO 3166). "
+                "Controls allowed channels and transmit power. "
+                "Common: US, GB, DE, JP."
+            ),
+        ),
     },
     "recon_tools": {
         "enabled": FieldSpec(

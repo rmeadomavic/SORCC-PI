@@ -33,6 +33,7 @@ Options:
   --password PASS    WiFi password (required if --ssid is given)
   --ethernet-only    Skip WiFi setup (Ethernet/LTE will be used)
   --no-enable        Do not enable boot services (just set up mDNS/WiFi)
+  --noninteractive   Explicit non-interactive mode (no prompts, use defaults)
   -h, --help         Show this help message
 
 Examples:
@@ -54,6 +55,7 @@ WIFI_SSID=""
 WIFI_PASSWORD=""
 ETHERNET_ONLY=false
 ENABLE_SERVICE=true
+NONINTERACTIVE=false
 
 # ── Parse arguments ──────────────────────────────────────────
 while [[ $# -gt 0 ]]; do
@@ -63,6 +65,7 @@ while [[ $# -gt 0 ]]; do
         --password)      WIFI_PASSWORD="$2"; shift 2 ;;
         --ethernet-only) ETHERNET_ONLY=true; shift ;;
         --no-enable)     ENABLE_SERVICE=false; shift ;;
+        --noninteractive) NONINTERACTIVE=true; shift ;;
         -h|--help)       usage ;;
         *) echo "Unknown option: $1"; usage ;;
     esac
@@ -90,6 +93,10 @@ echo "========================================"
 echo "  SORCC-PI — Headless Field-Boot Setup"
 echo "========================================"
 echo ""
+
+if [ "$NONINTERACTIVE" = true ]; then
+    info "Running in non-interactive mode (--noninteractive)"
+fi
 
 # ── Step 1/5: mDNS (Avahi) ───────────────────────────────────
 info "Step 1/5: Setting up mDNS (Avahi)..."
