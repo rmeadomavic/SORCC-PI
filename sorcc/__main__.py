@@ -1,6 +1,11 @@
 """SORCC-PI Dashboard — entry point."""
 import uvicorn
-from sorcc.web.server import app
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8080)
+    uvicorn.run(
+        "sorcc.web.server:app",
+        host="0.0.0.0",
+        port=8080,
+        workers=2,
+        log_level="warning",
+    )

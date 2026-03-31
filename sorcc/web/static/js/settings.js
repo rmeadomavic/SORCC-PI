@@ -27,14 +27,24 @@
 
     // ── Load Config into static form fields ─────────────────
 
-    function loadConfig() {
-        fetch("/api/config/full")
-            .then(function (r) { return r.json(); })
+    function loadConfig(retries) {
+        retries = retries === undefined ? 2 : retries;
+        fetch("/api/config/full", {
+            signal: AbortSignal.timeout ? AbortSignal.timeout(10000) : undefined
+        })
+            .then(function (r) {
+                if (!r.ok) throw new Error("HTTP " + r.status);
+                return r.json();
+            })
             .then(function (config) {
                 populateForm(config);
             })
             .catch(function (err) {
-                window.SORCC.showToast("Failed to load config: " + err.message, "error");
+                if (retries > 0) {
+                    setTimeout(function () { loadConfig(retries - 1); }, 2000);
+                } else {
+                    window.SORCC.showToast("Failed to load config: " + err.message, "error");
+                }
             });
     }
 
