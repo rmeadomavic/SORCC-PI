@@ -35,7 +35,7 @@ try:
     from argus.config_api import (
         read_config, write_config, restore_backup, restore_factory,
         has_backup, has_factory, set_config_path, get_config_path,
-        REDACTED_VALUE,
+        REDACTED_VALUE, read_config_raw,
     )
     _HAS_CONFIG_API = True
 except ImportError:
@@ -656,7 +656,9 @@ async def apply_wifi():
     if not _HAS_CONFIG_API:
         raise HTTPException(status_code=500, detail="Config API not available")
     try:
-        cfg = read_config()
+        # Command execution paths must read raw config values; API helpers may redact
+        # secrets (e.g., wifi.password) for responses and would break nmcli calls.
+        cfg = read_config_raw()
         ssid = cfg.get("wifi", {}).get("ssid", "").strip()
         password = cfg.get("wifi", {}).get("password", "").strip()
         country = cfg.get("wifi", {}).get("country_code", "US").strip()
@@ -1615,7 +1617,7 @@ def _check_wifi_conflict():
     if not _HAS_CONFIG_API:
         return "skip", "Config API not available"
     try:
-        cfg = read_config()
+        cfg = read_config_raw()
         monitor_iface = cfg.get("kismet", {}).get("source_wifi", "").split(":")[0].strip()
         connect_ssid = cfg.get("wifi", {}).get("ssid", "").strip()
         if not monitor_iface or not connect_ssid:

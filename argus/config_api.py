@@ -72,6 +72,25 @@ def _factory_path() -> Path:
 
 def read_config() -> dict[str, dict[str, str]]:
     """Read argus.ini and return as nested dict. Redacts sensitive fields."""
+    result = read_config_raw()
+
+    # Redact sensitive fields
+    for section in REDACTED_FIELDS:
+        if section not in result:
+            continue
+        for fld in REDACTED_FIELDS[section]:
+            if fld in result[section] and result[section][fld]:
+                result[section][fld] = REDACTED_VALUE
+
+    return result
+
+
+def read_config_raw() -> dict[str, dict[str, str]]:
+    """Read argus.ini and return as nested dict without redaction.
+
+    Internal-only helper for server-side operational logic that needs
+    actual secret values.
+    """
     path = get_config_path()
     config = configparser.ConfigParser(inline_comment_prefixes=(";", "#"))
     config.read(path)
@@ -79,11 +98,6 @@ def read_config() -> dict[str, dict[str, str]]:
     result: dict[str, dict[str, str]] = {}
     for section in config.sections():
         result[section] = dict(config[section])
-        # Redact sensitive fields
-        if section in REDACTED_FIELDS:
-            for fld in REDACTED_FIELDS[section]:
-                if fld in result[section] and result[section][fld]:
-                    result[section][fld] = REDACTED_VALUE
 
     return result
 
