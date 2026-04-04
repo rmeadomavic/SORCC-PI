@@ -39,9 +39,9 @@ See [Image Strategy](image-strategy.md) for detailed instructions.
 
 ```bash
 ssh kali@<pi-ip>
-git clone https://github.com/rmeadomavic/sorcc-pi.git
-cd sorcc-pi
-sudo bash scripts/sorcc-setup.sh
+git clone https://github.com/rmeadomavic/argus.git
+cd argus
+sudo bash scripts/argus-setup.sh
 ```
 
 The installer takes ~15 minutes. It installs Kismet, SDR tools, GPS support,
@@ -50,7 +50,7 @@ and configures all systemd services.
 ## Step 4: Configure for Headless Operation
 
 ```bash
-sudo bash scripts/sorcc-headless.sh --ssid "ClassroomWiFi" --password "s3cret"
+sudo bash scripts/argus-headless.sh --ssid "ClassroomWiFi" --password "s3cret"
 ```
 
 After this, the Pi boots ready to fly — no monitor or keyboard needed.
@@ -68,9 +68,9 @@ set a password to prevent unauthorized access.
 Or edit the config directly:
 
 ```bash
-nano /opt/sorcc/config/sorcc.ini
+nano /opt/argus/config/argus.ini
 # Set [dashboard] password = your-password
-sudo systemctl restart sorcc-dashboard
+sudo systemctl restart argus-dashboard
 ```
 
 Leave `password` blank to allow open access (safe on Tailscale-only networks).
@@ -78,7 +78,7 @@ Leave `password` blank to allow open access (safe on Tailscale-only networks).
 ## Step 6: Verify
 
 ```bash
-bash scripts/sorcc-preflight.sh
+bash scripts/argus-preflight.sh
 ```
 
 Or open the dashboard and check the **Preflight** tab. All checks should show green.
@@ -91,7 +91,7 @@ Or open the dashboard and check the **Preflight** tab. All checks should show gr
 | Method | URL |
 |--------|-----|
 | Local network | `http://<pi-ip>:8080` |
-| mDNS | `http://sorcc-pi.local:8080` |
+| mDNS | `http://argus-pi.local:8080` |
 | Tailscale | `http://<tailscale-ip>:8080` |
 | Instructor view | `http://<pi-ip>:8080/instructor` |
 

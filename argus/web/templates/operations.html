@@ -1,0 +1,504 @@
+<!-- Argus Operations Tab — Jinja2 include fragment -->
+
+<!-- Profile Selector -->
+<div class="profile-selector" id="profile-list">
+    <div class="profile-card active" data-profile="wifi-survey">
+        <div class="profile-card-name">WiFi Survey</div>
+        <div class="profile-card-desc">Locate and map WiFi networks</div>
+    </div>
+    <div class="profile-card" data-profile="bt-survey">
+        <div class="profile-card-name">BT Survey</div>
+        <div class="profile-card-desc">Bluetooth device enumeration</div>
+    </div>
+    <div class="profile-card" data-profile="full-spectrum">
+        <div class="profile-card-name">Full Spectrum</div>
+        <div class="profile-card-desc">All sources: WiFi + BT + SDR</div>
+    </div>
+    <div class="profile-card" data-profile="sdr-only">
+        <div class="profile-card-name">SDR Only</div>
+        <div class="profile-card-desc">433MHz / ADS-B monitoring</div>
+    </div>
+</div>
+
+<!-- WiFi Capture Toggle -->
+<div class="wifi-capture-bar" id="wifi-capture-bar">
+    <div class="wifi-capture-info">
+        <span class="wifi-capture-label">WiFi Capture</span>
+        <span class="wifi-capture-status" id="wifi-capture-status">Checking...</span>
+    </div>
+    <div class="wifi-adapter-info" id="wifi-adapter-info"></div>
+    <button class="wifi-capture-btn" id="wifi-capture-toggle" disabled>
+        <span class="wifi-capture-btn-text" id="wifi-capture-btn-text">Enable</span>
+    </button>
+    <div class="wifi-capture-warning" id="wifi-capture-warning" style="display:none;">
+        WiFi connectivity will be lost. LTE + Tailscale remain active.
+    </div>
+</div>
+
+<!-- Sub-Tab Navigation -->
+<div class="sub-tabs">
+    <button class="sub-tab active" data-subtab="live">Live View</button>
+    <button class="sub-tab" data-subtab="map">Map</button>
+    <button class="sub-tab" data-subtab="spectrum">Spectrum</button>
+    <button class="sub-tab" data-subtab="hunt">Hunt Mode</button>
+    <button class="sub-tab" data-subtab="logs">Logs</button>
+    <button class="sub-tab" data-subtab="export">Export</button>
+</div>
+
+<!-- ── Live View ── -->
+<div id="subtab-live" class="sub-content active">
+    <!-- Stats Summary Bar -->
+    <div class="stats-bar">
+        <div class="stat-card">
+            <div class="stat-card-value" id="stat-total">0</div>
+            <div class="stat-card-label">Total Devices</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-value" id="stat-wifi">0</div>
+            <div class="stat-card-label">WiFi</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-value" id="stat-bt">0</div>
+            <div class="stat-card-label">Bluetooth</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-value" id="stat-other">0</div>
+            <div class="stat-card-label">Other</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-value" id="stat-strong">0</div>
+            <div class="stat-card-label">Strong (&gt;-50)</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-value" id="stat-new">--</div>
+            <div class="stat-card-label">New / min</div>
+        </div>
+    </div>
+
+    <!-- Activity Feed Ticker -->
+    <div class="activity-feed" id="activity-feed">
+        <div class="activity-feed-header">
+            <span class="activity-feed-dot"></span>
+            <span class="activity-feed-label">LIVE ACTIVITY</span>
+            <span class="activity-feed-count" id="activity-new-count">--</span>
+        </div>
+        <div class="activity-feed-scroll" id="activity-feed-scroll"></div>
+    </div>
+
+    <!-- Top Activity Leaderboard -->
+    <div class="leaderboard-panel" id="leaderboard-panel">
+        <div class="leaderboard-header">
+            <span class="leaderboard-icon">&#9650;</span>
+            <span class="leaderboard-title">TOP ACTIVE</span>
+            <span class="leaderboard-badge" id="leaderboard-count">--</span>
+        </div>
+        <div class="leaderboard-list" id="leaderboard-list">
+            <div class="leaderboard-empty">Waiting for data...</div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="device-toolbar">
+            <h2>Detected Devices <span id="device-count" class="badge">0</span></h2>
+            <div class="device-search-wrap">
+                <input type="text" id="device-search" placeholder="Search devices..." class="device-search">
+            </div>
+        </div>
+        <div class="device-controls">
+            <div class="device-filters">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="Bluetooth">BT</button>
+                <button class="filter-btn" data-filter="IEEE802.11">WiFi</button>
+                <button class="filter-btn" data-filter="band:915mhz">915 MHz</button>
+                <button class="filter-btn" data-filter="band:868mhz">868 MHz</button>
+                <button class="filter-btn" data-filter="band:433mhz">433 MHz</button>
+                <button class="filter-btn" data-filter="ADSB">ADS-B</button>
+                <button class="filter-btn" data-filter="band:fpv">FPV</button>
+            </div>
+            <div class="device-sort">
+                <select id="device-sort">
+                    <option value="packets">Packets (most)</option>
+                    <option value="last-seen">Last Seen (newest)</option>
+                    <option value="name">Name (A-Z)</option>
+                    <option value="signal">Signal (strongest)</option>
+                    <option value="signal-asc">Signal (weakest)</option>
+                </select>
+            </div>
+        </div>
+        <div class="device-list" id="device-list">
+            <div class="loading">Connecting to Kismet...</div>
+        </div>
+    </div>
+
+    <!-- Device Detail Slide-out -->
+    <div class="device-detail-overlay" id="device-detail-overlay">
+        <div class="device-detail-panel" id="device-detail-panel">
+            <div class="detail-header">
+                <h3 id="detail-name">--</h3>
+                <button class="detail-close" id="detail-close">&times;</button>
+            </div>
+            <div class="detail-body">
+                <!-- Signal History Sparkline -->
+                <div class="detail-section detail-chart-section">
+                    <div class="detail-chart-header">
+                        <span class="detail-chart-label">SIGNAL HISTORY</span>
+                        <span class="detail-chart-value" id="detail-trend">--</span>
+                    </div>
+                    <svg id="detail-sparkline" class="detail-sparkline" viewBox="0 0 280 50" preserveAspectRatio="none">
+                        <polyline id="detail-spark-line" points="" fill="none" stroke="var(--argus-green-light)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-grid">
+                        <div class="detail-cell">
+                            <span class="detail-label">MAC</span>
+                            <span class="detail-value mono" id="detail-mac">--</span>
+                        </div>
+                        <div class="detail-cell">
+                            <span class="detail-label">Type</span>
+                            <span class="detail-value" id="detail-type">--</span>
+                        </div>
+                        <div class="detail-cell">
+                            <span class="detail-label">Signal</span>
+                            <span class="detail-value mono" id="detail-signal">--</span>
+                        </div>
+                        <div class="detail-cell">
+                            <span class="detail-label">Channel</span>
+                            <span class="detail-value mono" id="detail-channel">--</span>
+                        </div>
+                        <div class="detail-cell">
+                            <span class="detail-label">Packets</span>
+                            <span class="detail-value mono" id="detail-packets">--</span>
+                        </div>
+                        <div class="detail-cell">
+                            <span class="detail-label">Last Seen</span>
+                            <span class="detail-value" id="detail-last-seen">--</span>
+                        </div>
+                        <div class="detail-cell">
+                            <span class="detail-label">First Seen</span>
+                            <span class="detail-value" id="detail-first-seen">--</span>
+                        </div>
+                        <div class="detail-cell">
+                            <span class="detail-label">Activity</span>
+                            <span class="detail-value" id="detail-activity">--</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="detail-section">
+                    <h4>Actions</h4>
+                    <div class="detail-actions">
+                        <button class="btn-primary" id="detail-hunt-btn">Hunt This Device</button>
+                        <button class="btn-secondary" id="detail-locate-btn">Show on Map</button>
+                        <button class="btn-secondary" id="detail-copy-mac">Copy MAC</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Map View ── -->
+<div id="subtab-map" class="sub-content">
+    <div class="panel map-panel">
+        <div class="map-toolbar">
+            <h2>RF Survey Map</h2>
+            <div class="map-controls">
+                <button id="map-center-gps" class="btn-secondary" title="Center on GPS position">Center GPS</button>
+                <button id="map-toggle-track" class="btn-secondary active" title="Toggle GPS track">Track: ON</button>
+                <button id="map-toggle-radii" class="btn-secondary" title="Show signal range circles">Range: OFF</button>
+                <button id="map-toggle-tiles" class="btn-secondary" title="Switch map/satellite view">Map: STD</button>
+                <button id="map-fit-all" class="btn-secondary" title="Fit all markers in view">Fit All</button>
+            </div>
+        </div>
+        <div class="map-info-bar">
+            <span class="map-stats" id="map-stats">--</span>
+            <span class="map-gps-info" id="map-gps-info" style="color:var(--signal-warm)">Waiting for GPS fix — map will center when acquired</span>
+        </div>
+        <div id="argus-map" style="height:min(500px, 60vh);border-radius:8px;border:1px solid var(--border);"></div>
+        <div class="map-legend">
+            <span class="legend-item"><span class="legend-dot" style="background:#ef5350"></span> Strong (&gt;-50 dBm)</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#ff9800"></span> Medium (-50 to -70)</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#42a5f5"></span> Weak (&lt;-70 dBm)</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#385723"></span> Your Position</span>
+        </div>
+    </div>
+</div>
+
+<!-- ── Spectrum View ── -->
+<div id="subtab-spectrum" class="sub-content">
+    <div class="spectrum-view-selector">
+        <label for="spectrum-mode">View:</label>
+        <select id="spectrum-mode" class="spectrum-dropdown">
+            <option value="auto">Auto (best data)</option>
+            <option value="bt-activity">Bluetooth Activity</option>
+            <option value="wifi-channels">WiFi Channels</option>
+            <option value="fpv-bands">FPV / ISM Bands</option>
+            <option value="all-bands">All Frequency Bands</option>
+        </select>
+    </div>
+    <div class="spectrum-grid">
+        <!-- Channel Utilization Chart -->
+        <div class="spectrum-card spectrum-card-wide">
+            <div class="spectrum-card-header">
+                <h3 id="spec-chart-title">Channel Utilization</h3>
+                <span class="spectrum-card-badge" id="spec-ch-count">0 channels</span>
+            </div>
+            <div class="spectrum-chart-wrap">
+                <svg id="channel-chart" class="spectrum-svg" viewBox="0 0 720 220" preserveAspectRatio="xMidYMid meet">
+                    <!-- Grid rendered by JS -->
+                </svg>
+            </div>
+            <div class="spectrum-chart-legend">
+                <span class="spec-legend-item"><span class="spec-legend-swatch" style="background:var(--signal-cold)"></span> &lt;3 devices</span>
+                <span class="spec-legend-item"><span class="spec-legend-swatch" style="background:var(--signal-warm)"></span> 3-8 devices</span>
+                <span class="spec-legend-item"><span class="spec-legend-swatch" style="background:var(--signal-hot)"></span> &gt;8 devices</span>
+            </div>
+        </div>
+
+        <!-- Frequency Band Distribution -->
+        <div class="spectrum-card">
+            <div class="spectrum-card-header">
+                <h3>Band Distribution</h3>
+            </div>
+            <div class="spectrum-donut-wrap">
+                <svg id="band-donut" class="spectrum-svg" viewBox="0 0 240 240">
+                    <!-- Donut rendered by JS -->
+                </svg>
+                <div class="donut-center-text">
+                    <div class="donut-center-value" id="donut-total">0</div>
+                    <div class="donut-center-label">DEVICES</div>
+                </div>
+            </div>
+            <div class="band-list" id="band-list">
+                <!-- Band breakdown rendered by JS -->
+            </div>
+        </div>
+
+        <!-- Device Type Breakdown -->
+        <div class="spectrum-card">
+            <div class="spectrum-card-header">
+                <h3>Device Types</h3>
+                <span class="spectrum-card-badge" id="cat-device-count">0 classified</span>
+            </div>
+            <div class="spectrum-donut-wrap">
+                <svg id="category-donut" class="spectrum-svg" viewBox="0 0 240 240">
+                    <!-- Donut rendered by JS -->
+                </svg>
+                <div class="donut-center-text">
+                    <div class="donut-center-value" id="cat-donut-total">0</div>
+                    <div class="donut-center-label">TYPES</div>
+                </div>
+            </div>
+            <div class="band-list" id="category-list">
+                <!-- Category breakdown rendered by JS -->
+            </div>
+        </div>
+
+        <!-- Signal Heatmap Grid -->
+        <div class="spectrum-card">
+            <div class="spectrum-card-header">
+                <h3>RF Band Activity</h3>
+                <span class="spectrum-card-badge" id="spec-heatmap-info">Band vs Packets</span>
+            </div>
+            <div class="spectrum-chart-wrap">
+                <svg id="signal-heatmap" class="spectrum-svg" viewBox="0 0 400 200">
+                    <!-- Heatmap rendered by JS -->
+                </svg>
+            </div>
+            <div class="heatmap-scale">
+                <span class="heatmap-scale-label">Low activity</span>
+                <div class="heatmap-scale-bar"></div>
+                <span class="heatmap-scale-label">High activity</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scan line effect overlay -->
+    <div class="spectrum-scanline"></div>
+</div>
+
+<!-- ── Hunt Mode ── -->
+<div id="subtab-hunt" class="sub-content">
+    <div class="panel">
+        <h2>Device Hunt</h2>
+        <div class="hunt-setup">
+            <label for="target-ssid">Target (SSID or MAC address):</label>
+            <div class="hunt-input-row">
+                <input type="text" id="target-ssid" placeholder="Enter SSID name or MAC (AA:BB:CC:DD:EE:FF)...">
+                <button id="hunt-start" class="btn-primary">Start Hunt</button>
+                <button id="hunt-stop" class="btn-danger" style="display:none;">Stop</button>
+            </div>
+            <div style="font-size:var(--font-xs);color:var(--text-dim);margin-top:4px;">
+                WiFi: enter network name &bull; Bluetooth: enter MAC address from device list &bull; Click any device row → "Hunt This Device"
+            </div>
+        </div>
+
+        <!-- Hunt idle state -->
+        <div id="hunt-idle" class="hunt-idle-state">
+            <div class="hunt-idle-icon">&#127919;</div>
+            <div class="hunt-idle-text">No active hunt</div>
+            <div class="hunt-idle-hint">Enter a target above and press Start Hunt to begin tracking a device by signal strength or packet activity.</div>
+        </div>
+
+        <div id="hunt-display" style="display:none;">
+            <div class="signal-gauge-container">
+                <div class="signal-label">Signal Strength</div>
+                <!-- SVG Arc Gauge -->
+                <svg class="arc-gauge" viewBox="0 0 200 120" id="arc-gauge">
+                    <defs>
+                        <linearGradient id="gauge-gradient" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0%" stop-color="#42a5f5"/>
+                            <stop offset="50%" stop-color="#ff9800"/>
+                            <stop offset="100%" stop-color="#ef5350"/>
+                        </linearGradient>
+                    </defs>
+                    <!-- Background arc -->
+                    <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#262626" stroke-width="12" stroke-linecap="round"/>
+                    <!-- Value arc -->
+                    <path id="gauge-arc" d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="url(#gauge-gradient)" stroke-width="12" stroke-linecap="round" stroke-dasharray="0 251.33" />
+                    <!-- Needle -->
+                    <line id="gauge-needle" x1="100" y1="100" x2="100" y2="30" stroke="#fff" stroke-width="2" stroke-linecap="round" transform="rotate(-90, 100, 100)"/>
+                    <circle cx="100" cy="100" r="4" fill="#385723" stroke="#fff" stroke-width="2"/>
+                </svg>
+                <!-- Fallback bar gauge -->
+                <div class="signal-gauge" style="display:none">
+                    <div class="signal-bar" id="signal-bar"></div>
+                </div>
+                <div class="signal-value" id="signal-value">-- dBm</div>
+                <div class="signal-hint" id="signal-hint">Searching...</div>
+                <!-- Audio toggle -->
+                <label class="hunt-audio-toggle">
+                    <input type="checkbox" id="hunt-audio-toggle"> Audio Feedback
+                </label>
+            </div>
+
+            <div class="hunt-stats">
+                <div class="stat">
+                    <span class="stat-label">Status</span>
+                    <span class="stat-value" id="hunt-status">Searching</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Channel</span>
+                    <span class="stat-value" id="hunt-channel">--</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">MAC</span>
+                    <span class="stat-value" id="hunt-mac">--</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Peak Signal</span>
+                    <span class="stat-value" id="hunt-peak">-- dBm</span>
+                </div>
+            </div>
+
+            <!-- RSSI History Chart -->
+            <div class="chart-container">
+                <h3>Signal History</h3>
+                <svg id="rssi-chart" viewBox="0 0 660 200" preserveAspectRatio="none">
+                    <line x1="0" y1="50" x2="600" y2="50" class="chart-gridline"/>
+                    <line x1="0" y1="100" x2="600" y2="100" class="chart-gridline"/>
+                    <line x1="0" y1="150" x2="600" y2="150" class="chart-gridline"/>
+                    <text x="605" y="54" class="chart-label">-40 dBm</text>
+                    <text x="605" y="104" class="chart-label">-60 dBm</text>
+                    <text x="605" y="154" class="chart-label">-80 dBm</text>
+                    <polyline id="rssi-line" class="chart-line" points=""/>
+                </svg>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Log Viewer ── -->
+<div id="subtab-logs" class="sub-content">
+    <div class="panel log-panel">
+        <div class="log-toolbar">
+            <h2>System Logs</h2>
+            <div class="log-controls">
+                <select id="log-level-filter" class="log-filter-select">
+                    <option value="WARNING" selected>WARNING+</option>
+                    <option value="ERROR">ERROR only</option>
+                    <option value="INFO">INFO+</option>
+                    <option value="">All Levels</option>
+                </select>
+                <button id="log-pause-btn" class="btn-secondary log-btn" title="Pause auto-scroll">&#9646;&#9646; Pause</button>
+                <button id="log-refresh-btn" class="btn-secondary log-btn" title="Refresh now">&#8635; Refresh</button>
+                <button id="log-clear-btn" class="btn-secondary log-btn" title="Clear display">Clear</button>
+            </div>
+        </div>
+        <div class="log-viewer" id="log-viewer">
+            <div class="log-line log-dim">Loading logs...</div>
+        </div>
+        <div class="log-status-bar">
+            <span id="log-status">Connecting...</span>
+            <span id="log-entry-count">0 entries</span>
+        </div>
+    </div>
+</div>
+
+<!-- ── Export ── -->
+<div id="subtab-export" class="sub-content">
+    <div class="panel">
+        <h2>Data Export</h2>
+        <div class="export-status-bar" id="export-status-bar">
+            <span class="export-stat">
+                <span class="export-stat-value" id="export-device-count">--</span> devices tracked
+            </span>
+            <span class="export-stat">
+                <span class="export-stat-value" id="export-located-count">--</span> GPS-located
+            </span>
+            <span class="export-stat" id="export-gps-status">
+                GPS: <span id="export-gps-state">checking...</span>
+            </span>
+        </div>
+
+        <div class="export-grid">
+            <div class="export-card">
+                <div class="export-card-header">
+                    <h3>CSV</h3>
+                    <span class="export-card-badge">All Devices</span>
+                </div>
+                <p class="export-card-desc">Full device list with MAC, signal, packets, manufacturer</p>
+                <button id="export-csv" class="btn-primary export-btn">Download CSV</button>
+            </div>
+            <div class="export-card">
+                <div class="export-card-header">
+                    <h3>KML</h3>
+                    <span class="export-card-badge export-gps-req">Requires GPS</span>
+                </div>
+                <p class="export-card-desc">Google Earth placemarks for all located devices</p>
+                <button id="export-kml" class="btn-primary export-btn">Download KML</button>
+            </div>
+            <div class="export-card">
+                <div class="export-card-header">
+                    <h3>CoT XML</h3>
+                    <span class="export-card-badge export-gps-req">Requires GPS</span>
+                </div>
+                <p class="export-card-desc">ATAK-compatible Cursor on Target with MIL-STD-2525 types</p>
+                <button id="export-cot" class="btn-primary export-btn">Download CoT</button>
+            </div>
+            <div class="export-card">
+                <div class="export-card-header">
+                    <h3>Waypoints</h3>
+                    <span class="export-card-badge export-gps-req">Requires GPS</span>
+                </div>
+                <p class="export-card-desc">Mission Planner waypoint file for autonomous RF hunt</p>
+                <button id="export-waypoints" class="btn-primary export-btn">Download WPL</button>
+            </div>
+        </div>
+
+        <div class="export-instructions">
+            <h3>How to view in Google Earth</h3>
+            <ol>
+                <li>Click "Download KML File" above</li>
+                <li>Transfer the file to your computer</li>
+                <li>Open Google Earth Pro</li>
+                <li>Drag and drop the .kml file into Google Earth</li>
+                <li>RF sources will appear as placemarks on the map</li>
+            </ol>
+
+            <h3>Manual export (from terminal)</h3>
+            <code>sudo kismetdb_to_kml -v --in Kismet-*.kismet --out survey.kml</code>
+        </div>
+    </div>
+</div>

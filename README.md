@@ -1,4 +1,4 @@
-# SORCC-PI — RF Survey Payload Integrator
+# Argus — RF Survey Payload Integrator
 
 ![Platform](https://img.shields.io/badge/Platform-Raspberry_Pi_4-c51a4a?style=flat-square)
 ![OS](https://img.shields.io/badge/OS-Kali_Linux_ARM64-557C94?style=flat-square)
@@ -15,7 +15,7 @@ deployable RF survey payload for robotics platforms.
 graph TD
     Browser["Student Browser<br/>phone / laptop"]
     Instructor["Instructor Browser"]
-    Dashboard["SORCC Dashboard<br/>FastAPI :8080"]
+    Dashboard["Argus Dashboard<br/>FastAPI :8080"]
     Kismet["Kismet<br/>Wireless Monitor :2501"]
     WiFi["WiFi<br/>wlan0"]
     BT["Bluetooth<br/>hci0"]
@@ -51,11 +51,11 @@ graph TD
 ```bash
 # 1. Flash Kali Linux ARM64 onto SD card (use RPi Imager)
 # 2. Clone the repo
-git clone https://github.com/rmeadomavic/sorcc-pi.git
-cd sorcc-pi
+git clone https://github.com/rmeadomavic/argus.git
+cd argus
 
 # 3. Run the one-click installer
-sudo bash scripts/sorcc-setup.sh
+sudo bash scripts/argus-setup.sh
 
 # 4. Open the dashboard
 # http://<pi-ip>:8080
@@ -103,7 +103,7 @@ sudo bash scripts/sorcc-setup.sh
 
 ### Password Protection
 
-Set `password` in `[dashboard]` of `sorcc.ini` to require login. Leave blank for open access.
+Set `password` in `[dashboard]` of `argus.ini` to require login. Leave blank for open access.
 When set, all pages and APIs require authentication. `/api/status` stays open for instructor polling.
 Sessions expire after `session_timeout_min` minutes (default: 480 = 8 hours).
 
@@ -141,11 +141,11 @@ Sessions expire after `session_timeout_min` minutes (default: 480 = 8 hours).
 
 ## Configuration
 
-All settings live in `config/sorcc.ini`. Edit via the dashboard Settings tab
+All settings live in `config/argus.ini`. Edit via the dashboard Settings tab
 or directly on the Pi:
 
 ```bash
-nano /opt/sorcc/config/sorcc.ini
+nano /opt/argus/config/argus.ini
 ```
 
 Key settings:
@@ -154,7 +154,7 @@ Key settings:
 |-----|---------|---------|
 | `apn` | `[lte]` | Carrier APN — blank for interactive prompt |
 | `source_wifi` | `[kismet]` | WiFi adapter for monitor mode |
-| `hostname` | `[general]` | mDNS hostname (e.g., `sorcc-pi.local`) |
+| `hostname` | `[general]` | mDNS hostname (e.g., `argus-pi.local`) |
 | `password` | `[dashboard]` | Dashboard login password (empty = no login) |
 
 See [docs/configuration.md](docs/configuration.md) for the full reference.
@@ -178,29 +178,29 @@ Power on and the dashboard is ready — no monitor, no keyboard.
 
 ```bash
 # With WiFi
-sudo bash scripts/sorcc-headless.sh --ssid "ClassroomWiFi" --password "s3cret"
+sudo bash scripts/argus-headless.sh --ssid "ClassroomWiFi" --password "s3cret"
 
 # LTE only
-sudo bash scripts/sorcc-headless.sh --ethernet-only
+sudo bash scripts/argus-headless.sh --ethernet-only
 
 # Custom hostname
-sudo bash scripts/sorcc-headless.sh --hostname sorcc-pi-03
+sudo bash scripts/argus-headless.sh --hostname argus-pi-03
 ```
 
 ## Service Management
 
 | Service | Purpose | Depends On |
 |---------|---------|------------|
-| `sorcc-boot` | GPS init, Avahi startup | ModemManager |
-| `kismet` | Wireless monitoring | sorcc-boot |
-| `sorcc-dashboard` | Web UI on :8080 | kismet |
+| `argus-boot` | GPS init, Avahi startup | ModemManager |
+| `kismet` | Wireless monitoring | argus-boot |
+| `argus-dashboard` | Web UI on :8080 | kismet |
 
 ```mermaid
 graph LR
     MM["ModemManager"]
-    Boot["sorcc-boot<br/>GPS + Avahi"]
+    Boot["argus-boot<br/>GPS + Avahi"]
     K["kismet<br/>RF monitoring"]
-    Dash["sorcc-dashboard<br/>Web UI :8080"]
+    Dash["argus-dashboard<br/>Web UI :8080"]
 
     MM --> Boot --> K --> Dash
 
@@ -212,14 +212,14 @@ graph LR
 
 ```bash
 # Check all services
-systemctl status kismet sorcc-dashboard sorcc-boot
+systemctl status kismet argus-dashboard argus-boot
 
 # View logs
-journalctl -u sorcc-dashboard -f
+journalctl -u argus-dashboard -f
 journalctl -u kismet -f
 
 # Restart services
-sudo systemctl restart sorcc-dashboard
+sudo systemctl restart argus-dashboard
 ```
 
 ## API Endpoints
@@ -254,7 +254,7 @@ Full OpenAPI schema available at `/docs` when running.
 | No devices in Live View | Check Kismet: `systemctl status kismet` |
 | LTE not connecting | Verify APN in Settings tab. Modem index auto-detected. |
 | No GPS fix | Move to open sky area, check preflight GPS Fix status |
-| Dashboard not loading | Check: `systemctl status sorcc-dashboard` |
+| Dashboard not loading | Check: `systemctl status argus-dashboard` |
 | Dashboard requires login | Password is set in `[dashboard] password`. Clear it to disable. |
 | SDR not detected | Replug the Nooelec dongle, check `lsusb` |
 | Bluetooth missing | Run `sudo hciconfig hci0 up`, check `hciconfig` |
@@ -265,10 +265,10 @@ Full OpenAPI schema available at `/docs` when running.
 
 ```bash
 # Full preflight check
-bash scripts/sorcc-preflight.sh
+bash scripts/argus-preflight.sh
 
 # JSON output (used by dashboard)
-bash scripts/sorcc-preflight.sh --json
+bash scripts/argus-preflight.sh --json
 ```
 
 ## Course Materials

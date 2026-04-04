@@ -1,4 +1,4 @@
-# SORCC-PI — Starting a Dev Session
+# Argus — Starting a Dev Session
 
 Quick reference for each development session. Assumes INIT-SETUP.md is complete.
 
@@ -48,14 +48,14 @@ With both tabs open and the Claude Chrome extension active, prompt Claude in Chr
 
 ```
 I have two tabs open:
-- Tab 1: Claude Code remote terminal connected to my SORCC Pi at <TAILSCALE_IP>
-- Tab 2: SORCC-PI dashboard at http://<TAILSCALE_IP>:8080
+- Tab 1: Claude Code remote terminal connected to my Argus Pi at <TAILSCALE_IP>
+- Tab 2: Argus dashboard at http://<TAILSCALE_IP>:8080
 
 Your workflow:
 1. Go to Tab 2 and screenshot the UI
 2. Identify visual issues, broken elements, or UX problems
 3. Switch to Tab 1 and make code changes to fix them
-4. Run in Tab 1: rsync -av --exclude='__pycache__' ~/SORCC-PI/sorcc/ /opt/sorcc/sorcc/ && sudo systemctl restart sorcc-dashboard
+4. Run in Tab 1: rsync -av --exclude='__pycache__' ~/SORCC-PI/argus/ /opt/argus/argus/ && sudo systemctl restart argus-dashboard
 5. Switch back to Tab 2, wait 5 seconds, refresh, and verify
 6. Repeat until clean
 
@@ -68,9 +68,9 @@ Do NOT change: config files, installer scripts (unless specifically tasked)
 While the recursive loop runs, fire off code-only work in the cloud:
 ```bash
 # In another terminal on the Pi, or from Tab 1:
-claude --remote --model sonnet "Write pytest tests for sorcc/web/kismet.py"
+claude --remote --model sonnet "Write pytest tests for argus/web/kismet.py"
 claude --remote --model sonnet "Improve inline documentation in server.py"
-claude --remote --model sonnet "Audit sorcc-setup.sh for edge cases"
+claude --remote --model sonnet "Audit argus-setup.sh for edge cases"
 ```
 
 Check progress: `/tasks` in Claude Code, or at `claude.ai/code`.
@@ -95,7 +95,7 @@ Check progress: `/tasks` in Claude Code, or at `claude.ai/code`.
 After starting, verify these in Tab 1:
 ```bash
 # Services running?
-systemctl is-active kismet sorcc-dashboard sorcc-boot
+systemctl is-active kismet argus-dashboard argus-boot
 
 # Dashboard responding?
 curl -s http://localhost:8080/api/status | python3 -c "import json,sys; s=json.load(sys.stdin); print(f'Kismet: {s[\"kismet\"]} | Devices: {s[\"device_count\"]} | GPS: {s[\"gps\"]}')"
@@ -110,8 +110,8 @@ curl -s http://localhost:8080/api/logs?n=3
 
 Before closing out:
 - [ ] Commit and push all changes: `git add -A && git commit -m "..." && git push`
-- [ ] Sync to deployment: `rsync -av --exclude='__pycache__' ~/SORCC-PI/sorcc/ /opt/sorcc/sorcc/`
-- [ ] Restart service: `sudo systemctl restart sorcc-dashboard`
+- [ ] Sync to deployment: `rsync -av --exclude='__pycache__' ~/SORCC-PI/argus/ /opt/argus/argus/`
+- [ ] Restart service: `sudo systemctl restart argus-dashboard`
 - [ ] Tell Claude Code: "wrap up, commit to memory, update NEXT-SESSION-TODO.md"
 - [ ] Review any cloud `--remote` task results at claude.ai/code
 
@@ -122,7 +122,7 @@ Before closing out:
 | Problem | Fix |
 |---------|-----|
 | Remote control disconnected | Re-run `/remote-control` in Claude Code |
-| Dashboard not loading | `sudo systemctl restart sorcc-dashboard` |
+| Dashboard not loading | `sudo systemctl restart argus-dashboard` |
 | Kismet down | `sudo systemctl restart kismet` |
 | GPS not working | `sudo mmcli -m 0 --location-enable-gps-nmea --location-enable-gps-raw` |
 | 503 errors | Kismet slow — wait 30s (response cache will serve stale data) |

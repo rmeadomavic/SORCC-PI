@@ -1,0 +1,258 @@
+/* Argus Preflight Tab — System Readiness Checklist */
+
+/* ── Overall Status Banner ── */
+.preflight-banner {
+    padding: var(--sp-4) var(--sp-5);
+    border-radius: var(--radius-lg);
+    text-align: center;
+    margin-bottom: var(--sp-5);
+    border: 2px solid var(--border);
+    transition: all var(--transition-normal);
+}
+
+.preflight-banner h2 {
+    font-size: var(--font-xl);
+    margin-bottom: var(--sp-1);
+}
+
+.preflight-banner p {
+    font-size: var(--font-sm);
+    color: var(--text-secondary);
+}
+
+.preflight-banner.status-pass {
+    background: var(--success-bg);
+    border-color: var(--argus-green);
+    box-shadow: var(--glow-green);
+}
+
+.preflight-banner.status-pass h2 {
+    color: var(--argus-muted);
+}
+
+.preflight-banner.status-warn {
+    background: var(--warning-bg);
+    border-color: var(--warning);
+}
+
+.preflight-banner.status-warn h2 {
+    color: var(--warning);
+}
+
+.preflight-banner.status-fail {
+    background: var(--danger-bg);
+    border-color: var(--danger);
+    box-shadow: var(--glow-danger);
+}
+
+.preflight-banner.status-fail h2 {
+    color: #fca5a5;
+}
+
+.preflight-banner.status-unknown {
+    background: var(--bg-panel);
+    border-color: var(--card-border);
+}
+
+.preflight-banner.status-unknown h2 {
+    color: var(--text-secondary);
+}
+
+/* ── Controls Row ── */
+.preflight-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--sp-4);
+    flex-wrap: wrap;
+    gap: var(--sp-3);
+}
+
+.preflight-controls-left {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+}
+
+.preflight-timestamp {
+    font-size: var(--font-xs);
+    color: var(--text-dim);
+}
+
+.auto-refresh-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    font-size: var(--font-sm);
+    color: var(--text-secondary);
+}
+
+/* ── Category Cards Grid ── */
+.preflight-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--sp-4);
+}
+
+.preflight-card {
+    background: var(--bg-panel-gradient);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.preflight-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--sp-3) var(--sp-4);
+    background: linear-gradient(180deg, rgba(42, 65, 24, 0.12), rgba(0, 0, 0, 0.25));
+    border-bottom: 1px solid var(--card-border);
+    border-top: 2px solid var(--argus-green);
+}
+
+.preflight-card-header h3 {
+    font-size: var(--font-base);
+    font-weight: 700;
+    color: var(--text-bright);
+    margin: 0;
+}
+
+.preflight-card-status {
+    font-size: var(--font-xs);
+    font-weight: 700;
+    padding: 2px var(--sp-2);
+    border-radius: var(--radius-sm);
+    text-transform: uppercase;
+    letter-spacing: var(--ls-wide);
+}
+
+.preflight-card-status.pass {
+    background: var(--success-bg);
+    color: var(--success);
+}
+
+.preflight-card-status.warn {
+    background: var(--warning-bg);
+    color: var(--warning);
+}
+
+.preflight-card-status.fail {
+    background: var(--danger-bg);
+    color: var(--danger);
+}
+
+/* ── Check Items ── */
+.preflight-checks {
+    padding: var(--sp-2) 0;
+}
+
+.preflight-check {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-2) var(--sp-4);
+    border-bottom: 1px solid rgba(68, 68, 68, 0.3);
+}
+
+.preflight-check:last-child {
+    border-bottom: none;
+}
+
+.check-indicator {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-xs);
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.check-indicator.pass {
+    background: rgba(56, 87, 35, 0.2);
+    color: var(--argus-muted);
+    border: 1px solid var(--argus-green);
+}
+
+.check-indicator.warn {
+    background: var(--warning-bg);
+    color: var(--warning);
+    border: 1px solid var(--warning);
+}
+
+.check-indicator.info {
+    background: rgba(100, 100, 100, 0.1);
+    color: #777;
+    border: 1px solid #444;
+}
+
+.check-indicator.fail {
+    background: var(--danger-bg);
+    color: var(--danger);
+    border: 1px solid var(--danger);
+}
+
+.check-indicator.pending {
+    background: var(--bg-input);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+}
+
+.check-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.check-name {
+    font-size: var(--font-sm);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.check-detail {
+    font-size: var(--font-xs);
+    color: var(--text-dim);
+    margin-top: 1px;
+}
+
+/* ── Auto-Refresh Indicator ── */
+.refresh-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-1);
+    font-size: var(--font-xs);
+    color: var(--text-dim);
+}
+
+.refresh-indicator .spin {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--border);
+    border-top-color: var(--argus-green);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+    .preflight-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .preflight-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .preflight-controls-left {
+        flex-wrap: wrap;
+    }
+}

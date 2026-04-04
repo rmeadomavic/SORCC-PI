@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Argus Instructor Overview</title>
+    <style>
+        /* ── Design Tokens (inline to keep standalone) ── */
+        :root {
+            --argus-green: #4a7c3f;
+            --argus-green-dark: #385723;
+            --argus-green-light: #5a9c4f;
+            --argus-muted: #A6BC92;
+            --bg-dark: #1a1a1a;
+            --bg-panel: #2a2a2a;
+            --bg-input: #333;
+            --text-primary: #e0e0e0;
+            --text-secondary: #999;
+            --text-bright: #fff;
+            --text-dim: #666;
+            --border: #444;
+            --signal-cold: #e74c3c;
+            --signal-hot: #2ecc71;
+            --signal-warm: #f39c12;
+            --danger: #e74c3c;
+            --info: #3498db;
+            --radius-md: 6px;
+            --radius-lg: 8px;
+            --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --font-mono: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Header ── */
+        header {
+            background: var(--argus-green-dark);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--argus-green);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-text {
+            font-size: 1.2rem;
+            font-weight: 900;
+            color: var(--text-bright);
+            background: var(--argus-green);
+            padding: 4px 10px;
+            border-radius: 4px;
+            letter-spacing: 2px;
+        }
+
+        header h1 {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-bright);
+        }
+
+        /* ── Add Device Bar ── */
+        .add-bar {
+            padding: 16px 20px;
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .add-bar input {
+            flex: 1;
+            min-width: 200px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-bright);
+            padding: 10px 14px;
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+        }
+
+        .add-bar input::placeholder { color: var(--text-dim); }
+        .add-bar input:focus { outline: none; border-color: var(--argus-green); }
+
+        .btn {
+            border: none;
+            padding: 10px 20px;
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: var(--argus-green);
+            color: white;
+        }
+
+        .btn-primary:hover { background: var(--argus-green-light); }
+
+        .btn-secondary {
+            background: var(--bg-input);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        /* ── Device Grid ── */
+        .device-grid {
+            flex: 1;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+            align-content: start;
+        }
+
+        .pi-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+
+        .pi-card.online { border-color: var(--argus-green); }
+        .pi-card.offline { border-color: var(--signal-cold); opacity: 0.7; }
+
+        .pi-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--bg-input);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .pi-card-hostname {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text-bright);
+        }
+
+        .pi-card-callsign {
+            font-size: 0.75rem;
+            color: var(--argus-muted);
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+
+        .pi-card-remove {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0 4px;
+            line-height: 1;
+        }
+
+        .pi-card-remove:hover { color: var(--danger); }
+
+        .pi-card-body {
+            padding: 14px 16px;
+        }
+
+        .pi-card-status-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .pi-status-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-dim);
+            flex-shrink: 0;
+        }
+
+        .dot.up { background: var(--signal-hot); }
+        .dot.down { background: var(--signal-cold); }
+        .dot.warn { background: var(--signal-warm); }
+
+        .pi-card-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .pi-stat {
+            background: var(--bg-dark);
+            padding: 8px 10px;
+            border-radius: var(--radius-md);
+            text-align: center;
+        }
+
+        .pi-stat-label {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .pi-stat-value {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-bright);
+            font-family: var(--font-mono);
+        }
+
+        .pi-card-profile {
+            font-size: 0.75rem;
+            color: var(--argus-muted);
+            margin-bottom: 10px;
+        }
+
+        .pi-card-link {
+            display: block;
+            text-align: center;
+            background: var(--argus-green);
+            color: white;
+            padding: 8px;
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+        }
+
+        .pi-card-link:hover {
+            background: var(--argus-green-light);
+            text-decoration: none;
+        }
+
+        .pi-card-error {
+            font-size: 0.8rem;
+            color: var(--signal-cold);
+            text-align: center;
+            padding: 20px 10px;
+        }
+
+        /* ── Empty State ── */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-dim);
+            grid-column: 1 / -1;
+        }
+
+        .empty-state h2 {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            font-size: 0.9rem;
+        }
+
+        /* ── Footer ── */
+        footer {
+            background: var(--bg-panel);
+            border-top: 1px solid var(--border);
+            padding: 8px 20px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+
+        .footer-classification {
+            color: var(--argus-muted);
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .device-grid {
+                grid-template-columns: 1fr;
+                padding: 12px;
+            }
+            header {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ── Header ── -->
+    <header>
+        <div class="header-left">
+            <div class="logo-text">ARGUS</div>
+            <h1>Instructor Overview</h1>
+        </div>
+    </header>
+
+    <!-- ── Add Device Bar ── -->
+    <div class="add-bar">
+        <input type="text" id="device-input" placeholder="Enter Pi IP or hostname (e.g., 192.168.1.10, argus-pi-01)">
+        <button class="btn btn-primary" id="btn-add-device">Add Device</button>
+        <button class="btn btn-secondary" id="btn-add-bulk">Add Bulk (comma-separated)</button>
+    </div>
+
+    <!-- ── Device Card Grid ── -->
+    <div class="device-grid" id="device-grid">
+        <div class="empty-state" id="empty-state">
+            <h2>No Devices Added</h2>
+            <p>Enter a Pi IP address or hostname above to begin monitoring.</p>
+        </div>
+    </div>
+
+    <!-- ── Footer ── -->
+    <footer>
+        <span class="footer-classification">UNCLASSIFIED</span>
+        <span>Argus — SORCC Instructor Overview</span>
+    </footer>
+
+    <script>
+    (function () {
+        "use strict";
+
+        var POLL_INTERVAL = 2000;
+        var STORAGE_KEY = "argus-instructor-devices";
+        var devices = [];
+        var pollTimers = {};
+
+        // ── LocalStorage ──
+        function loadDevices() {
+            try {
+                var saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) devices = JSON.parse(saved);
+            } catch (e) {
+                devices = [];
+            }
+        }
+
+        function saveDevices() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(devices));
+        }
+
+        // ── DOM References ──
+        var grid = document.getElementById("device-grid");
+        var emptyState = document.getElementById("empty-state");
+        var input = document.getElementById("device-input");
+        var addBtn = document.getElementById("btn-add-device");
+        var bulkBtn = document.getElementById("btn-add-bulk");
+
+        // ── Add Device ──
+        function addDevice(host) {
+            host = host.trim();
+            if (!host) return;
+            // Normalize: strip protocol, trailing slash
+            host = host.replace(/^https?:\/\//, "").replace(/\/+$/, "").replace(/:8080$/, "");
+            if (devices.indexOf(host) !== -1) return; // already exists
+            devices.push(host);
+            saveDevices();
+            renderCard(host);
+            updateEmpty();
+            startPolling(host);
+        }
+
+        function removeDevice(host) {
+            var idx = devices.indexOf(host);
+            if (idx !== -1) devices.splice(idx, 1);
+            saveDevices();
+            var card = document.getElementById("card-" + hostId(host));
+            if (card) card.remove();
+            if (pollTimers[host]) {
+                clearInterval(pollTimers[host]);
+                delete pollTimers[host];
+            }
+            updateEmpty();
+        }
+
+        function hostId(host) {
+            return host.replace(/[^a-zA-Z0-9]/g, "_");
+        }
+
+        function updateEmpty() {
+            emptyState.style.display = devices.length === 0 ? "" : "none";
+        }
+
+        // ── Render Card ──
+        function renderCard(host) {
+            var id = hostId(host);
+            var card = document.createElement("div");
+            card.className = "pi-card offline";
+            card.id = "card-" + id;
+            card.innerHTML =
+                '<div class="pi-card-header">' +
+                '  <div>' +
+                '    <div class="pi-card-hostname" id="hostname-' + id + '">' + escapeHtml(host) + '</div>' +
+                '    <div class="pi-card-callsign" id="callsign-' + id + '">--</div>' +
+                '  </div>' +
+                '  <button class="pi-card-remove" data-host="' + escapeHtml(host) + '" title="Remove">&times;</button>' +
+                '</div>' +
+                '<div class="pi-card-body">' +
+                '  <div class="pi-card-status-row">' +
+                '    <div class="pi-status-item"><div class="dot" id="dot-kismet-' + id + '"></div> Kismet</div>' +
+                '    <div class="pi-status-item"><div class="dot" id="dot-gps-' + id + '"></div> GPS</div>' +
+                '    <div class="pi-status-item"><div class="dot" id="dot-lte-' + id + '"></div> LTE</div>' +
+                '  </div>' +
+                '  <div class="pi-card-stats">' +
+                '    <div class="pi-stat"><div class="pi-stat-label">Battery</div><div class="pi-stat-value" id="stat-battery-' + id + '">--</div></div>' +
+                '    <div class="pi-stat"><div class="pi-stat-label">Devices</div><div class="pi-stat-value" id="stat-devices-' + id + '">--</div></div>' +
+                '  </div>' +
+                '  <div class="pi-card-profile" id="profile-' + id + '">Profile: --</div>' +
+                '  <a class="pi-card-link" href="http://' + escapeHtml(host) + ':8080" target="_blank">Open Dashboard</a>' +
+                '</div>';
+
+            // Insert before empty state
+            grid.insertBefore(card, emptyState);
+
+            // Remove button handler
+            card.querySelector(".pi-card-remove").addEventListener("click", function () {
+                removeDevice(this.dataset.host);
+            });
+        }
+
+        // ── Poll Device ──
+        function startPolling(host) {
+            pollDevice(host); // immediate first poll
+            pollTimers[host] = setInterval(function () {
+                pollDevice(host);
+            }, POLL_INTERVAL);
+        }
+
+        function pollDevice(host) {
+            var id = hostId(host);
+            var card = document.getElementById("card-" + id);
+            if (!card) return;
+
+            var url = "http://" + host + ":8080/api/status";
+            fetch(url, { mode: "cors", signal: AbortSignal.timeout(3000) })
+                .then(function (r) { return r.json(); })
+                .then(function (s) {
+                    card.classList.remove("offline");
+                    card.classList.add("online");
+
+                    if (s.hostname) {
+                        document.getElementById("hostname-" + id).textContent = s.hostname;
+                    }
+                    if (s.callsign) {
+                        document.getElementById("callsign-" + id).textContent = s.callsign;
+                    }
+
+                    setDot("dot-kismet-" + id, s.kismet);
+                    setDot("dot-gps-" + id, s.gps);
+                    setDot("dot-lte-" + id, s.modem);
+
+                    var bat = document.getElementById("stat-battery-" + id);
+                    bat.textContent = (s.battery != null) ? Math.round(s.battery) + "%" : "--";
+
+                    var devCount = document.getElementById("stat-devices-" + id);
+                    devCount.textContent = (s.device_count != null) ? s.device_count : "--";
+
+                    var profile = document.getElementById("profile-" + id);
+                    profile.textContent = "Profile: " + (s.active_profile || "--");
+                })
+                .catch(function () {
+                    card.classList.remove("online");
+                    card.classList.add("offline");
+                });
+        }
+
+        function setDot(id, active) {
+            var dot = document.getElementById(id);
+            if (!dot) return;
+            dot.classList.remove("up", "down");
+            dot.classList.add(active ? "up" : "down");
+        }
+
+        function escapeHtml(str) {
+            var div = document.createElement("div");
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // ── Event Listeners ──
+        addBtn.addEventListener("click", function () {
+            addDevice(input.value);
+            input.value = "";
+            input.focus();
+        });
+
+        input.addEventListener("keydown", function (e) {
+            if (e.key === "Enter") {
+                addDevice(input.value);
+                input.value = "";
+            }
+        });
+
+        bulkBtn.addEventListener("click", function () {
+            var val = input.value;
+            if (!val.trim()) {
+                input.focus();
+                return;
+            }
+            var hosts = val.split(",");
+            for (var i = 0; i < hosts.length; i++) {
+                addDevice(hosts[i]);
+            }
+            input.value = "";
+            input.focus();
+        });
+
+        // ── Init ──
+        loadDevices();
+        updateEmpty();
+        for (var i = 0; i < devices.length; i++) {
+            renderCard(devices[i]);
+            startPolling(devices[i]);
+        }
+    })();
+    </script>
+</body>
+</html>

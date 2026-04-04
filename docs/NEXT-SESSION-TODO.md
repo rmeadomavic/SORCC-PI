@@ -1,4 +1,4 @@
-# SORCC-PI — Next Recursive Session TODO
+# Argus — Next Recursive Session TODO
 
 **Setup:** Two browser tabs — Tab 1: Claude Code CLI on Pi, Tab 2: Dashboard UI at `100.71.115.45:8080`
 
@@ -45,7 +45,7 @@
 
 ## Priority 5: Installer & Fresh Test — PARTIALLY DONE
 
-- [x] **Harden sorcc-setup.sh** — Uses requirements.txt, rsync, module verification, log dir
+- [x] **Harden argus-setup.sh** — Uses requirements.txt, rsync, module verification, log dir
 - [x] **Boot service** — GPS auto-enables on boot via mmcli + AT command fallback
 - [ ] **Fresh install test** — Wipe SD card, flash Kali, run installer, verify everything works
 
@@ -83,8 +83,8 @@
 
 ## Session Workflow Reminder
 
-1. CLI session: edit code, test endpoints, sync to /opt/sorcc/, restart service
+1. CLI session: edit code, test endpoints, sync to /opt/argus/, restart service
 2. Browser session: visual QA, multi-persona audit, report issues
-3. Sync: `rsync -av --exclude='__pycache__' ~/SORCC-PI/sorcc/ /opt/sorcc/sorcc/`
-4. Restart: `sudo systemctl restart sorcc-dashboard`
+3. Sync: `rsync -av --exclude='__pycache__' ~/Argus/argus/ /opt/argus/argus/`
+4. Restart: `sudo systemctl restart argus-dashboard`
 5. Commit + push after each chunk
