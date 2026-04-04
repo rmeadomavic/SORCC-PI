@@ -119,12 +119,10 @@ argus/
 
 | Metric | Count |
 |--------|-------|
-| LOC (`argus/`) | ~3,100 |
-| Merged PRs | 14 (all branches being cleaned up) |
+| LOC (`argus/`) | ~3,100 across 12 Python files |
+| Merged PRs | 14 |
 
-> **Process gap:** Zero human code reviews across all 14 PRs. Zero Codex reviews
-> (0% automated review rate). All PRs merged without any reviewer. See Hydra
-> CLAUDE.md for the same note — this is a cross-project gap.
+> **Process gap:** Zero code reviews (human or automated) across 14 merged PRs.
 
 ### Serial Device Map
 
