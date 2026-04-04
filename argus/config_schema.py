@@ -1,6 +1,6 @@
-"""Config schema -- typed validation for sorcc.ini with plain-English errors.
+"""Config schema -- typed validation for argus.ini with plain-English errors.
 
-Validates every section and field in the SORCC-PI configuration file so that
+Validates every section and field in the Argus configuration file so that
 problems surface as clear messages ("LTE APN is blank -- set it to your
 carrier's APN") instead of cryptic Python tracebacks.
 """
@@ -60,16 +60,16 @@ SCHEMA: dict[str, dict[str, FieldSpec]] = {
         "hostname": FieldSpec(
             FieldType.STRING,
             required=True,
-            default="sorcc-pi-01",
+            default="argus-pi-01",
             description=(
                 "mDNS hostname -- this is how you reach the Pi on the "
-                "network (e.g. sorcc-pi-01.local)"
+                "network (e.g. argus-pi-01.local)"
             ),
         ),
         "callsign": FieldSpec(
             FieldType.STRING,
             required=True,
-            default="SORCC-01",
+            default="ARGUS-01",
             description="Identifier shown on the instructor overview screen",
         ),
     },
@@ -89,7 +89,7 @@ SCHEMA: dict[str, dict[str, FieldSpec]] = {
         ),
         "connection_name": FieldSpec(
             FieldType.STRING,
-            default="sorcc-lte",
+            default="argus-lte",
             description="NetworkManager connection name for the LTE link",
         ),
         "dns": FieldSpec(
@@ -177,7 +177,7 @@ SCHEMA: dict[str, dict[str, FieldSpec]] = {
         ),
         "log_dir": FieldSpec(
             FieldType.STRING,
-            default="/opt/sorcc/output_data",
+            default="/opt/argus/output_data",
             description="Directory where Kismet stores capture data",
         ),
     },
@@ -272,7 +272,7 @@ SCHEMA: dict[str, dict[str, FieldSpec]] = {
 
 
 def validate(config_path: str | Path) -> ValidationResult:
-    """Validate a SORCC config file against the schema.
+    """Validate an Argus config file against the schema.
 
     Returns a ValidationResult with plain-English errors and warnings.
     """
@@ -282,7 +282,7 @@ def validate(config_path: str | Path) -> ValidationResult:
     if not path.exists():
         result.errors.append(
             f"Config file not found at {path}. "
-            "Run the setup script or copy sorcc.ini.factory to sorcc.ini."
+            "Run the setup script or copy argus.ini.factory to argus.ini."
         )
         return result
 

@@ -1,4 +1,4 @@
-"""SORCC-PI Dashboard — FastAPI application wrapping Kismet REST API."""
+"""Argus Dashboard — FastAPI application wrapping Kismet REST API."""
 
 from __future__ import annotations
 
@@ -27,12 +27,12 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from sorcc.web import kismet as ks
-from sorcc.web.oui import classify_device
-from sorcc.web.event_logger import events
+from argus.web import kismet as ks
+from argus.web.oui import classify_device
+from argus.web.event_logger import events
 
 try:
-    from sorcc.config_api import (
+    from argus.config_api import (
         read_config, write_config, restore_backup, restore_factory,
         has_backup, has_factory, set_config_path, get_config_path,
         REDACTED_VALUE,
@@ -41,7 +41,7 @@ try:
 except ImportError:
     _HAS_CONFIG_API = False
 
-from sorcc.web.logging_config import setup_logging, ring_handler
+from argus.web.logging_config import setup_logging, ring_handler
 setup_logging()
 log = logging.getLogger(__name__)
 
@@ -71,7 +71,7 @@ def _get_modem_index() -> str:
     return "0"
 
 
-app = FastAPI(title="SORCC RF Survey Dashboard", version="2.0.0")
+app = FastAPI(title="Argus RF Survey Dashboard", version="2.0.0")
 
 BASE_DIR = Path(__file__).parent
 STATIC_DIR = BASE_DIR / "static"
@@ -186,7 +186,7 @@ class _AuthMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         # Check session cookie
-        cookie = request.cookies.get("sorcc_session", "")
+        cookie = request.cookies.get("argus_session", "")
         if cookie and _validate_session_cookie(cookie):
             return await call_next(request)
 
@@ -211,7 +211,7 @@ _AUTH_OPEN_PREFIXES = {"/api/status", "/api/devices", "/api/activity", "/api/eve
 try:
     import configparser as _cp
     _cfg = _cp.ConfigParser()
-    _cfg.read("/opt/sorcc/config/sorcc.ini")
+    _cfg.read("/opt/argus/config/argus.ini")
     _AUTH_TOKEN = _cfg.get("dashboard", "api_token", fallback="").strip() or None
 except Exception:
     pass
@@ -307,7 +307,7 @@ async def _startup_load_web_password():
     except Exception as e:
         log.warning("Could not read dashboard password config: %s", e)
 
-# classify_device imported from sorcc.web.oui
+# classify_device imported from argus.web.oui
 
 # Track first-seen times and packet history for activity metrics
 _device_first_seen: dict[str, float] = {}
@@ -326,15 +326,15 @@ def _get_callsign() -> str:
     if _HAS_CONFIG_API:
         try:
             cfg = read_config()
-            return cfg.get("general", {}).get("callsign", "SORCC-01")
+            return cfg.get("general", {}).get("callsign", "ARGUS-01")
         except Exception:
             pass
-    return "SORCC-01"
+    return "ARGUS-01"
 
 
 @app.on_event("startup")
 async def _startup():
-    log.info("SORCC Dashboard v2.0.0 starting")
+    log.info("Argus Dashboard v2.0.0 starting")
     # Initialize event logger with configured callsign
     events.callsign = _get_callsign()
     events.log("system_startup", version="2.0.0")
@@ -363,7 +363,7 @@ async def login_page(request: Request):
     if _web_password is None:
         return RedirectResponse(url="/", status_code=302)
     # If already authenticated, go to dashboard
-    cookie = request.cookies.get("sorcc_session", "")
+    cookie = request.cookies.get("argus_session", "")
     if cookie and _validate_session_cookie(cookie):
         return RedirectResponse(url="/", status_code=302)
     return templates.TemplateResponse("login.html", {
@@ -396,7 +396,7 @@ async def api_login(request: Request):
         cookie_value = _make_session_cookie()
         response = JSONResponse(content={"status": "ok"})
         response.set_cookie(
-            key="sorcc_session",
+            key="argus_session",
             value=cookie_value,
             httponly=True,
             samesite="lax",
@@ -414,7 +414,7 @@ async def api_login(request: Request):
 @app.post("/api/logout")
 async def api_logout(request: Request):
     response = JSONResponse(content={"status": "ok"})
-    response.delete_cookie(key="sorcc_session", path="/")
+    response.delete_cookie(key="argus_session", path="/")
     return response
 
 
@@ -1135,10 +1135,10 @@ async def get_gps():
 @app.get("/api/export/kml")
 async def export_kml():
     import glob as glob_mod
-    output_kml = "/tmp/sorcc-survey-export.kml"
+    output_kml = "/tmp/argus-survey-export.kml"
 
     # Try kismetdb_to_kml first (best quality — uses full capture data)
-    capture_dirs = ["/opt/sorcc/output_data", "/root", "/tmp"]
+    capture_dirs = ["/opt/argus/output_data", "/root", "/tmp"]
     kismet_files: list[str] = []
     for d in capture_dirs:
         kismet_files.extend(glob_mod.glob(f"{d}/*.kismet"))
@@ -1152,7 +1152,7 @@ async def export_kml():
             result = subprocess.run(["kismetdb_to_kml", "-v", "--in", latest, "--out", output_kml], capture_output=True, text=True, timeout=30)
             if result.returncode == 0 and Path(output_kml).exists():
                 events.log("export_generated", format="kml", source="kismetdb")
-                return FileResponse(output_kml, media_type="application/vnd.google-earth.kml+xml", filename="sorcc-survey.kml")
+                return FileResponse(output_kml, media_type="application/vnd.google-earth.kml+xml", filename="argus-survey.kml")
 
     # Fallback: generate KML from GPS-located devices via Kismet API
     located = _fetch_located_devices_for_cot()
@@ -1160,7 +1160,7 @@ async def export_kml():
         raise HTTPException(status_code=404, detail="No GPS-located devices found. Get a GPS fix outdoors first.")
     kml = ET.Element("kml", xmlns="http://www.opengis.net/kml/2.2")
     doc = ET.SubElement(kml, "Document")
-    ET.SubElement(doc, "name").text = "SORCC RF Survey Export"
+    ET.SubElement(doc, "name").text = "Argus RF Survey Export"
     for device, classification in located:
         pm = ET.SubElement(doc, "Placemark")
         ET.SubElement(pm, "name").text = device.get("name") or device.get("mac", "Unknown")
@@ -1174,7 +1174,7 @@ async def export_kml():
     tree = ET.ElementTree(kml)
     tree.write(output_kml, xml_declaration=True, encoding="utf-8")
     events.log("export_generated", format="kml", source="api", device_count=len(located))
-    return FileResponse(output_kml, media_type="application/vnd.google-earth.kml+xml", filename="sorcc-survey.kml")
+    return FileResponse(output_kml, media_type="application/vnd.google-earth.kml+xml", filename="argus-survey.kml")
 
 
 @app.get("/api/export/csv")
@@ -1186,7 +1186,7 @@ async def export_csv():
     writer.writeheader()
     for dev in devices:
         writer.writerow({k: dev.get(k, "") for k in fieldnames})
-    return Response(content=buf.getvalue(), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=sorcc-devices.csv"})
+    return Response(content=buf.getvalue(), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=argus-devices.csv"})
 
 
 # ── CoT XML Export (ATAK Integration) ────────────────────────────────
@@ -1246,7 +1246,7 @@ def _build_cot_event(device: dict, classification: dict) -> ET.Element:
 
     event = ET.Element("event", {
         "version": "2.0",
-        "uid": f"SORCC-{mac}",
+        "uid": f"ARGUS-{mac}",
         "type": cot_type,
         "time": iso_now,
         "start": iso_now,
@@ -1372,7 +1372,7 @@ async def export_cot_self():
 
     event = ET.Element("event", {
         "version": "2.0",
-        "uid": f"SORCC-PLATFORM-{callsign}",
+        "uid": f"ARGUS-PLATFORM-{callsign}",
         "type": "a-f-G-E-S",  # friendly ground electronic sensor
         "time": iso_now,
         "start": iso_now,
@@ -1389,7 +1389,7 @@ async def export_cot_self():
     detail = ET.SubElement(event, "detail")
     ET.SubElement(detail, "contact", callsign=callsign)
     remarks = ET.SubElement(detail, "remarks")
-    remarks.text = f"SORCC RF Sensor Platform | Source: {gps.get('source', 'unknown')}"
+    remarks.text = f"Argus RF Sensor Platform | Source: {gps.get('source', 'unknown')}"
     ET.SubElement(detail, "__group", name="Blue", role="Team Lead")
 
     xml_bytes = ET.tostring(event, encoding="unicode", xml_declaration=False)
@@ -1445,7 +1445,7 @@ async def export_waypoints():
     return Response(
         content=content,
         media_type="text/plain",
-        headers={"Content-Disposition": "attachment; filename=sorcc-hunt-waypoints.waypoints"},
+        headers={"Content-Disposition": "attachment; filename=argus-hunt-waypoints.waypoints"},
     )
 
 
@@ -1475,8 +1475,8 @@ async def config_write(request: Request):
                 configure_web_password(pw, _session_timeout_sec // 60)
 
         # Validate after write and return any issues
-        from sorcc.config_schema import validate
-        vr = validate("/opt/sorcc/config/sorcc.ini")
+        from argus.config_schema import validate
+        vr = validate("/opt/argus/config/argus.ini")
         result: dict[str, Any] = {"status": "ok"}
         if vr.errors:
             result["validation_errors"] = vr.errors
@@ -1508,8 +1508,8 @@ async def config_factory_reset():
 @app.get("/api/config/validate")
 async def config_validate():
     """Validate the current config and return plain-English errors/warnings."""
-    from sorcc.config_schema import validate
-    vr = validate("/opt/sorcc/config/sorcc.ini")
+    from argus.config_schema import validate
+    vr = validate("/opt/argus/config/argus.ini")
     return {"ok": vr.ok, "errors": vr.errors, "warnings": vr.warnings}
 
 
@@ -1522,7 +1522,7 @@ async def config_export():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to read config: {e}")
     content = json.dumps(cfg, indent=2)
-    return Response(content=content, media_type="application/json", headers={"Content-Disposition": "attachment; filename=sorcc-config.json"})
+    return Response(content=content, media_type="application/json", headers={"Content-Disposition": "attachment; filename=argus-config.json"})
 
 @app.post("/api/config/import")
 async def config_import(file: UploadFile = File(...)):
@@ -1698,8 +1698,8 @@ async def preflight():
         _run_check_async("Bluetooth (hci0)", "hardware", _check_bluetooth),
         _run_check_async("PiSugar Battery", "hardware", _check_pisugar),
         _run_check_async("Kismet", "services", _check_service("kismet")),
-        _run_check_async("sorcc-dashboard", "services", _check_service("sorcc-dashboard")),
-        _run_check_async("sorcc-boot", "services", _check_service("sorcc-boot")),
+        _run_check_async("argus-dashboard", "services", _check_service("argus-dashboard")),
+        _run_check_async("argus-boot", "services", _check_service("argus-boot")),
         _run_check_async("avahi-daemon", "services", _check_service("avahi-daemon")),
         _run_check_async("LTE Modem", "network", _check_lte_modem),
         _run_check_async("Internet", "network", _check_internet),

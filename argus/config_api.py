@@ -1,6 +1,6 @@
-"""Config file read/write with file locking for SORCC-PI.
+"""Config file read/write with file locking for Argus.
 
-Provides safe concurrent access to sorcc.ini via fcntl file locking,
+Provides safe concurrent access to argus.ini via fcntl file locking,
 automatic backups, and factory-reset support.
 """
 
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 # Defaults
 # ---------------------------------------------------------------------------
 
-DEFAULT_CONFIG_PATH = Path("/opt/sorcc/config/sorcc.ini")
+DEFAULT_CONFIG_PATH = Path("/opt/argus/config/argus.ini")
 
 _config_path: Path | None = None
 
@@ -46,13 +46,13 @@ RESTART_REQUIRED_FIELDS: dict[str, set[str]] = {
 # ---------------------------------------------------------------------------
 
 def set_config_path(path: Path | str) -> None:
-    """Set the sorcc.ini path (called at startup)."""
+    """Set the argus.ini path (called at startup)."""
     global _config_path
     _config_path = Path(path)
 
 
 def get_config_path() -> Path:
-    """Return the current sorcc.ini path."""
+    """Return the current argus.ini path."""
     if _config_path is not None:
         return _config_path
     return DEFAULT_CONFIG_PATH
@@ -71,7 +71,7 @@ def _factory_path() -> Path:
 # ---------------------------------------------------------------------------
 
 def read_config() -> dict[str, dict[str, str]]:
-    """Read sorcc.ini and return as nested dict. Redacts sensitive fields."""
+    """Read argus.ini and return as nested dict. Redacts sensitive fields."""
     path = get_config_path()
     config = configparser.ConfigParser(inline_comment_prefixes=(";", "#"))
     config.read(path)
@@ -93,7 +93,7 @@ def read_config() -> dict[str, dict[str, str]]:
 # ---------------------------------------------------------------------------
 
 def write_config(updates: dict[str, dict[str, str]]) -> dict[str, Any]:
-    """Merge updates into sorcc.ini with atomic write and file locking.
+    """Merge updates into argus.ini with atomic write and file locking.
 
     Returns a dict with 'restart_required' and 'skipped' lists.
     """
@@ -168,7 +168,7 @@ def has_backup() -> bool:
 
 
 def restore_backup() -> bool:
-    """Restore sorcc.ini from sorcc.ini.bak. Returns True on success."""
+    """Restore argus.ini from argus.ini.bak. Returns True on success."""
     bak = _backup_path()
     if not bak.exists():
         return False
@@ -183,7 +183,7 @@ def has_factory() -> bool:
 
 
 def restore_factory() -> bool:
-    """Restore sorcc.ini from sorcc.ini.factory. Returns True on success.
+    """Restore argus.ini from argus.ini.factory. Returns True on success.
 
     Backs up the current config to .bak before overwriting.
     """
@@ -200,7 +200,7 @@ def restore_factory() -> bool:
 
 
 def backup_on_boot() -> None:
-    """Copy current sorcc.ini to sorcc.ini.bak on successful boot.
+    """Copy current argus.ini to argus.ini.bak on successful boot.
 
     Only backs up if the config parses successfully -- preserves
     last-known-good .bak when current config is corrupted.

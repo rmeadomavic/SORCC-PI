@@ -1,7 +1,7 @@
-"""SORCC-PI — Auto-generate self-signed TLS certificate for HTTPS.
+"""Argus — Auto-generate self-signed TLS certificate for HTTPS.
 
 Usage:
-    from sorcc.tls import ensure_tls_cert
+    from argus.tls import ensure_tls_cert
     cert, key = ensure_tls_cert()
     # Pass to uvicorn: ssl_certfile=cert, ssl_keyfile=key
 
@@ -14,15 +14,15 @@ from pathlib import Path
 
 log = logging.getLogger(__name__)
 
-DEFAULT_CERT_DIR = "/opt/sorcc/config"
-CERT_FILE = "sorcc-tls.crt"
-KEY_FILE = "sorcc-tls.key"
+DEFAULT_CERT_DIR = "/opt/argus/config"
+CERT_FILE = "argus-tls.crt"
+KEY_FILE = "argus-tls.key"
 
 
 def ensure_tls_cert(
     cert_dir: str = DEFAULT_CERT_DIR,
-    org: str = "SORCC",
-    cn: str = "sorcc-dashboard",
+    org: str = "Argus",
+    cn: str = "argus-dashboard",
 ) -> tuple[str, str]:
     """Ensure a self-signed TLS cert exists, generating one if needed.
 

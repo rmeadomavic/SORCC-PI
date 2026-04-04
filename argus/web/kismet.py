@@ -1,4 +1,4 @@
-"""SORCC-PI — Kismet REST API client with session caching and response caching."""
+"""Argus — Kismet REST API client with session caching and response caching."""
 
 from __future__ import annotations
 

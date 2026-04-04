@@ -1,11 +1,11 @@
-"""SORCC-PI — Structured event logger for operator actions and system state changes.
+"""Argus — Structured event logger for operator actions and system state changes.
 
 Writes JSONL files with timestamps, event types, and optional payloads.
 Each line is a self-contained JSON record. Files are named by date and callsign.
 Designed for after-action review by S2 analysts.
 
 Usage:
-    from sorcc.web.event_logger import events
+    from argus.web.event_logger import events
     events.log("hunt_started", target="AA:BB:CC:DD:EE:FF", mode="mac")
     events.log("mode_switched", profile="bt-survey")
     events.log("wifi_capture_enabled")
@@ -27,13 +27,13 @@ from typing import Any
 log = logging.getLogger(__name__)
 
 # Default log directory — matches boot service mkdir
-DEFAULT_LOG_DIR = "/opt/sorcc/logs"
+DEFAULT_LOG_DIR = "/opt/argus/logs"
 
 
 class EventLogger:
     """Append-only JSONL event logger with SHA-256 hash chain."""
 
-    def __init__(self, log_dir: str = DEFAULT_LOG_DIR, callsign: str = "SORCC-01"):
+    def __init__(self, log_dir: str = DEFAULT_LOG_DIR, callsign: str = "ARGUS-01"):
         self.log_dir = Path(log_dir)
         self.callsign = callsign
         self._prev_hash = "genesis"

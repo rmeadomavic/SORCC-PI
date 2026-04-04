@@ -1,4 +1,4 @@
-"""SORCC-PI Dashboard — entry point."""
+"""Argus Dashboard — entry point."""
 import os
 import uvicorn
 
@@ -10,26 +10,26 @@ if __name__ == "__main__":
         "log_level": "warning",
     }
 
-    # TLS: enable with SORCC_TLS=1 env var or tls_enabled in config
-    tls_enabled = os.environ.get("SORCC_TLS", "").strip() == "1"
+    # TLS: enable with ARGUS_TLS=1 env var or tls_enabled in config
+    tls_enabled = os.environ.get("ARGUS_TLS", "").strip() == "1"
     if not tls_enabled:
         try:
             import configparser
             cfg = configparser.ConfigParser()
-            cfg.read("/opt/sorcc/config/sorcc.ini")
+            cfg.read("/opt/argus/config/argus.ini")
             tls_enabled = cfg.get("dashboard", "tls_enabled", fallback="false").lower() == "true"
         except Exception:
             pass
 
     if tls_enabled:
         try:
-            from sorcc.tls import ensure_tls_cert
+            from argus.tls import ensure_tls_cert
             cert, key = ensure_tls_cert()
             kwargs["ssl_certfile"] = cert
             kwargs["ssl_keyfile"] = key
-            kwargs["port"] = int(os.environ.get("SORCC_PORT", "8443"))
-            print(f"[SORCC] TLS enabled — https://0.0.0.0:{kwargs['port']}")
+            kwargs["port"] = int(os.environ.get("ARGUS_PORT", "8443"))
+            print(f"[Argus] TLS enabled — https://0.0.0.0:{kwargs['port']}")
         except Exception as e:
-            print(f"[SORCC] TLS setup failed, falling back to HTTP: {e}")
+            print(f"[Argus] TLS setup failed, falling back to HTTP: {e}")
 
-    uvicorn.run("sorcc.web.server:app", **kwargs)
+    uvicorn.run("argus.web.server:app", **kwargs)

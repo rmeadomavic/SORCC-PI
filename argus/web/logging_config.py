@@ -1,4 +1,4 @@
-"""SORCC-PI — Structured logging with rotation and in-memory ring buffer."""
+"""Argus — Structured logging with rotation and in-memory ring buffer."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ import time
 from pathlib import Path
 
 
-LOG_DIR = Path("/opt/sorcc/logs")
+LOG_DIR = Path("/opt/argus/logs")
 LOG_FILE = LOG_DIR / "dashboard.log"
 MAX_BYTES = 5 * 1024 * 1024  # 5MB per file
 BACKUP_COUNT = 3              # Keep 3 rotated files (15MB total max)

@@ -1,4 +1,4 @@
-"""SORCC-PI — OUI manufacturer lookup and BT device classification.
+"""Argus — OUI manufacturer lookup and BT device classification.
 
 Maps the first 3 bytes of a MAC address (OUI prefix) to manufacturer and
 device category. Falls back to name-based heuristics and BLE random
