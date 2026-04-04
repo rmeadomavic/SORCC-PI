@@ -1710,3 +1710,37 @@
 .leaflet-control-attribution a {
     color: var(--accent, #4a7c3f) !important;
 }
+
+/* ── Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+    .activity-feed-dot,
+    .signal-hint.stale,
+    #subtab-spectrum.active .spectrum-scanline {
+        animation: none;
+    }
+
+    .device-detail-panel,
+    .activity-feed-item,
+    .device-row.device-new,
+    .stat-card.stat-pulse {
+        animation: none;
+    }
+
+    .device-detail-panel {
+        transform: none;
+    }
+
+    .leaderboard-bar-fill,
+    .wifi-capture-btn,
+    .sub-tab,
+    .profile-card,
+    .device-search,
+    .filter-btn,
+    .device-row,
+    .device-bar,
+    .hunt-input-row input,
+    .signal-bar,
+    .stat-card-value {
+        transition-duration: 0.01ms;
+    }
+}

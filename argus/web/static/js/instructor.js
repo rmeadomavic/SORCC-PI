@@ -103,7 +103,7 @@
         devices.forEach(function (d) {
             html += '<div class="device-list-item">';
             html += '  <span class="device-address">' + escapeHtml(d.address) + '</span>';
-            html += '  <button class="remove-device-btn" data-address="' + escapeHtml(d.address) + '" title="Remove">&#10005;</button>';
+            html += '  <button class="remove-device-btn" data-address="' + escapeHtml(d.address) + '" title="Remove" aria-label="Remove device">&#10005;</button>';
             html += '</div>';
         });
         list.innerHTML = html;

@@ -256,3 +256,13 @@
         flex-wrap: wrap;
     }
 }
+
+@media (prefers-reduced-motion: reduce) {
+    .refresh-indicator .spin {
+        animation: none;
+    }
+
+    .preflight-banner {
+        transition-duration: 0.01ms;
+    }
+}

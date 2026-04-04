@@ -16,6 +16,7 @@ import socket
 import subprocess
 import time
 import xml.etree.ElementTree as ET
+from urllib.parse import urlparse
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -35,7 +36,7 @@ try:
     from argus.config_api import (
         read_config, write_config, restore_backup, restore_factory,
         has_backup, has_factory, set_config_path, get_config_path,
-        REDACTED_VALUE,
+        REDACTED_VALUE, read_config_raw,
     )
     _HAS_CONFIG_API = True
 except ImportError:
@@ -238,7 +239,47 @@ class _TokenAuthMiddleware(BaseHTTPMiddleware):
         # Same-origin bypass — browser requests from the dashboard itself
         fetch_site = request.headers.get("sec-fetch-site", "")
         origin = request.headers.get("origin", "")
-        if fetch_site == "same-origin" or (origin and request.base_url.hostname in origin):
+
+        def _normalized_port(scheme: str, port: int | None) -> int | None:
+            if port is not None:
+                return port
+            if scheme == "http":
+                return 80
+            if scheme == "https":
+                return 443
+            return None
+
+        origin_is_app_origin = False
+        if origin:
+            try:
+                parsed_origin = urlparse(origin)
+                parsed_scheme = (parsed_origin.scheme or "").lower()
+                parsed_host = parsed_origin.hostname
+
+                # Defensive checks: malformed/non-origin style values are untrusted
+                if (
+                    parsed_scheme in {"http", "https"}
+                    and parsed_host
+                    and not parsed_origin.username
+                    and not parsed_origin.password
+                    and parsed_origin.path in {"", "/"}
+                    and not parsed_origin.params
+                    and not parsed_origin.query
+                    and not parsed_origin.fragment
+                ):
+                    app_scheme = request.base_url.scheme.lower()
+                    app_host = request.base_url.hostname
+                    origin_port = _normalized_port(parsed_scheme, parsed_origin.port)
+                    app_port = _normalized_port(app_scheme, request.base_url.port)
+                    origin_is_app_origin = (
+                        parsed_scheme == app_scheme
+                        and parsed_host == app_host
+                        and origin_port == app_port
+                    )
+            except ValueError:
+                origin_is_app_origin = False
+
+        if fetch_site == "same-origin" and origin_is_app_origin:
             return await call_next(request)
 
         # Check bearer token for external requests to protected endpoints
@@ -656,7 +697,9 @@ async def apply_wifi():
     if not _HAS_CONFIG_API:
         raise HTTPException(status_code=500, detail="Config API not available")
     try:
-        cfg = read_config()
+        # Command execution paths must read raw config values; API helpers may redact
+        # secrets (e.g., wifi.password) for responses and would break nmcli calls.
+        cfg = read_config_raw()
         ssid = cfg.get("wifi", {}).get("ssid", "").strip()
         password = cfg.get("wifi", {}).get("password", "").strip()
         country = cfg.get("wifi", {}).get("country_code", "US").strip()
@@ -1615,7 +1658,7 @@ def _check_wifi_conflict():
     if not _HAS_CONFIG_API:
         return "skip", "Config API not available"
     try:
-        cfg = read_config()
+        cfg = read_config_raw()
         monitor_iface = cfg.get("kismet", {}).get("source_wifi", "").split(":")[0].strip()
         connect_ssid = cfg.get("wifi", {}).get("ssid", "").strip()
         if not monitor_iface or not connect_ssid:

@@ -2,21 +2,21 @@
 
 <div class="settings-layout">
     <!-- Section Navigation -->
-    <nav class="settings-nav" id="settings-nav">
-        <button class="settings-nav-btn active" data-section="general">General</button>
-        <button class="settings-nav-btn" data-section="lte">LTE</button>
-        <button class="settings-nav-btn" data-section="gps">GPS</button>
-        <button class="settings-nav-btn" data-section="kismet">Kismet</button>
-        <button class="settings-nav-btn" data-section="dashboard">Dashboard</button>
-        <button class="settings-nav-btn" data-section="tailscale">Tailscale</button>
-        <button class="settings-nav-btn" data-section="pisugar">PiSugar</button>
-        <button class="settings-nav-btn" data-section="wifi">WiFi</button>
+    <nav class="settings-nav" id="settings-nav" role="tablist" aria-label="Settings sections">
+        <button id="settings-tab-btn-general" class="settings-nav-btn active" data-section="general" role="tab" aria-selected="true" aria-controls="settings-general" tabindex="0">General</button>
+        <button id="settings-tab-btn-lte" class="settings-nav-btn" data-section="lte" role="tab" aria-selected="false" aria-controls="settings-lte" tabindex="-1">LTE</button>
+        <button id="settings-tab-btn-gps" class="settings-nav-btn" data-section="gps" role="tab" aria-selected="false" aria-controls="settings-gps" tabindex="-1">GPS</button>
+        <button id="settings-tab-btn-kismet" class="settings-nav-btn" data-section="kismet" role="tab" aria-selected="false" aria-controls="settings-kismet" tabindex="-1">Kismet</button>
+        <button id="settings-tab-btn-dashboard" class="settings-nav-btn" data-section="dashboard" role="tab" aria-selected="false" aria-controls="settings-dashboard" tabindex="-1">Dashboard</button>
+        <button id="settings-tab-btn-tailscale" class="settings-nav-btn" data-section="tailscale" role="tab" aria-selected="false" aria-controls="settings-tailscale" tabindex="-1">Tailscale</button>
+        <button id="settings-tab-btn-pisugar" class="settings-nav-btn" data-section="pisugar" role="tab" aria-selected="false" aria-controls="settings-pisugar" tabindex="-1">PiSugar</button>
+        <button id="settings-tab-btn-wifi" class="settings-nav-btn" data-section="wifi" role="tab" aria-selected="false" aria-controls="settings-wifi" tabindex="-1">WiFi</button>
     </nav>
 
     <!-- Section Content -->
     <div class="settings-content">
         <!-- General -->
-        <div id="settings-general" class="settings-section active">
+        <div id="settings-general" class="settings-section active" role="tabpanel" aria-labelledby="settings-tab-btn-general">
             <h3>General</h3>
             <div class="form-group">
                 <label for="cfg-hostname">Hostname</label>
@@ -31,7 +31,7 @@
         </div>
 
         <!-- LTE -->
-        <div id="settings-lte" class="settings-section">
+        <div id="settings-lte" class="settings-section" role="tabpanel" aria-labelledby="settings-tab-btn-lte">
             <h3>LTE Configuration</h3>
             <div class="form-group">
                 <label for="cfg-apn">APN</label>
@@ -56,7 +56,7 @@
         </div>
 
         <!-- GPS -->
-        <div id="settings-gps" class="settings-section">
+        <div id="settings-gps" class="settings-section" role="tabpanel" aria-labelledby="settings-tab-btn-gps">
             <h3>GPS Configuration</h3>
             <div class="form-group">
                 <label for="cfg-gps-port">GPS Serial Port</label>
@@ -75,7 +75,7 @@
         </div>
 
         <!-- Kismet -->
-        <div id="settings-kismet" class="settings-section">
+        <div id="settings-kismet" class="settings-section" role="tabpanel" aria-labelledby="settings-tab-btn-kismet">
             <h3>Kismet Configuration</h3>
             <div class="form-group">
                 <label for="cfg-kismet-url">Kismet API URL</label>
@@ -99,7 +99,7 @@
         </div>
 
         <!-- Dashboard -->
-        <div id="settings-dashboard" class="settings-section">
+        <div id="settings-dashboard" class="settings-section" role="tabpanel" aria-labelledby="settings-tab-btn-dashboard">
             <h3>Dashboard Settings</h3>
             <div class="form-group">
                 <label for="cfg-dash-port">Dashboard Port</label>
@@ -136,7 +136,7 @@
         </div>
 
         <!-- Tailscale -->
-        <div id="settings-tailscale" class="settings-section">
+        <div id="settings-tailscale" class="settings-section" role="tabpanel" aria-labelledby="settings-tab-btn-tailscale">
             <h3>Tailscale VPN</h3>
             <div class="form-group">
                 <label for="cfg-ts-authkey">Auth Key</label>
@@ -153,7 +153,7 @@
         </div>
 
         <!-- PiSugar -->
-        <div id="settings-pisugar" class="settings-section">
+        <div id="settings-pisugar" class="settings-section" role="tabpanel" aria-labelledby="settings-tab-btn-pisugar">
             <h3>PiSugar Battery</h3>
             <div class="toggle-row">
                 <span class="toggle-label">Enable battery monitoring</span>
@@ -170,7 +170,7 @@
         </div>
 
         <!-- WiFi -->
-        <div id="settings-wifi" class="settings-section">
+        <div id="settings-wifi" class="settings-section" role="tabpanel" aria-labelledby="settings-tab-btn-wifi">
             <h3>WiFi Configuration</h3>
             <div class="form-group">
                 <label for="cfg-wifi-ssid">WiFi SSID</label>
