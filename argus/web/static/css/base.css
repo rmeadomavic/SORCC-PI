@@ -555,3 +555,27 @@ footer::before {
     }
     .tab { min-height: 40px; }
 }
+
+/* ── Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+    .status-dot.active,
+    .status-dot.warn,
+    .connection-banner {
+        animation: none;
+    }
+
+    .toast {
+        animation: none;
+        transform: none;
+        opacity: 1;
+    }
+
+    .tab,
+    .btn-primary,
+    .btn-danger,
+    .btn-secondary,
+    .toggle-slider,
+    .toggle-slider::before {
+        transition-duration: 0.01ms;
+    }
+}
