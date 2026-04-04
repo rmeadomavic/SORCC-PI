@@ -67,6 +67,7 @@ argus/
     __main__.py                  # Entry point (uvicorn launcher)
     config_schema.py             # Typed config validation with FieldSpec
     config_api.py                # Config read/write with file locking
+    tls.py                       # Auto-generate self-signed TLS cert for HTTPS
     web/
       __init__.py
       server.py                  # FastAPI app — routes, middleware (~1100 lines, after stub cleanup)
@@ -103,7 +104,7 @@ argus/
     argus-headless.sh            # Headless field-boot setup
     argus-preflight.sh           # Post-install validation (supports --json)
     argus-capture-old.sh         # Capture configs from old Pi
-    argus-network-fix.sh         # Network troubleshooting and repair
+    argus-network-fix.sh         # Network recovery (WiFi + LTE field fixes)
     setup-tailscale.sh           # Tailscale remote access
     kismet.service               # Systemd: Kismet
     argus-boot.service           # Systemd: GPS init, Avahi
