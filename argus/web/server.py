@@ -16,6 +16,7 @@ import socket
 import subprocess
 import time
 import xml.etree.ElementTree as ET
+from urllib.parse import urlparse
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -238,7 +239,47 @@ class _TokenAuthMiddleware(BaseHTTPMiddleware):
         # Same-origin bypass — browser requests from the dashboard itself
         fetch_site = request.headers.get("sec-fetch-site", "")
         origin = request.headers.get("origin", "")
-        if fetch_site == "same-origin" or (origin and request.base_url.hostname in origin):
+
+        def _normalized_port(scheme: str, port: int | None) -> int | None:
+            if port is not None:
+                return port
+            if scheme == "http":
+                return 80
+            if scheme == "https":
+                return 443
+            return None
+
+        origin_is_app_origin = False
+        if origin:
+            try:
+                parsed_origin = urlparse(origin)
+                parsed_scheme = (parsed_origin.scheme or "").lower()
+                parsed_host = parsed_origin.hostname
+
+                # Defensive checks: malformed/non-origin style values are untrusted
+                if (
+                    parsed_scheme in {"http", "https"}
+                    and parsed_host
+                    and not parsed_origin.username
+                    and not parsed_origin.password
+                    and parsed_origin.path in {"", "/"}
+                    and not parsed_origin.params
+                    and not parsed_origin.query
+                    and not parsed_origin.fragment
+                ):
+                    app_scheme = request.base_url.scheme.lower()
+                    app_host = request.base_url.hostname
+                    origin_port = _normalized_port(parsed_scheme, parsed_origin.port)
+                    app_port = _normalized_port(app_scheme, request.base_url.port)
+                    origin_is_app_origin = (
+                        parsed_scheme == app_scheme
+                        and parsed_host == app_host
+                        and origin_port == app_port
+                    )
+            except ValueError:
+                origin_is_app_origin = False
+
+        if fetch_site == "same-origin" and origin_is_app_origin:
             return await call_next(request)
 
         # Check bearer token for external requests to protected endpoints
