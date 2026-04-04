@@ -23,30 +23,71 @@
 
     // ── Sub-tab Navigation ──────────────────────────────────
 
+    function syncSubTabs(tabs, activeName) {
+        tabs.forEach(function (tab) {
+            var isActive = tab.dataset.subtab === activeName;
+            tab.classList.toggle("active", isActive);
+            tab.setAttribute("aria-selected", isActive ? "true" : "false");
+            tab.setAttribute("tabindex", isActive ? "0" : "-1");
+        });
+
+        document.querySelectorAll(".sub-content").forEach(function (panel) {
+            panel.classList.remove("active");
+        });
+
+        var panel = document.getElementById("subtab-" + activeName);
+        if (panel) panel.classList.add("active");
+    }
+
+    function activateSubTab(target, tabs) {
+        syncSubTabs(tabs, target);
+        activeSubTab = target;
+        // Immediately render spectrum with cached data when switching to tab
+        if (target === "spectrum" && lastDevices.length > 0) {
+            renderSpectrum(lastDevices);
+        }
+        // Fetch logs when switching to logs tab
+        if (target === "logs") {
+            fetchLogs();
+        }
+    }
+
+    function focusSubTabByOffset(tabs, currentTab, offset) {
+        var index = tabs.indexOf(currentTab);
+        if (index < 0) return;
+        var nextIndex = (index + offset + tabs.length) % tabs.length;
+        tabs[nextIndex].focus();
+        tabs[nextIndex].click();
+    }
+
     function initSubTabs() {
-        document.querySelectorAll(".sub-tab").forEach(function (tab) {
+        var tabs = Array.from(document.querySelectorAll(".sub-tab"));
+        tabs.forEach(function (tab) {
             tab.addEventListener("click", function () {
                 var target = this.dataset.subtab;
-                document.querySelectorAll(".sub-tab").forEach(function (t) {
-                    t.classList.remove("active");
-                });
-                document.querySelectorAll(".sub-content").forEach(function (tc) {
-                    tc.classList.remove("active");
-                });
-                this.classList.add("active");
-                var panel = document.getElementById("subtab-" + target);
-                if (panel) panel.classList.add("active");
-                activeSubTab = target;
-                // Immediately render spectrum with cached data when switching to tab
-                if (target === "spectrum" && lastDevices.length > 0) {
-                    renderSpectrum(lastDevices);
-                }
-                // Fetch logs when switching to logs tab
-                if (target === "logs") {
-                    fetchLogs();
+                activateSubTab(target, tabs);
+            });
+
+            tab.addEventListener("keydown", function (e) {
+                if (e.key === "ArrowRight") {
+                    e.preventDefault();
+                    focusSubTabByOffset(tabs, this, 1);
+                } else if (e.key === "ArrowLeft") {
+                    e.preventDefault();
+                    focusSubTabByOffset(tabs, this, -1);
+                } else if (e.key === "Home") {
+                    e.preventDefault();
+                    tabs[0].focus();
+                    tabs[0].click();
+                } else if (e.key === "End") {
+                    e.preventDefault();
+                    tabs[tabs.length - 1].focus();
+                    tabs[tabs.length - 1].click();
                 }
             });
         });
+
+        activateSubTab(activeSubTab, tabs);
     }
 
     // ── Device Filter / Sort / Search ─────────────────────

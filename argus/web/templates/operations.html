@@ -36,17 +36,17 @@
 </div>
 
 <!-- Sub-Tab Navigation -->
-<div class="sub-tabs">
-    <button class="sub-tab active" data-subtab="live">Live View</button>
-    <button class="sub-tab" data-subtab="map">Map</button>
-    <button class="sub-tab" data-subtab="spectrum">Spectrum</button>
-    <button class="sub-tab" data-subtab="hunt">Hunt Mode</button>
-    <button class="sub-tab" data-subtab="logs">Logs</button>
-    <button class="sub-tab" data-subtab="export">Export</button>
+<div class="sub-tabs" role="tablist" aria-label="Operations views">
+    <button id="sub-tab-btn-live" class="sub-tab active" data-subtab="live" role="tab" aria-selected="true" aria-controls="subtab-live" tabindex="0">Live View</button>
+    <button id="sub-tab-btn-map" class="sub-tab" data-subtab="map" role="tab" aria-selected="false" aria-controls="subtab-map" tabindex="-1">Map</button>
+    <button id="sub-tab-btn-spectrum" class="sub-tab" data-subtab="spectrum" role="tab" aria-selected="false" aria-controls="subtab-spectrum" tabindex="-1">Spectrum</button>
+    <button id="sub-tab-btn-hunt" class="sub-tab" data-subtab="hunt" role="tab" aria-selected="false" aria-controls="subtab-hunt" tabindex="-1">Hunt Mode</button>
+    <button id="sub-tab-btn-logs" class="sub-tab" data-subtab="logs" role="tab" aria-selected="false" aria-controls="subtab-logs" tabindex="-1">Logs</button>
+    <button id="sub-tab-btn-export" class="sub-tab" data-subtab="export" role="tab" aria-selected="false" aria-controls="subtab-export" tabindex="-1">Export</button>
 </div>
 
 <!-- ── Live View ── -->
-<div id="subtab-live" class="sub-content active">
+<div id="subtab-live" class="sub-content active" role="tabpanel" aria-labelledby="sub-tab-btn-live">
     <!-- Stats Summary Bar -->
     <div class="stats-bar">
         <div class="stat-card">
@@ -199,7 +199,7 @@
 </div>
 
 <!-- ── Map View ── -->
-<div id="subtab-map" class="sub-content">
+<div id="subtab-map" class="sub-content" role="tabpanel" aria-labelledby="sub-tab-btn-map">
     <div class="panel map-panel">
         <div class="map-toolbar">
             <h2>RF Survey Map</h2>
@@ -226,7 +226,7 @@
 </div>
 
 <!-- ── Spectrum View ── -->
-<div id="subtab-spectrum" class="sub-content">
+<div id="subtab-spectrum" class="sub-content" role="tabpanel" aria-labelledby="sub-tab-btn-spectrum">
     <div class="spectrum-view-selector">
         <label for="spectrum-mode">View:</label>
         <select id="spectrum-mode" class="spectrum-dropdown">
@@ -319,7 +319,7 @@
 </div>
 
 <!-- ── Hunt Mode ── -->
-<div id="subtab-hunt" class="sub-content">
+<div id="subtab-hunt" class="sub-content" role="tabpanel" aria-labelledby="sub-tab-btn-hunt">
     <div class="panel">
         <h2>Device Hunt</h2>
         <div class="hunt-setup">
@@ -410,7 +410,7 @@
 </div>
 
 <!-- ── Log Viewer ── -->
-<div id="subtab-logs" class="sub-content">
+<div id="subtab-logs" class="sub-content" role="tabpanel" aria-labelledby="sub-tab-btn-logs">
     <div class="panel log-panel">
         <div class="log-toolbar">
             <h2>System Logs</h2>
@@ -437,7 +437,7 @@
 </div>
 
 <!-- ── Export ── -->
-<div id="subtab-export" class="sub-content">
+<div id="subtab-export" class="sub-content" role="tabpanel" aria-labelledby="sub-tab-btn-export">
     <div class="panel">
         <h2>Data Export</h2>
         <div class="export-status-bar" id="export-status-bar">

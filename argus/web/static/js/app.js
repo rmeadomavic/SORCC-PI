@@ -57,22 +57,59 @@
 
     // ── Tab Navigation ──────────────────────────────────────
 
+    function syncTabs(tabs, panelPrefix, activeName) {
+        tabs.forEach(function (tab) {
+            var isActive = tab.dataset.tab === activeName;
+            tab.classList.toggle("active", isActive);
+            tab.setAttribute("aria-selected", isActive ? "true" : "false");
+            tab.setAttribute("tabindex", isActive ? "0" : "-1");
+        });
+
+        document.querySelectorAll(".tab-content").forEach(function (panel) {
+            panel.classList.remove("active");
+        });
+
+        var panel = document.getElementById(panelPrefix + activeName);
+        if (panel) panel.classList.add("active");
+    }
+
+    function focusTabByOffset(tabs, currentTab, offset) {
+        var index = tabs.indexOf(currentTab);
+        if (index < 0) return;
+        var nextIndex = (index + offset + tabs.length) % tabs.length;
+        tabs[nextIndex].focus();
+        tabs[nextIndex].click();
+    }
+
     function initTabs() {
-        document.querySelectorAll(".tab").forEach(function (tab) {
+        var tabs = Array.from(document.querySelectorAll(".tab"));
+        tabs.forEach(function (tab) {
             tab.addEventListener("click", function () {
                 var target = this.dataset.tab;
-                document.querySelectorAll(".tab").forEach(function (t) {
-                    t.classList.remove("active");
-                });
-                document.querySelectorAll(".tab-content").forEach(function (tc) {
-                    tc.classList.remove("active");
-                });
-                this.classList.add("active");
-                var panel = document.getElementById("tab-" + target);
-                if (panel) panel.classList.add("active");
+                syncTabs(tabs, "tab-", target);
                 activeTab = target;
             });
+
+            tab.addEventListener("keydown", function (e) {
+                if (e.key === "ArrowRight") {
+                    e.preventDefault();
+                    focusTabByOffset(tabs, this, 1);
+                } else if (e.key === "ArrowLeft") {
+                    e.preventDefault();
+                    focusTabByOffset(tabs, this, -1);
+                } else if (e.key === "Home") {
+                    e.preventDefault();
+                    tabs[0].focus();
+                    tabs[0].click();
+                } else if (e.key === "End") {
+                    e.preventDefault();
+                    tabs[tabs.length - 1].focus();
+                    tabs[tabs.length - 1].click();
+                }
+            });
         });
+
+        syncTabs(tabs, "tab-", activeTab);
     }
 
     // ── Status Polling ──────────────────────────────────────

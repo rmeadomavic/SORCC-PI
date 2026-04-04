@@ -7,22 +7,59 @@
 
     // ── Section Navigation ──────────────────────────────────
 
+    function syncSections(tabs, activeName) {
+        tabs.forEach(function (tab) {
+            var isActive = tab.dataset.section === activeName;
+            tab.classList.toggle("active", isActive);
+            tab.setAttribute("aria-selected", isActive ? "true" : "false");
+            tab.setAttribute("tabindex", isActive ? "0" : "-1");
+        });
+
+        document.querySelectorAll(".settings-section").forEach(function (section) {
+            section.classList.remove("active");
+        });
+
+        var panel = document.getElementById("settings-" + activeName);
+        if (panel) panel.classList.add("active");
+    }
+
+    function focusSectionByOffset(tabs, currentTab, offset) {
+        var index = tabs.indexOf(currentTab);
+        if (index < 0) return;
+        var nextIndex = (index + offset + tabs.length) % tabs.length;
+        tabs[nextIndex].focus();
+        tabs[nextIndex].click();
+    }
+
     function initSections() {
-        document.querySelectorAll(".settings-nav-btn").forEach(function (btn) {
+        var tabs = Array.from(document.querySelectorAll(".settings-nav-btn"));
+        tabs.forEach(function (btn) {
             btn.addEventListener("click", function () {
                 var target = this.dataset.section;
-                document.querySelectorAll(".settings-nav-btn").forEach(function (b) {
-                    b.classList.remove("active");
-                });
-                document.querySelectorAll(".settings-section").forEach(function (s) {
-                    s.classList.remove("active");
-                });
-                this.classList.add("active");
-                var panel = document.getElementById("settings-" + target);
-                if (panel) panel.classList.add("active");
+                syncSections(tabs, target);
                 activeSection = target;
             });
+
+            btn.addEventListener("keydown", function (e) {
+                if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    focusSectionByOffset(tabs, this, 1);
+                } else if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    focusSectionByOffset(tabs, this, -1);
+                } else if (e.key === "Home") {
+                    e.preventDefault();
+                    tabs[0].focus();
+                    tabs[0].click();
+                } else if (e.key === "End") {
+                    e.preventDefault();
+                    tabs[tabs.length - 1].focus();
+                    tabs[tabs.length - 1].click();
+                }
+            });
         });
+
+        syncSections(tabs, activeSection);
     }
 
     // ── Load Config into static form fields ─────────────────

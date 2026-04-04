@@ -43,21 +43,21 @@
     </header>
 
     <!-- ── Tab Navigation ── -->
-    <nav class="tabs">
-        <button class="tab active" data-tab="operations">Operations</button>
-        <button class="tab" data-tab="settings">Settings</button>
-        <button class="tab" data-tab="preflight">Preflight</button>
+    <nav class="tabs" role="tablist" aria-label="Main tabs">
+        <button id="tab-btn-operations" class="tab active" data-tab="operations" role="tab" aria-selected="true" aria-controls="tab-operations" tabindex="0">Operations</button>
+        <button id="tab-btn-settings" class="tab" data-tab="settings" role="tab" aria-selected="false" aria-controls="tab-settings" tabindex="-1">Settings</button>
+        <button id="tab-btn-preflight" class="tab" data-tab="preflight" role="tab" aria-selected="false" aria-controls="tab-preflight" tabindex="-1">Preflight</button>
     </nav>
 
     <!-- ── Tab Content ── -->
     <main>
-        <section id="tab-operations" class="tab-content active">
+        <section id="tab-operations" class="tab-content active" role="tabpanel" aria-labelledby="tab-btn-operations">
             {% include "operations.html" %}
         </section>
-        <section id="tab-settings" class="tab-content">
+        <section id="tab-settings" class="tab-content" role="tabpanel" aria-labelledby="tab-btn-settings">
             {% include "settings.html" %}
         </section>
-        <section id="tab-preflight" class="tab-content">
+        <section id="tab-preflight" class="tab-content" role="tabpanel" aria-labelledby="tab-btn-preflight">
             {% include "preflight.html" %}
         </section>
     </main>
