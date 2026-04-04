@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# SORCC-PI — Headless field-boot setup
+# Argus — Headless field-boot setup
 # Configures the Pi for zero-touch operation: power on → dashboard available
 #
-# Usage: sudo bash scripts/sorcc-headless.sh --ssid "ClassroomWiFi" --password "s3cret"
+# Usage: sudo bash scripts/argus-headless.sh --ssid "ClassroomWiFi" --password "s3cret"
 set -euo pipefail
 
 PASS=0; WARN=0; FAIL=0
@@ -14,21 +14,21 @@ info() { echo -e "${CYAN}[INFO]${NC} $1"; }
 
 usage() {
     cat <<'EOF'
-Usage: sorcc-headless.sh [OPTIONS]
+Usage: argus-headless.sh [OPTIONS]
 
-Configure a SORCC Pi for headless field-boot mode. After running this script,
-the Pi will boot to a running SORCC Dashboard with zero operator interaction —
+Configure an Argus Pi for headless field-boot mode. After running this script,
+the Pi will boot to a running Argus Dashboard with zero operator interaction —
 just plug in power.
 
 What this script does:
   1. Installs and configures Avahi (mDNS) for .local discovery
   2. Optionally persists a WiFi network via NetworkManager
-  3. Enables systemd services (sorcc-boot → kismet → sorcc-dashboard)
+  3. Enables systemd services (argus-boot → kismet → argus-dashboard)
   4. Verifies daemon auto-start configuration
   5. Runs a preflight self-test to verify the full boot chain
 
 Options:
-  --hostname NAME    mDNS hostname (default: sorcc-pi → reachable at sorcc-pi.local)
+  --hostname NAME    mDNS hostname (default: argus-pi → reachable at argus-pi.local)
   --ssid SSID        WiFi network name to persist (optional)
   --password PASS    WiFi password (required if --ssid is given)
   --ethernet-only    Skip WiFi setup (Ethernet/LTE will be used)
@@ -38,19 +38,19 @@ Options:
 
 Examples:
   # Full setup with WiFi
-  sudo bash scripts/sorcc-headless.sh --ssid "ClassroomWiFi" --password "s3cret"
+  sudo bash scripts/argus-headless.sh --ssid "ClassroomWiFi" --password "s3cret"
 
   # LTE-only (no WiFi needed — uses cellular for connectivity)
-  sudo bash scripts/sorcc-headless.sh --ethernet-only
+  sudo bash scripts/argus-headless.sh --ethernet-only
 
-  # Custom hostname (reachable at sorcc-pi-03.local)
-  sudo bash scripts/sorcc-headless.sh --hostname sorcc-pi-03 --ssid "FieldNet" --password "pw123"
+  # Custom hostname (reachable at argus-pi-03.local)
+  sudo bash scripts/argus-headless.sh --hostname argus-pi-03 --ssid "FieldNet" --password "pw123"
 EOF
     exit 0
 }
 
 # ── Defaults ──────────────────────────────────────────────────
-MDNS_HOSTNAME="sorcc-pi"
+MDNS_HOSTNAME="argus-pi"
 WIFI_SSID=""
 WIFI_PASSWORD=""
 ETHERNET_ONLY=false
@@ -84,13 +84,13 @@ if [ -n "$WIFI_SSID" ] && [ -z "$WIFI_PASSWORD" ]; then
 fi
 
 if [[ $EUID -ne 0 ]]; then
-    fail "This script must be run as root. Use: sudo bash scripts/sorcc-headless.sh"
+    fail "This script must be run as root. Use: sudo bash scripts/argus-headless.sh"
     exit 1
 fi
 
 echo ""
 echo "========================================"
-echo "  SORCC-PI — Headless Field-Boot Setup"
+echo "  Argus — Headless Field-Boot Setup"
 echo "========================================"
 echo ""
 
@@ -127,13 +127,13 @@ if [ -f "$AVAHI_CONF" ]; then
     fi
 fi
 
-# Publish the SORCC Dashboard as an mDNS service
+# Publish the Argus Dashboard as an mDNS service
 mkdir -p /etc/avahi/services
-cat > /etc/avahi/services/sorcc-dashboard.service <<AVAHI_SVC
+cat > /etc/avahi/services/argus-dashboard.service <<AVAHI_SVC
 <?xml version="1.0" standalone='no'?>
 <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
 <service-group>
-  <name replace-wildcards="yes">SORCC Dashboard on %h</name>
+  <name replace-wildcards="yes">Argus Dashboard on %h</name>
   <service>
     <type>_http._tcp</type>
     <port>8080</port>
@@ -141,7 +141,7 @@ cat > /etc/avahi/services/sorcc-dashboard.service <<AVAHI_SVC
   </service>
 </service-group>
 AVAHI_SVC
-ok "mDNS service file created for SORCC Dashboard"
+ok "mDNS service file created for Argus Dashboard"
 
 systemctl enable --now avahi-daemon 2>/dev/null || true
 systemctl restart avahi-daemon 2>/dev/null || true
@@ -194,18 +194,18 @@ fi
 
 echo ""
 
-# ── Step 3/5: Enable SORCC services ──────────────────────────
-info "Step 3/5: SORCC systemd services..."
+# ── Step 3/5: Enable Argus services ──────────────────────────
+info "Step 3/5: Argus systemd services..."
 echo ""
 
 if [ "$ENABLE_SERVICE" = true ]; then
-    SERVICES=(sorcc-boot kismet sorcc-dashboard)
+    SERVICES=(argus-boot kismet argus-dashboard)
     for svc in "${SERVICES[@]}"; do
         if [ -f "/etc/systemd/system/${svc}.service" ]; then
             systemctl enable "$svc" 2>/dev/null || true
             ok "$svc service enabled"
         else
-            warn "$svc.service not found — run sorcc-setup.sh first"
+            warn "$svc.service not found — run argus-setup.sh first"
         fi
     done
 else
@@ -260,7 +260,7 @@ else
 fi
 
 # Service chain check
-for svc in sorcc-boot kismet sorcc-dashboard; do
+for svc in argus-boot kismet argus-dashboard; do
     if systemctl is-enabled --quiet "$svc" 2>/dev/null; then
         ok "$svc is enabled for boot"
     else
@@ -278,9 +278,9 @@ if [ "$ETHERNET_ONLY" = false ]; then
 else
     echo "    3. (WiFi skipped — using Ethernet/LTE only)"
 fi
-echo "    4. sorcc-boot.service → GPS init, Avahi startup"
+echo "    4. argus-boot.service → GPS init, Avahi startup"
 echo "    5. kismet.service → wireless monitoring"
-echo "    6. sorcc-dashboard.service → web UI on port 8080"
+echo "    6. argus-dashboard.service → web UI on port 8080"
 echo "    7. avahi-daemon → advertises $MDNS_HOSTNAME.local"
 echo ""
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# SORCC-PI — Capture reference configs from an existing SORCC Pi setup
+# Argus — Capture reference configs from an existing Argus Pi setup
 # Run this on the old Pi (or mount its SD card) before wiping.
 #
-# Usage: sudo bash scripts/sorcc-capture-old.sh [OUTPUT_DIR]
+# Usage: sudo bash scripts/argus-capture-old.sh [OUTPUT_DIR]
 set -euo pipefail
 
 GREEN='\033[0;32m'; YELLOW='\033[1;33m'; CYAN='\033[0;36m'; NC='\033[0m'
@@ -15,7 +15,7 @@ mkdir -p "$OUTPUT_DIR"
 
 echo ""
 echo "========================================"
-echo "  SORCC-PI — Old Setup Capture"
+echo "  Argus — Old Setup Capture"
 echo "========================================"
 echo ""
 info "Saving reference configs to: $OUTPUT_DIR"
@@ -57,7 +57,7 @@ fi
 
 info "Capturing systemd services..."
 mkdir -p "$OUTPUT_DIR/services"
-for svc in sorcc-boot kismet sorcc-dashboard pisugar-server; do
+for svc in argus-boot kismet argus-dashboard pisugar-server; do
     [ -f "/etc/systemd/system/${svc}.service" ] && cp "/etc/systemd/system/${svc}.service" "$OUTPUT_DIR/services/" && ok "Captured ${svc}.service"
 done
 

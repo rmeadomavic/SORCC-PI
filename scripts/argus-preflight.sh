@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# SORCC-PI — Post-install validation
-# Usage: bash scripts/sorcc-preflight.sh [--json]
+# Argus — Post-install validation
+# Usage: bash scripts/argus-preflight.sh [--json]
 set -euo pipefail
 
 PASS=0
@@ -72,7 +72,7 @@ check_service() {
 }
 
 if [ "$JSON_MODE" = false ]; then
-    echo "SORCC-PI Preflight Check"
+    echo "Argus Preflight Check"
     echo "========================"
     echo ""
 fi
@@ -118,19 +118,19 @@ else
 fi
 
 # User groups
-SORCC_USER="${SUDO_USER:-$(whoami)}"
-if id -nG "$SORCC_USER" | grep -qw dialout; then
-    ok "Dialout Group" "hardware" "User $SORCC_USER in dialout group"
+ARGUS_USER="${SUDO_USER:-$(whoami)}"
+if id -nG "$ARGUS_USER" | grep -qw dialout; then
+    ok "Dialout Group" "hardware" "User $ARGUS_USER in dialout group"
 else
-    warn "Dialout Group" "hardware" "User $SORCC_USER NOT in dialout group"
+    warn "Dialout Group" "hardware" "User $ARGUS_USER NOT in dialout group"
 fi
 
 if [ "$JSON_MODE" = false ]; then echo ""; echo "-- Services --"; fi
 
 # ── Services ─────────────────────────────────────────────────
 check_service kismet "Kismet Service"
-check_service sorcc-boot "SORCC Boot Service"
-check_service sorcc-dashboard "SORCC Dashboard"
+check_service argus-boot "Argus Boot Service"
+check_service argus-dashboard "Argus Dashboard"
 check_service avahi-daemon "Avahi mDNS"
 
 if [ "$JSON_MODE" = false ]; then echo ""; echo "-- Network --"; fi
@@ -181,18 +181,18 @@ else
 fi
 
 if curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/ 2>/dev/null | grep -q "200"; then
-    ok "SORCC Dashboard" "config" "Dashboard responding on port 8080"
+    ok "Argus Dashboard" "config" "Dashboard responding on port 8080"
 else
-    warn "SORCC Dashboard" "config" "Dashboard not responding on port 8080"
+    warn "Argus Dashboard" "config" "Dashboard not responding on port 8080"
 fi
 
-if [ -f /opt/sorcc/config/sorcc.ini ]; then
-    ok "SORCC Config" "config" "sorcc.ini exists"
+if [ -f /opt/argus/config/argus.ini ]; then
+    ok "Argus Config" "config" "argus.ini exists"
 else
-    warn "SORCC Config" "config" "sorcc.ini not found — run sorcc-setup.sh"
+    warn "Argus Config" "config" "argus.ini not found — run argus-setup.sh"
 fi
 
-if [ -f /opt/sorcc/gps_lte.py ]; then
+if [ -f /opt/argus/gps_lte.py ]; then
     ok "GPS Script" "config" "GPS script installed"
 else
     warn "GPS Script" "config" "GPS script not found"
@@ -200,18 +200,18 @@ fi
 
 # Dashboard modules
 for mod in server.py kismet.py oui.py logging_config.py; do
-    if [ -f /opt/sorcc/sorcc/web/"$mod" ]; then
+    if [ -f /opt/argus/argus/web/"$mod" ]; then
         ok "Module $mod" "config" "Dashboard module $mod present"
     else
-        fail "Module $mod" "config" "Dashboard module $mod missing from /opt/sorcc/sorcc/web/"
+        fail "Module $mod" "config" "Dashboard module $mod missing from /opt/argus/argus/web/"
     fi
 done
 
 # Log directory
-if [ -d /opt/sorcc/logs ]; then
-    ok "Log Dir" "config" "Log directory exists (/opt/sorcc/logs/)"
+if [ -d /opt/argus/logs ]; then
+    ok "Log Dir" "config" "Log directory exists (/opt/argus/logs/)"
 else
-    warn "Log Dir" "config" "Log directory missing — create with: mkdir -p /opt/sorcc/logs"
+    warn "Log Dir" "config" "Log directory missing — create with: mkdir -p /opt/argus/logs"
 fi
 
 # Python dependencies
@@ -240,7 +240,7 @@ else
     echo ""
 
     if [ "$FAIL" -gt 0 ]; then
-        echo "Some checks FAILED. Review the output above and re-run sorcc-setup.sh."
+        echo "Some checks FAILED. Review the output above and re-run argus-setup.sh."
         exit 1
     elif [ "$WARN" -gt 0 ]; then
         echo "All critical checks passed. Some warnings — review above."

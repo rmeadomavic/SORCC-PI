@@ -1,7 +1,7 @@
 [Unit]
-Description=Kismet Wireless Monitor (SORCC RF Survey)
-After=network.target sorcc-boot.service
-Wants=sorcc-boot.service
+Description=Kismet Wireless Monitor (Argus RF Survey)
+After=network.target argus-boot.service
+Wants=argus-boot.service
 
 [Service]
 Type=simple

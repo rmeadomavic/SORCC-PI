@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# SORCC-PI — Network Recovery Script
+# Argus — Network Recovery Script
 # Fixes common WiFi + LTE connection issues in the field.
 # Safe to re-run at any time.
 #
-# Usage: sudo bash scripts/sorcc-network-fix.sh
+# Usage: sudo bash scripts/argus-network-fix.sh
 set -euo pipefail
 
 GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; CYAN='\033[0;36m'; NC='\033[0m'
@@ -13,13 +13,13 @@ fail() { echo -e "${RED}[FAIL]${NC} $1"; }
 info() { echo -e "${CYAN}[INFO]${NC} $1"; }
 
 if [[ $EUID -ne 0 ]]; then
-    fail "Run as root: sudo bash scripts/sorcc-network-fix.sh"
+    fail "Run as root: sudo bash scripts/argus-network-fix.sh"
     exit 1
 fi
 
 echo ""
 echo "========================================"
-echo "  SORCC-PI — Network Recovery"
+echo "  Argus — Network Recovery"
 echo "========================================"
 echo ""
 
@@ -145,13 +145,13 @@ if mmcli -L 2>/dev/null | grep -q "/"; then
                 else
                     warn "LTE connection failed after 3 attempts"
                     info "  Try: sudo nmcli connection delete '$LTE_CON'"
-                    info "  Then: sudo nmcli connection add type gsm ifname '*' con-name sorcc-lte apn YOUR_APN"
+                    info "  Then: sudo nmcli connection add type gsm ifname '*' con-name argus-lte apn YOUR_APN"
                 fi
             fi
         done
     else
         warn "No GSM/LTE connection profile found"
-        info "  Create one: sudo nmcli c add type gsm ifname '*' con-name sorcc-lte apn YOUR_APN"
+        info "  Create one: sudo nmcli c add type gsm ifname '*' con-name argus-lte apn YOUR_APN"
     fi
 else
     warn "No LTE modem detected — check SixFab hat connection"

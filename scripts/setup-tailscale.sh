@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SORCC-PI — Tailscale SSH remote access setup
+# Argus — Tailscale SSH remote access setup
 # Usage: sudo bash scripts/setup-tailscale.sh [OPTIONS]
 set -euo pipefail
 
@@ -16,11 +16,11 @@ usage() {
     cat <<'EOF'
 Usage: setup-tailscale.sh [OPTIONS]
 
-Install and configure Tailscale for SSH remote access on a SORCC Pi.
+Install and configure Tailscale for SSH remote access on an Argus Pi.
 
 Options:
   --authkey KEY    Use a Tailscale auth key (skips interactive login)
-  --hostname NAME  Set the Tailscale hostname (default: sorcc-pi)
+  --hostname NAME  Set the Tailscale hostname (default: argus-pi)
   --ssh            Enable Tailscale SSH (default: enabled)
   --no-ssh         Disable Tailscale SSH
   -h, --help       Show this help message
@@ -33,17 +33,17 @@ Examples:
   sudo bash scripts/setup-tailscale.sh --authkey tskey-auth-xxxxx
 
   # Custom hostname (for multi-Pi setups)
-  sudo bash scripts/setup-tailscale.sh --hostname sorcc-pi-03
+  sudo bash scripts/setup-tailscale.sh --hostname argus-pi-03
 EOF
     exit 0
 }
 
 # ── Defaults ─────────────────────────────────────────────────
 AUTHKEY=""
-HOSTNAME="sorcc-pi"
+HOSTNAME="argus-pi"
 SSH_ENABLED=true
-SORCC_USER="${SUDO_USER:-$(whoami)}"
-SORCC_HOME="$(eval echo ~"$SORCC_USER")"
+ARGUS_USER="${SUDO_USER:-$(whoami)}"
+ARGUS_HOME="$(eval echo ~"$ARGUS_USER")"
 
 # ── Parse arguments ──────────────────────────────────────────
 while [[ $# -gt 0 ]]; do
@@ -63,7 +63,7 @@ if [[ $EUID -ne 0 ]]; then
     exit 1
 fi
 
-echo "SORCC-PI — Tailscale SSH Setup"
+echo "Argus — Tailscale SSH Setup"
 echo "=============================="
 
 # ── Step 1: Install Tailscale ────────────────────────────────
@@ -116,12 +116,12 @@ else
 fi
 
 # Ensure the user has an .ssh directory
-mkdir -p "$SORCC_HOME/.ssh"
-chmod 700 "$SORCC_HOME/.ssh"
-touch "$SORCC_HOME/.ssh/authorized_keys"
-chmod 600 "$SORCC_HOME/.ssh/authorized_keys"
-chown -R "$SORCC_USER:$SORCC_USER" "$SORCC_HOME/.ssh"
-ok "SSH directory configured for $SORCC_USER"
+mkdir -p "$ARGUS_HOME/.ssh"
+chmod 700 "$ARGUS_HOME/.ssh"
+touch "$ARGUS_HOME/.ssh/authorized_keys"
+chmod 600 "$ARGUS_HOME/.ssh/authorized_keys"
+chown -R "$ARGUS_USER:$ARGUS_USER" "$ARGUS_HOME/.ssh"
+ok "SSH directory configured for $ARGUS_USER"
 
 # Enable password authentication as a fallback
 if [ -f /etc/ssh/sshd_config ]; then
@@ -166,15 +166,15 @@ if [ -n "$TS_IP" ]; then
     echo "  ┌──────────────────────────────────────────────┐"
     echo "  │  Tailscale IP:  $TS_IP"
     echo "  │  Hostname:      $HOSTNAME"
-    echo "  │  SSH command:   ssh $SORCC_USER@$TS_IP"
+    echo "  │  SSH command:   ssh $ARGUS_USER@$TS_IP"
     if [ "$SSH_ENABLED" = true ]; then
-    echo "  │  Tailscale SSH: ssh $SORCC_USER@$HOSTNAME"
+    echo "  │  Tailscale SSH: ssh $ARGUS_USER@$HOSTNAME"
     fi
     echo "  │  Dashboard:     http://$TS_IP:8080"
     echo "  │  Kismet:        http://$TS_IP:2501"
     echo "  └──────────────────────────────────────────────┘"
     echo ""
-    echo "  To connect with just 'ssh sorcc-pi', add this to your"
+    echo "  To connect with just 'ssh argus-pi', add this to your"
     echo "  laptop's SSH config file:"
     echo ""
     echo "    Windows:  C:\\Users\\<YOU>\\.ssh\\config"
@@ -183,7 +183,7 @@ if [ -n "$TS_IP" ]; then
     echo "  ── Copy below this line ──────────────────────"
     echo "  Host $HOSTNAME"
     echo "      HostName $TS_IP"
-    echo "      User $SORCC_USER"
+    echo "      User $ARGUS_USER"
     echo "      ServerAliveInterval 30"
     echo "      ServerAliveCountMax 3"
     echo "  ── Copy above this line ──────────────────────"

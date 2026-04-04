@@ -1,12 +1,12 @@
 [Unit]
-Description=SORCC RF Survey Dashboard
+Description=Argus RF Survey Dashboard
 After=kismet.service
 Wants=kismet.service
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 -m sorcc
-WorkingDirectory=/opt/sorcc
+ExecStart=/usr/bin/python3 -m argus
+WorkingDirectory=/opt/argus
 Restart=on-failure
 RestartSec=5
 

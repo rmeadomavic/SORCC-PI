@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# SORCC-PI — One-script Raspberry Pi payload setup
-# Installs everything needed for the SORCC RF Survey payload.
+# Argus — One-script Raspberry Pi payload setup
+# Installs everything needed for the Argus RF Survey payload.
 #
-# Usage: sudo bash scripts/sorcc-setup.sh [--skip-upgrade]
+# Usage: sudo bash scripts/argus-setup.sh [--skip-upgrade]
 set -euo pipefail
 
 # ── Parse command-line flags ────────────────────────────────
@@ -10,7 +10,7 @@ SKIP_UPGRADE=false
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --skip-upgrade) SKIP_UPGRADE=true; shift ;;
-        *) echo "Unknown option: $1"; echo "Usage: sorcc-setup.sh [--skip-upgrade]"; exit 1 ;;
+        *) echo "Unknown option: $1"; echo "Usage: argus-setup.sh [--skip-upgrade]"; exit 1 ;;
     esac
 done
 
@@ -42,16 +42,16 @@ ask() {
 # ── Determine paths ──────────────────────────────────────────
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-INSTALL_DIR="/opt/sorcc"
+INSTALL_DIR="/opt/argus"
 CONFIG_DIR="$INSTALL_DIR/config"
 
 # Detect the real user (even when running under sudo)
 if [ -n "${SUDO_USER:-}" ]; then
-    SORCC_USER="$SUDO_USER"
+    ARGUS_USER="$SUDO_USER"
 else
-    SORCC_USER="$(whoami)"
+    ARGUS_USER="$(whoami)"
 fi
-SORCC_HOME="$(eval echo ~"$SORCC_USER")"
+ARGUS_HOME="$(eval echo ~"$ARGUS_USER")"
 
 NEED_RELOGIN=false
 SERIAL_DEVICES=()
@@ -59,42 +59,42 @@ SDR_FOUND=false
 
 echo ""
 echo "╔════════════════════════════════════════╗"
-echo "║  SORCC-PI — Raspberry Pi Payload Setup ║"
+echo "║  Argus — Raspberry Pi Payload Setup ║"
 echo "║  RF Survey Payload Integrator          ║"
 echo "╚════════════════════════════════════════╝"
 echo ""
 info "Repo:     $REPO_DIR"
 info "Install:  $INSTALL_DIR"
-info "User:     $SORCC_USER ($SORCC_HOME)"
+info "User:     $ARGUS_USER ($ARGUS_HOME)"
 echo ""
 
 # ── Root check ───────────────────────────────────────────────
 if [[ $EUID -ne 0 ]]; then
-    fail "This script must be run as root. Use: sudo bash scripts/sorcc-setup.sh"
+    fail "This script must be run as root. Use: sudo bash scripts/argus-setup.sh"
     exit 1
 fi
 
 # ── Initialize config ────────────────────────────────────────
 mkdir -p "$CONFIG_DIR"
-if [ ! -f "$CONFIG_DIR/sorcc.ini" ]; then
-    if [ -f "$REPO_DIR/config/sorcc.ini.factory" ]; then
-        cp "$REPO_DIR/config/sorcc.ini.factory" "$CONFIG_DIR/sorcc.ini"
-        cp "$REPO_DIR/config/sorcc.ini.factory" "$CONFIG_DIR/sorcc.ini.factory"
+if [ ! -f "$CONFIG_DIR/argus.ini" ]; then
+    if [ -f "$REPO_DIR/config/argus.ini.factory" ]; then
+        cp "$REPO_DIR/config/argus.ini.factory" "$CONFIG_DIR/argus.ini"
+        cp "$REPO_DIR/config/argus.ini.factory" "$CONFIG_DIR/argus.ini.factory"
         info "Config initialized from factory defaults"
     fi
 fi
 
-# Helper: read a config value from sorcc.ini (safe — no shell interpolation into Python)
+# Helper: read a config value from argus.ini (safe — no shell interpolation into Python)
 cfg_get() {
     local section="$1" key="$2" default="${3:-}"
     local value
-    value=$(SORCC_CFG="$CONFIG_DIR/sorcc.ini" SORCC_SEC="$section" SORCC_KEY="$key" \
+    value=$(ARGUS_CFG="$CONFIG_DIR/argus.ini" ARGUS_SEC="$section" ARGUS_KEY="$key" \
         python3 -c "
 import configparser, os
 c = configparser.ConfigParser()
-c.read(os.environ['SORCC_CFG'])
+c.read(os.environ['ARGUS_CFG'])
 try:
-    v = c.get(os.environ['SORCC_SEC'], os.environ['SORCC_KEY']).split(';')[0].strip()
+    v = c.get(os.environ['ARGUS_SEC'], os.environ['ARGUS_KEY']).split(';')[0].strip()
     print(v)
 except Exception:
     print('')
@@ -102,18 +102,18 @@ except Exception:
     echo "${value:-$default}"
 }
 
-# Helper: write a config value to sorcc.ini (safe — no shell interpolation into Python)
+# Helper: write a config value to argus.ini (safe — no shell interpolation into Python)
 cfg_set() {
     local section="$1" key="$2" value="$3"
-    SORCC_CFG="$CONFIG_DIR/sorcc.ini" SORCC_SEC="$section" SORCC_KEY="$key" SORCC_VAL="$value" \
+    ARGUS_CFG="$CONFIG_DIR/argus.ini" ARGUS_SEC="$section" ARGUS_KEY="$key" ARGUS_VAL="$value" \
         python3 -c "
 import configparser, os
 c = configparser.ConfigParser()
-c.read(os.environ['SORCC_CFG'])
-if not c.has_section(os.environ['SORCC_SEC']):
-    c.add_section(os.environ['SORCC_SEC'])
-c.set(os.environ['SORCC_SEC'], os.environ['SORCC_KEY'], os.environ['SORCC_VAL'])
-with open(os.environ['SORCC_CFG'], 'w') as f:
+c.read(os.environ['ARGUS_CFG'])
+if not c.has_section(os.environ['ARGUS_SEC']):
+    c.add_section(os.environ['ARGUS_SEC'])
+c.set(os.environ['ARGUS_SEC'], os.environ['ARGUS_KEY'], os.environ['ARGUS_VAL'])
+with open(os.environ['ARGUS_CFG'], 'w') as f:
     c.write(f)
 " 2>/dev/null || true
 }
@@ -182,11 +182,11 @@ else
 fi
 
 # Check/add dialout group
-if id -nG "$SORCC_USER" | grep -qw dialout; then
-    ok "User $SORCC_USER is in dialout group"
+if id -nG "$ARGUS_USER" | grep -qw dialout; then
+    ok "User $ARGUS_USER is in dialout group"
 else
-    warn "Adding $SORCC_USER to dialout group (takes effect after logout/login)"
-    usermod -aG dialout "$SORCC_USER"
+    warn "Adding $ARGUS_USER to dialout group (takes effect after logout/login)"
+    usermod -aG dialout "$ARGUS_USER"
     NEED_RELOGIN=true
 fi
 
@@ -240,7 +240,7 @@ iw reg set "$WIFI_COUNTRY" 2>/dev/null || true
 echo "REGDOMAIN=$WIFI_COUNTRY" > /etc/default/crda 2>/dev/null || true
 echo "options cfg80211 ieee80211_regdom=$WIFI_COUNTRY" > /etc/modprobe.d/wifi-regdom.conf 2>/dev/null || true
 mkdir -p /etc/NetworkManager/conf.d
-printf '[device-wifi]\nmatch-device=interface-name:wlan0\nmanaged=1\n' > /etc/NetworkManager/conf.d/sorcc-wifi.conf
+printf '[device-wifi]\nmatch-device=interface-name:wlan0\nmanaged=1\n' > /etc/NetworkManager/conf.d/argus-wifi.conf
 ok "WiFi regulatory domain set to $WIFI_COUNTRY, wlan0 managed by NetworkManager"
 echo ""
 
@@ -318,10 +318,10 @@ chmod 600 /root/.kismet/kismet_httpd.conf
 ok "Kismet credentials set ($KISMET_USER/***)"
 
 # Generate kismet_site.conf dynamically from config
-info "Generating Kismet site config from sorcc.ini..."
+info "Generating Kismet site config from argus.ini..."
 {
-    echo "# SORCC-PI — Kismet site configuration"
-    echo "# Generated by sorcc-setup.sh — edits will be overwritten on re-run"
+    echo "# Argus — Kismet site configuration"
+    echo "# Generated by argus-setup.sh — edits will be overwritten on re-run"
     echo ""
 
     GPS_PORT=$(cfg_get gps serial_port "/dev/ttyUSB1")
@@ -354,11 +354,11 @@ ok "Kismet site config generated"
 
 # Add user to kismet group
 if getent group kismet >/dev/null 2>&1; then
-    if ! id -nG "$SORCC_USER" | grep -qw kismet; then
-        usermod -aG kismet "$SORCC_USER"
-        ok "Added $SORCC_USER to kismet group"
+    if ! id -nG "$ARGUS_USER" | grep -qw kismet; then
+        usermod -aG kismet "$ARGUS_USER"
+        ok "Added $ARGUS_USER to kismet group"
     else
-        ok "User $SORCC_USER already in kismet group"
+        ok "User $ARGUS_USER already in kismet group"
     fi
 fi
 
@@ -381,9 +381,9 @@ fi
 
 if [ -n "$MODEM_NUM" ]; then
     # Check for existing connection
-    EXISTING_CON=$(nmcli -t -f NAME con show 2>/dev/null | grep -i "sorcc-lte" || true)
+    EXISTING_CON=$(nmcli -t -f NAME con show 2>/dev/null | grep -i "argus-lte" || true)
     if [ -n "$EXISTING_CON" ]; then
-        ok "LTE connection 'sorcc-lte' already configured"
+        ok "LTE connection 'argus-lte' already configured"
     else
         # Read APN from config, prompt if blank
         APN=$(cfg_get lte apn "")
@@ -416,19 +416,19 @@ if [ -n "$MODEM_NUM" ]; then
         fi
 
         if [ -n "$APN" ]; then
-            nmcli c add type gsm ifname '*' con-name "sorcc-lte" apn "$APN"
+            nmcli c add type gsm ifname '*' con-name "argus-lte" apn "$APN"
         else
-            nmcli c add type gsm ifname '*' con-name "sorcc-lte"
+            nmcli c add type gsm ifname '*' con-name "argus-lte"
         fi
 
         DNS=$(cfg_get lte dns "8.8.8.8,1.1.1.1")
-        nmcli con mod "sorcc-lte" ipv4.method auto
-        nmcli con mod "sorcc-lte" ipv4.dns "$DNS"
+        nmcli con mod "argus-lte" ipv4.method auto
+        nmcli con mod "argus-lte" ipv4.dns "$DNS"
         ok "LTE connection configured (dynamic IP via DHCP)"
     fi
 
     # Try to bring up the connection
-    if nmcli con up "sorcc-lte" 2>/dev/null; then
+    if nmcli con up "argus-lte" 2>/dev/null; then
         ok "LTE connection active"
         if ping -c 2 -W 5 8.8.8.8 >/dev/null 2>&1; then
             ok "Internet connectivity verified"
@@ -557,12 +557,12 @@ if [ "$RECON_ENABLED" = "true" ]; then
                 warn "gqrx-sdr not available"
             }
 
-            IMSI_DIR="$SORCC_HOME/IMSI-catcher"
+            IMSI_DIR="$ARGUS_HOME/IMSI-catcher"
             if [ -d "$IMSI_DIR" ]; then
                 ok "IMSI-catcher already cloned at $IMSI_DIR"
             else
                 git clone https://github.com/Oros42/IMSI-catcher.git "$IMSI_DIR"
-                chown -R "$SORCC_USER:$SORCC_USER" "$IMSI_DIR"
+                chown -R "$ARGUS_USER:$ARGUS_USER" "$IMSI_DIR"
                 ok "IMSI-catcher cloned to $IMSI_DIR"
             fi
         ) || warn "Recon tools install failed — skipping (not critical)"
@@ -571,18 +571,18 @@ fi
 
 # Install systemd service files
 cp "$REPO_DIR/scripts/kismet.service" /etc/systemd/system/kismet.service
-cp "$REPO_DIR/scripts/sorcc-boot.service" /etc/systemd/system/sorcc-boot.service
+cp "$REPO_DIR/scripts/argus-boot.service" /etc/systemd/system/argus-boot.service
 
-# Create updated dashboard service pointing to new sorcc package
-cat > /etc/systemd/system/sorcc-dashboard.service <<SVCFILE
+# Create updated dashboard service pointing to new argus package
+cat > /etc/systemd/system/argus-dashboard.service <<SVCFILE
 [Unit]
-Description=SORCC RF Survey Dashboard
+Description=Argus RF Survey Dashboard
 After=kismet.service
 Wants=kismet.service
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 -m sorcc
+ExecStart=/usr/bin/python3 -m argus
 WorkingDirectory=$INSTALL_DIR
 Restart=on-failure
 RestartSec=5
@@ -592,39 +592,39 @@ WantedBy=multi-user.target
 SVCFILE
 
 # Update paths in service files
-sed -i "s|/opt/sorcc|$INSTALL_DIR|g" /etc/systemd/system/sorcc-boot.service
+sed -i "s|/opt/argus|$INSTALL_DIR|g" /etc/systemd/system/argus-boot.service
 
 systemctl daemon-reload
-systemctl enable kismet.service sorcc-boot.service sorcc-dashboard.service
+systemctl enable kismet.service argus-boot.service argus-dashboard.service
 ok "Services installed and enabled"
-info "Boot order: sorcc-boot (GPS) → kismet → sorcc-dashboard"
+info "Boot order: argus-boot (GPS) → kismet → argus-dashboard"
 
 echo ""
 
 # ══════════════════════════════════════════════════════════════
-# Step 8/8: SORCC Dashboard
+# Step 8/8: Argus Dashboard
 # ══════════════════════════════════════════════════════════════
-info "Step 8/8: SORCC Dashboard"
+info "Step 8/8: Argus Dashboard"
 echo ""
 
-# Install the sorcc Python package
+# Install the argus Python package
 mkdir -p "$INSTALL_DIR"
 mkdir -p "$INSTALL_DIR/logs"
-rsync -a --exclude='__pycache__' "$REPO_DIR/sorcc/" "$INSTALL_DIR/sorcc/"
+rsync -a --exclude='__pycache__' "$REPO_DIR/argus/" "$INSTALL_DIR/argus/"
 cp "$REPO_DIR/profiles.json" "$INSTALL_DIR/profiles.json"
-cp "$REPO_DIR/config/sorcc.ini.factory" "$CONFIG_DIR/sorcc.ini.factory"
+cp "$REPO_DIR/config/argus.ini.factory" "$CONFIG_DIR/argus.ini.factory"
 ok "Dashboard files synced to $INSTALL_DIR"
 
 # Verify all expected modules exist
 EXPECTED_MODULES="server.py kismet.py oui.py logging_config.py"
 MISSING=""
 for mod in $EXPECTED_MODULES; do
-    if [ ! -f "$INSTALL_DIR/sorcc/web/$mod" ]; then
+    if [ ! -f "$INSTALL_DIR/argus/web/$mod" ]; then
         MISSING="$MISSING $mod"
     fi
 done
 if [ -n "$MISSING" ]; then
-    warn "Missing modules in sorcc/web/:$MISSING"
+    warn "Missing modules in argus/web/:$MISSING"
 else
     ok "All expected modules present"
 fi
@@ -648,13 +648,13 @@ else
 fi
 
 # Start the dashboard
-systemctl restart sorcc-dashboard 2>/dev/null || true
+systemctl restart argus-dashboard 2>/dev/null || true
 
 # Determine access URLs
 PI_IP="$(hostname -I | awk '{print $1}')"
 TS_IP="${TS_IP:-$(tailscale ip -4 2>/dev/null || true)}"
 
-ok "SORCC Dashboard installed"
+ok "Argus Dashboard installed"
 echo ""
 
 # ══════════════════════════════════════════════════════════════
@@ -667,16 +667,16 @@ echo ""
 info "Dashboard:      http://${PI_IP}:8080"
 if [ -n "${TS_IP:-}" ]; then
     info "Dashboard (TS): http://${TS_IP}:8080"
-    info "SSH (Tailscale): ssh $SORCC_USER@$TS_IP"
+    info "SSH (Tailscale): ssh $ARGUS_USER@$TS_IP"
 fi
 info "Kismet UI:      http://${PI_IP}:2501  ($KISMET_USER/***)"
 echo ""
-info "Config file:    $CONFIG_DIR/sorcc.ini"
+info "Config file:    $CONFIG_DIR/argus.ini"
 info "Edit config:    http://${PI_IP}:8080 → Settings tab"
 echo ""
-info "Validate:       bash $REPO_DIR/scripts/sorcc-preflight.sh"
-info "Headless setup: sudo bash $REPO_DIR/scripts/sorcc-headless.sh --help"
-info "Services:       systemctl status kismet sorcc-dashboard sorcc-boot"
+info "Validate:       bash $REPO_DIR/scripts/argus-preflight.sh"
+info "Headless setup: sudo bash $REPO_DIR/scripts/argus-headless.sh --help"
+info "Services:       systemctl status kismet argus-dashboard argus-boot"
 echo ""
 info "Reboot the Pi to verify everything starts automatically."
 echo ""

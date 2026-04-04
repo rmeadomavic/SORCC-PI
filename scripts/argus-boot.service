@@ -1,5 +1,5 @@
 [Unit]
-Description=SORCC Pi Boot Init (GPS + Avahi)
+Description=Argus Pi Boot Init (GPS + Avahi)
 After=ModemManager.service NetworkManager-wait-online.service
 Requires=ModemManager.service
 Wants=NetworkManager-wait-online.service
@@ -13,12 +13,12 @@ ExecStartPre=/usr/bin/nmcli radio wwan on
 # Wait for ModemManager to fully enumerate the modem before touching it
 ExecStartPre=/bin/bash -c 'for i in 1 2 3 4 5 6; do mmcli -L 2>/dev/null | grep -q "/" && exit 0; echo "[INFO] Waiting for modem... ($i/6)"; sleep 5; done; echo "[WARN] Modem not detected after 30s — continuing anyway"; exit 0'
 # Bring up the LTE connection with retry (NetworkManager may need a kick after boot)
-ExecStart=/bin/bash -c 'CON=$(nmcli -t -f NAME con show 2>/dev/null | grep -i sorcc-lte | head -1); if [ -n "$CON" ]; then for i in 1 2 3; do nmcli con up "$CON" 2>/dev/null && echo "[INFO] LTE connection up" && break; echo "[WARN] LTE attempt $i failed, retrying in 5s..."; sleep 5; done; else echo "[INFO] No sorcc-lte connection configured — skipping"; fi'
+ExecStart=/bin/bash -c 'CON=$(nmcli -t -f NAME con show 2>/dev/null | grep -i argus-lte | head -1); if [ -n "$CON" ]; then for i in 1 2 3; do nmcli con up "$CON" 2>/dev/null && echo "[INFO] LTE connection up" && break; echo "[WARN] LTE attempt $i failed, retrying in 5s..."; sleep 5; done; else echo "[INFO] No argus-lte connection configured — skipping"; fi'
 # Enable GPS via dynamic modem detection + AT command fallback
 ExecStart=/bin/bash -c 'MODEM=$(mmcli -L 2>/dev/null | grep -oP "/Modem/\\K[0-9]+" | head -1); if [ -n "$MODEM" ]; then mmcli -m $MODEM --location-enable-gps-nmea 2>/dev/null || true; mmcli -m $MODEM --location-enable-gps-raw 2>/dev/null || true; echo "GPS enabled via mmcli (modem $MODEM)"; else echo "No modem found for mmcli GPS"; fi'
-ExecStartPost=-/usr/bin/python3 /opt/sorcc/gps_lte.py
+ExecStartPost=-/usr/bin/python3 /opt/argus/gps_lte.py
 # Create log directory
-ExecStartPost=/bin/mkdir -p /opt/sorcc/logs
+ExecStartPost=/bin/mkdir -p /opt/argus/logs
 # Start mDNS for device discovery on the local network
 ExecStartPost=-/usr/bin/systemctl start avahi-daemon
 # Ensure Tailscale SSH stays enabled across reboots
