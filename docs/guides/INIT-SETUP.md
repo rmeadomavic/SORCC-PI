@@ -1,4 +1,4 @@
-# SORCC-PI — One-Time Environment Setup
+# Argus — One-Time Environment Setup
 
 Run these steps once per Pi. After this, use `SESSION-START.md` for each dev session.
 
@@ -58,21 +58,21 @@ tailscale ip -4
 
 ```bash
 cd ~
-gh repo clone rmeadomavic/SORCC-PI
-cd SORCC-PI
+gh repo clone rmeadomavic/Argus
+cd Argus
 ```
 
-## 6. Run the SORCC Installer (Pi only)
+## 6. Run the Argus Installer (Pi only)
 
 ```bash
-sudo bash scripts/sorcc-setup.sh
+sudo bash scripts/argus-setup.sh
 ```
 
 ## 7. Set Up Claude Code Project Settings
 
 ```bash
 # Create project settings directory
-mkdir -p ~/SORCC-PI/.claude
+mkdir -p ~/Argus/.claude
 
 # The CLAUDE.md in the repo root provides all project context automatically.
 # Memory files in ~/.claude/projects/-home-kali/memory/ persist across sessions.
@@ -95,7 +95,7 @@ mkdir -p ~/SORCC-PI/.claude
 
 ```bash
 # Check services
-systemctl status kismet sorcc-dashboard sorcc-boot
+systemctl status kismet argus-dashboard argus-boot
 
 # Check dashboard
 curl -s http://localhost:8080/api/status | python3 -m json.tool
@@ -104,7 +104,7 @@ curl -s http://localhost:8080/api/status | python3 -m json.tool
 # Open browser to http://<TAILSCALE_IP>:8080
 
 # Check Claude Code
-cd ~/SORCC-PI
+cd ~/Argus
 claude --version
 ```
 
@@ -116,7 +116,7 @@ claude --version
 - OS: Kali Linux ARM64
 - Dashboard port: 8080
 - Kismet port: 2501
-- Passwords: `kismet` or `sorcc`
+- Passwords: `kismet` or `argus`
 - GPS: needs `mmcli --location-enable-gps-nmea --location-enable-gps-raw` (done by boot service)
 
 ---
@@ -127,6 +127,6 @@ After completing these steps, your device has:
 - Claude Code CLI with your Anthropic account
 - GitHub access for commits/PRs
 - Tailscale for remote access from anywhere
-- SORCC-PI repo with full project context in CLAUDE.md
+- Argus repo with full project context in CLAUDE.md
 - Memory system with learnings from previous sessions
 - Ready for remote-control sessions from browser/phone

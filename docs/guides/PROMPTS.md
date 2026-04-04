@@ -4,14 +4,14 @@ If your environment crashes or you're starting fresh, paste these into the right
 
 ---
 
-## SORCC-PI (Raspberry Pi)
+## Argus (Raspberry Pi)
 
 **Setup:** `ssh kali@100.71.115.45` → `cd ~/SORCC-PI` → `cc` → `/remote-control`
 
 ### Tab 1 — Claude Code
 ```
-Start a recursive dev session on SORCC-PI. Check memory for session context
-and docs/NEXT-SESSION-TODO.md for the task list. Deploy path is /opt/sorcc/,
+Start a recursive dev session on Argus. Check memory for session context
+and docs/NEXT-SESSION-TODO.md for the task list. Deploy path is /opt/argus/,
 repo is /home/kali/SORCC-PI/. Work through the TODO priorities in order.
 My browser instance is watching the UI live and will feed back visual issues.
 
@@ -23,8 +23,8 @@ in chunks, commit after each chunk. Cook.
 ### Tab 2 — Claude Chrome
 ```
 I have two tabs open:
-- Tab 1: Claude Code remote terminal connected to my SORCC Pi
-- Tab 2: SORCC-PI dashboard at http://100.71.115.45:8080
+- Tab 1: Claude Code remote terminal connected to my Argus Pi
+- Tab 2: Argus dashboard at http://100.71.115.45:8080
 
 Your workflow:
 1. Go to Tab 2 and screenshot the UI
@@ -41,4 +41,3 @@ Audit from three personas:
 
 Be ruthless. Report everything.
 ```
-

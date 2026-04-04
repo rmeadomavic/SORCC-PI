@@ -3,7 +3,7 @@
 ## Decision
 
 Use the official **Kali Linux ARM64** image for Raspberry Pi 4, flashed with
-RPi Imager, then run `sudo bash scripts/sorcc-setup.sh` for all customization.
+RPi Imager, then run `sudo bash scripts/argus-setup.sh` for all customization.
 
 ## Rationale
 
@@ -26,7 +26,7 @@ RPi Imager, then run `sudo bash scripts/sorcc-setup.sh` for all customization.
 3. Select the downloaded Kali image
 4. Select the target SD card (128GB+ recommended)
 5. In RPi Imager settings, configure:
-   - Hostname (e.g., `sorcc-pi-01`)
+   - Hostname (e.g., `argus-pi-01`)
    - WiFi credentials (if applicable)
    - Enable SSH
    - Set timezone
@@ -35,9 +35,9 @@ RPi Imager, then run `sudo bash scripts/sorcc-setup.sh` for all customization.
 8. Clone the repo and run the installer:
 
 ```bash
-git clone https://github.com/rmeadomavic/sorcc-pi.git
-cd sorcc-pi
-sudo bash scripts/sorcc-setup.sh
+git clone https://github.com/rmeadomavic/argus.git
+cd argus
+sudo bash scripts/argus-setup.sh
 ```
 
 ## Alternative: Pre-baked Image (Not Recommended)

@@ -1,9 +1,9 @@
 # Configuration Reference
 
-All settings live in `config/sorcc.ini`. Edit via the web dashboard (Settings tab)
-or directly on the Pi at `/opt/sorcc/config/sorcc.ini`.
+All settings live in `config/argus.ini`. Edit via the web dashboard (Settings tab)
+or directly on the Pi at `/opt/argus/config/argus.ini`.
 
-Factory defaults are in `config/sorcc.ini.factory`.
+Factory defaults are in `config/argus.ini.factory`.
 
 ## Sections
 
@@ -11,15 +11,15 @@ Factory defaults are in `config/sorcc.ini.factory`.
 
 | Key | Default | Description |
 |-----|---------|-------------|
-| `hostname` | `sorcc-pi-01` | mDNS hostname (reachable as `<hostname>.local`) |
-| `callsign` | `SORCC-01` | Identifier shown in instructor overview |
+| `hostname` | `argus-pi-01` | mDNS hostname (reachable as `<hostname>.local`) |
+| `callsign` | `ARGUS-01` | Identifier shown in instructor overview |
 
 ### [lte]
 
 | Key | Default | Description |
 |-----|---------|-------------|
 | `apn` | *(blank)* | Carrier APN — blank triggers interactive prompt during setup |
-| `connection_name` | `sorcc-lte` | NetworkManager connection name |
+| `connection_name` | `argus-lte` | NetworkManager connection name |
 | `dns` | `8.8.8.8,1.1.1.1` | DNS servers (comma-separated) |
 
 **Common APNs:**
@@ -48,7 +48,7 @@ Factory defaults are in `config/sorcc.ini.factory`.
 | `source_wifi` | *(blank)* | WiFi monitor-mode adapter (e.g., `wlan0`) |
 | `source_rtl433` | *(blank)* | RTL-433 source (e.g., `rtl433-0:channel=433000000`) |
 | `source_adsb` | *(blank)* | ADS-B source (e.g., `rtladsb-00000001`) |
-| `log_dir` | `/opt/sorcc/output_data` | Kismet capture data directory |
+| `log_dir` | `/opt/argus/output_data` | Kismet capture data directory |
 
 ### [dashboard]
 
@@ -95,8 +95,8 @@ Factory defaults are in `config/sorcc.ini.factory`.
 
 ### Via Terminal
 ```bash
-nano /opt/sorcc/config/sorcc.ini
-sudo systemctl restart sorcc-dashboard  # to pick up changes
+nano /opt/argus/config/argus.ini
+sudo systemctl restart argus-dashboard  # to pick up changes
 ```
 
 ### Import/Export
@@ -115,12 +115,12 @@ When a password is set:
 - Sessions use HMAC-signed cookies. They expire after `session_timeout_min` minutes.
 - Failed login attempts are rate-limited (10 failures = 5 minute lockout).
 
-Change the password via the Settings tab or by editing `sorcc.ini` directly.
+Change the password via the Settings tab or by editing `argus.ini` directly.
 
 ## Config File Locations
 
 | File | Purpose |
 |------|---------|
-| `/opt/sorcc/config/sorcc.ini` | Active runtime config |
-| `/opt/sorcc/config/sorcc.ini.bak` | Auto-backup before each write |
-| `/opt/sorcc/config/sorcc.ini.factory` | Factory defaults (never modified) |
+| `/opt/argus/config/argus.ini` | Active runtime config |
+| `/opt/argus/config/argus.ini.bak` | Auto-backup before each write |
+| `/opt/argus/config/argus.ini.factory` | Factory defaults (never modified) |
