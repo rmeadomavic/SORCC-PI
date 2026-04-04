@@ -1,5 +1,12 @@
 # Argus — Claude Code Guidelines
 
+## SORCC Ecosystem
+This project is part of the SORCC ecosystem alongside [Hydra/Argus].
+- Use consistent terminology: [list key terms]
+- Documentation tone: technical but accessible
+- Shared config pattern: INI with .factory defaults
+- Cross-references: link to sibling projects where relevant
+
 ## Project Context
 
 Argus is the software toolkit for the **Special Operations Robotics Capabilities
