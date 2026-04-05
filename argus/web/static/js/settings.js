@@ -4,6 +4,8 @@
     "use strict";
 
     var activeSection = "general";
+    var KISMET_PORT_MIN = 1;
+    var KISMET_PORT_MAX = 65535;
     var schema = null;
 
     // Schema-driven settings map: one source of truth for form IDs <-> config keys.
@@ -185,10 +187,27 @@
         return config;
     }
 
+    function validateKismetPort(config) {
+        if (!config || !config.kismet) return null;
+        var portRaw = config.kismet.port;
+        if (portRaw === undefined || portRaw === null || portRaw === "") return null;
+
+        var port = Number(portRaw);
+        if (!Number.isInteger(port) || port < KISMET_PORT_MIN || port > KISMET_PORT_MAX) {
+            return "Kismet port must be an integer between " + KISMET_PORT_MIN + " and " + KISMET_PORT_MAX + ".";
+        }
+        return null;
+    }
+
     // ── Apply Config ────────────────────────────────────────
 
     function applyConfig() {
         var config = collectConfig();
+        var kismetError = validateKismetPort(config);
+        if (kismetError) {
+            window.ARGUS.showToast(kismetError, "error");
+            return;
+        }
 
         fetch("/api/config/full", {
             method: "POST",
@@ -211,6 +230,15 @@
             .catch(function (err) {
                 window.ARGUS.showToast("Save failed: " + err.message, "error");
             });
+    }
+
+    function extractImportError(data, fallback) {
+        if (!data) return fallback;
+        if (typeof data.detail === "string" && data.detail.trim()) return data.detail;
+        if (typeof data.error === "string" && data.error.trim()) return data.error;
+        if (Array.isArray(data.errors) && data.errors.length) return data.errors.join("; ");
+        if (Array.isArray(data.validation_errors) && data.validation_errors.length) return data.validation_errors.join("; ");
+        return fallback;
     }
 
     function factoryReset() {
@@ -330,7 +358,8 @@
                             window.ARGUS.showToast("Round-trip check passed: export re-imported successfully", "success");
                         }
                     } else {
-                        window.ARGUS.showToast("Import failed: " + (data.detail || "Unknown error"), "error");
+                        var reason = extractImportError(data, "HTTP " + result.status);
+                        window.ARGUS.showToast("Import failed: " + reason, "error");
                     }
                 })
                 .catch(function (err) {
