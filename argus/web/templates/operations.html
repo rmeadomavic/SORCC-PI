@@ -207,6 +207,8 @@
                 <button id="map-center-gps" class="btn-secondary" title="Center on GPS position">Center GPS</button>
                 <button id="map-toggle-track" class="btn-secondary active" title="Toggle GPS track">Track: ON</button>
                 <button id="map-toggle-radii" class="btn-secondary" title="Show signal range circles">Range: OFF</button>
+                <button id="map-toggle-heat" class="btn-secondary active" title="Toggle persistent signal heatmap">Heat: ON</button>
+                <button id="map-clear-heat" class="btn-secondary" title="Clear collected heatmap history">Clear Heat</button>
                 <button id="map-toggle-tiles" class="btn-secondary" title="Switch map/satellite view">Map: STD</button>
                 <button id="map-fit-all" class="btn-secondary" title="Fit all markers in view">Fit All</button>
             </div>
@@ -220,6 +222,7 @@
             <span class="legend-item"><span class="legend-dot" style="background:#ef5350"></span> Strong (&gt;-50 dBm)</span>
             <span class="legend-item"><span class="legend-dot" style="background:#ff9800"></span> Medium (-50 to -70)</span>
             <span class="legend-item"><span class="legend-dot" style="background:#42a5f5"></span> Weak (&lt;-70 dBm)</span>
+            <span class="legend-item"><span class="legend-dot legend-dot-heat"></span> Activity Heatmap</span>
             <span class="legend-item"><span class="legend-dot" style="background:#385723"></span> Your Position</span>
         </div>
     </div>

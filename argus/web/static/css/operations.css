@@ -1667,6 +1667,10 @@
     border: 1px solid rgba(255,255,255,0.3);
 }
 
+.legend-dot-heat {
+    background: linear-gradient(135deg, #42a5f5 0%, #ff9800 55%, #ef5350 100%);
+}
+
 .map-controls .btn-secondary.active {
     background: linear-gradient(180deg, var(--argus-green), var(--argus-green-dark));
     color: var(--argus-light);

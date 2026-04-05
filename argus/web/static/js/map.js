@@ -10,8 +10,15 @@
     var deviceRadii = [];
     var trackPoints = [];
     var trackLine = null;
+    var trackDotsLayer = null;
     var trackEnabled = true;
     var showRadii = false;
+    var showHeatmap = true;
+    var heatLayer = null;
+    var heatSamples = {};
+    var HEAT_CELL_PRECISION = 5; // ~1.1m at equator
+    var HEAT_STALE_SECONDS = 15 * 60; // 15 min retention
+    var HEAT_MAX_CELLS = 1500;
     var mapPollTimer = null;
     var mapInitialized = false;
     var tileLayer = null;
@@ -103,6 +110,8 @@
             opacity: 0.7,
             dashArray: "5, 8"
         }).addTo(map);
+        trackDotsLayer = L.layerGroup().addTo(map);
+        heatLayer = L.layerGroup().addTo(map);
 
         // Controls
         bindMapControls();
@@ -127,6 +136,7 @@
                 this.classList.toggle("active", trackEnabled);
                 if (!trackEnabled) {
                     trackLine.setLatLngs([]);
+                    trackDotsLayer.clearLayers();
                     trackPoints = [];
                 }
             });
@@ -169,6 +179,26 @@
                 fitAllMarkers();
             });
         }
+
+        var heatBtn = document.getElementById("map-toggle-heat");
+        if (heatBtn) {
+            heatBtn.addEventListener("click", function () {
+                showHeatmap = !showHeatmap;
+                this.textContent = "Heat: " + (showHeatmap ? "ON" : "OFF");
+                this.classList.toggle("active", showHeatmap);
+                renderHeatmap();
+                updateMapStats();
+            });
+        }
+
+        var clearHeatBtn = document.getElementById("map-clear-heat");
+        if (clearHeatBtn) {
+            clearHeatBtn.addEventListener("click", function () {
+                heatSamples = {};
+                renderHeatmap();
+                updateMapStats();
+            });
+        }
     }
 
     function fitAllMarkers() {
@@ -207,6 +237,7 @@
                     trackPoints.push(latlng);
                     if (trackPoints.length > 1000) trackPoints.shift();
                     trackLine.setLatLngs(trackPoints);
+                    renderTrackDots();
                 }
 
                 // Update GPS info in stats
@@ -241,18 +272,9 @@
                 deviceRadii.forEach(function (r) { map.removeLayer(r); });
                 deviceRadii = [];
 
-                // Update stats
-                var stats = document.getElementById("map-stats");
-                if (stats) {
-                    var wifiCount = devices.filter(function (d) { return d.phy === "IEEE802.11"; }).length;
-                    var btCount = devices.filter(function (d) { return d.phy === "Bluetooth"; }).length;
-                    var otherCount = devices.length - wifiCount - btCount;
-                    var parts = [];
-                    if (wifiCount) parts.push(wifiCount + " WiFi");
-                    if (btCount) parts.push(btCount + " BT");
-                    if (otherCount) parts.push(otherCount + " other");
-                    stats.textContent = devices.length + " located (" + (parts.join(", ") || "none") + ")";
-                }
+                accumulateHeatSamples(devices);
+                renderHeatmap();
+                updateMapStats(devices);
 
                 devices.forEach(function (d) {
                     var color = signalColor(d.signal);
@@ -334,6 +356,130 @@
                 });
             })
             .catch(function () {});
+    }
+
+    function updateMapStats(devices) {
+        var stats = document.getElementById("map-stats");
+        if (!stats) return;
+        var currentDevices = Array.isArray(devices) ? devices : [];
+        var wifiCount = currentDevices.filter(function (d) { return d.phy === "IEEE802.11"; }).length;
+        var btCount = currentDevices.filter(function (d) { return d.phy === "Bluetooth"; }).length;
+        var otherCount = currentDevices.length - wifiCount - btCount;
+        var parts = [];
+        if (wifiCount) parts.push(wifiCount + " WiFi");
+        if (btCount) parts.push(btCount + " BT");
+        if (otherCount) parts.push(otherCount + " other");
+        parts.push(Object.keys(heatSamples).length + " heat cells");
+        stats.textContent = currentDevices.length + " located (" + parts.join(", ") + ")";
+    }
+
+    function renderTrackDots() {
+        if (!trackDotsLayer) return;
+        trackDotsLayer.clearLayers();
+        if (!trackEnabled || trackPoints.length < 3) return;
+
+        var stride = Math.max(1, Math.floor(trackPoints.length / 24));
+        for (var i = 0; i < trackPoints.length; i += stride) {
+            var point = trackPoints[i];
+            var progress = i / Math.max(1, trackPoints.length - 1);
+            L.circleMarker(point, {
+                radius: 2 + progress * 2.5,
+                color: "#A6BC92",
+                weight: 1,
+                opacity: 0.20 + progress * 0.35,
+                fillOpacity: 0.12 + progress * 0.18
+            }).addTo(trackDotsLayer);
+        }
+    }
+
+    function normalizeSignalWeight(signal, packets) {
+        var signalWeight = 0.15;
+        if (typeof signal === "number" && signal !== 0) {
+            // Map [-95, -35] dBm into [0.15, 1.0]
+            signalWeight = (signal + 95) / 60;
+            signalWeight = Math.max(0.15, Math.min(1.0, signalWeight));
+        }
+        var packetWeight = Math.log10(Math.max(1, packets || 1)) / 4;
+        packetWeight = Math.max(0, Math.min(1, packetWeight));
+        return signalWeight * 0.75 + packetWeight * 0.25;
+    }
+
+    function heatColor(intensity) {
+        if (intensity > 0.75) return "#ef5350";
+        if (intensity > 0.50) return "#ff9800";
+        if (intensity > 0.30) return "#fbc02d";
+        return "#42a5f5";
+    }
+
+    function pruneHeatSamples(nowSec) {
+        var keys = Object.keys(heatSamples);
+        if (!keys.length) return;
+
+        keys.forEach(function (key) {
+            if ((nowSec - heatSamples[key].seen_at) > HEAT_STALE_SECONDS) {
+                delete heatSamples[key];
+            }
+        });
+
+        keys = Object.keys(heatSamples);
+        if (keys.length <= HEAT_MAX_CELLS) return;
+
+        keys.sort(function (a, b) {
+            return heatSamples[b].seen_at - heatSamples[a].seen_at;
+        });
+        for (var i = HEAT_MAX_CELLS; i < keys.length; i++) {
+            delete heatSamples[keys[i]];
+        }
+    }
+
+    function accumulateHeatSamples(devices) {
+        if (!Array.isArray(devices) || devices.length === 0) return;
+
+        var nowSec = Date.now() / 1000;
+        devices.forEach(function (d) {
+            if (typeof d.lat !== "number" || typeof d.lon !== "number") return;
+            var key = d.lat.toFixed(HEAT_CELL_PRECISION) + "," + d.lon.toFixed(HEAT_CELL_PRECISION);
+            var sampleWeight = normalizeSignalWeight(d.signal, d.packets);
+            var existing = heatSamples[key];
+            if (!existing) {
+                heatSamples[key] = {
+                    lat: d.lat,
+                    lon: d.lon,
+                    intensity: sampleWeight,
+                    seen_at: nowSec
+                };
+                return;
+            }
+            existing.intensity = (existing.intensity * 0.80) + (sampleWeight * 0.20);
+            existing.seen_at = nowSec;
+        });
+
+        pruneHeatSamples(nowSec);
+    }
+
+    function renderHeatmap() {
+        if (!heatLayer) return;
+        heatLayer.clearLayers();
+        if (!showHeatmap) return;
+
+        var nowSec = Date.now() / 1000;
+        var keys = Object.keys(heatSamples);
+        if (!keys.length) return;
+
+        keys.forEach(function (key) {
+            var sample = heatSamples[key];
+            var ageRatio = Math.min(1, Math.max(0, (nowSec - sample.seen_at) / HEAT_STALE_SECONDS));
+            var ageMultiplier = 1 - (ageRatio * 0.65);
+            var intensity = Math.max(0.08, sample.intensity * ageMultiplier);
+
+            L.circleMarker([sample.lat, sample.lon], {
+                radius: 7 + intensity * 15,
+                color: heatColor(intensity),
+                weight: 0,
+                opacity: 0,
+                fillOpacity: 0.05 + (intensity * 0.30)
+            }).addTo(heatLayer);
+        });
     }
 
     function escapeForPopup(str) {
