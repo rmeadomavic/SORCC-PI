@@ -1537,7 +1537,11 @@ async def config_write(request: Request):
         # Validate after write and return any issues
         from argus.config_schema import validate
         vr = validate("/opt/argus/config/argus.ini")
-        result: dict[str, Any] = {"status": "ok", "skipped": write_result.get("skipped", [])}
+        result: dict[str, Any] = {
+            "status": "ok",
+            "restart_required": write_result.get("restart_required", []),
+            "skipped": write_result.get("skipped", []),
+        }
         if vr.errors:
             result["validation_errors"] = vr.errors
             result["status"] = "warn"
