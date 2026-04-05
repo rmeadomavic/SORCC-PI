@@ -4,6 +4,8 @@
     "use strict";
 
     var activeSection = "general";
+    var KISMET_PORT_MIN = 1;
+    var KISMET_PORT_MAX = 65535;
 
     // ── Section Navigation ──────────────────────────────────
 
@@ -94,7 +96,7 @@
             "cfg-sim-pin":          { section: "lte", key: "sim_pin" },
             "cfg-gps-port":         { section: "gps", key: "serial_port" },
             "cfg-gps-baud":         { section: "gps", key: "serial_baud" },
-            "cfg-kismet-url":       { section: "kismet", key: "port" },
+            "cfg-kismet-port":      { section: "kismet", key: "port" },
             "cfg-kismet-user":      { section: "kismet", key: "user" },
             "cfg-kismet-pass":      { section: "kismet", key: "pass" },
             "cfg-kismet-autostart": { section: "kismet", key: "autostart" },
@@ -140,7 +142,7 @@
             "cfg-sim-pin":          { section: "lte", key: "sim_pin" },
             "cfg-gps-port":         { section: "gps", key: "serial_port" },
             "cfg-gps-baud":         { section: "gps", key: "serial_baud" },
-            "cfg-kismet-url":       { section: "kismet", key: "port" },
+            "cfg-kismet-port":      { section: "kismet", key: "port" },
             "cfg-kismet-user":      { section: "kismet", key: "user" },
             "cfg-kismet-pass":      { section: "kismet", key: "pass" },
             "cfg-kismet-autostart": { section: "kismet", key: "autostart" },
@@ -175,7 +177,39 @@
 
     // ── Apply Config ────────────────────────────────────────
 
+    function validateKismetPort() {
+        var portEl = document.getElementById("cfg-kismet-port");
+        var hintEl = document.getElementById("cfg-kismet-port-hint");
+        if (!portEl) return true;
+
+        var rawVal = (portEl.value || "").trim();
+        if (!rawVal) {
+            if (hintEl) hintEl.textContent = "Kismet API Port is required (1-65535)";
+            portEl.setCustomValidity("Kismet API Port is required");
+            return false;
+        }
+
+        var parsed = Number(rawVal);
+        var isIntegerPort = Number.isInteger(parsed) && parsed >= KISMET_PORT_MIN && parsed <= KISMET_PORT_MAX;
+        if (!isIntegerPort) {
+            if (hintEl) hintEl.textContent = "Expected format: numeric TCP port (1-65535), e.g. 2501";
+            portEl.setCustomValidity("Enter a valid port number between 1 and 65535");
+            return false;
+        }
+
+        portEl.setCustomValidity("");
+        if (hintEl) hintEl.textContent = "Expected format: numeric TCP port (1-65535), e.g. 2501";
+        return true;
+    }
+
     function applyConfig() {
+        if (!validateKismetPort()) {
+            var badPortEl = document.getElementById("cfg-kismet-port");
+            if (badPortEl) badPortEl.reportValidity();
+            window.ARGUS.showToast("Fix Kismet API Port before saving", "error");
+            return;
+        }
+
         var config = collectConfig();
 
         fetch("/api/config/full", {
@@ -329,6 +363,13 @@
 
         var wifiBtn = document.getElementById("btn-apply-wifi");
         if (wifiBtn) wifiBtn.addEventListener("click", function () {
+            if (!validateKismetPort()) {
+                var badPortEl = document.getElementById("cfg-kismet-port");
+                if (badPortEl) badPortEl.reportValidity();
+                window.ARGUS.showToast("Fix Kismet API Port before applying WiFi", "error");
+                return;
+            }
+
             // Save config first, then apply WiFi only on success
             var config = collectConfig();
             fetch("/api/config/full", {
@@ -349,6 +390,12 @@
                     window.ARGUS.showToast("Config save failed: " + err.message, "error");
                 });
         });
+
+        var kismetPortEl = document.getElementById("cfg-kismet-port");
+        if (kismetPortEl) {
+            kismetPortEl.addEventListener("input", validateKismetPort);
+            kismetPortEl.addEventListener("blur", validateKismetPort);
+        }
 
         // Load config when settings tab is activated
         document.querySelectorAll(".tab").forEach(function (tab) {

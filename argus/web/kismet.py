@@ -14,6 +14,9 @@ log = logging.getLogger(__name__)
 KISMET_URL = "http://localhost:2501"
 KISMET_USER = "kismet"
 KISMET_PASS = "kismet"
+_SETTINGS_TTL = 5  # seconds
+_settings_time: float = 0
+_session_config_key: tuple[str, str, str] | None = None
 
 # Session cache — reuse HTTP session for 60 seconds
 _session_cache: requests.Session | None = None
@@ -24,9 +27,50 @@ _response_cache: dict[str, tuple[float, Any]] = {}
 _CACHE_TTL = 30  # seconds
 
 
+def refresh_settings() -> None:
+    """Refresh Kismet connection details from config file if available."""
+    global KISMET_URL, KISMET_USER, KISMET_PASS, _settings_time
+    now = time.time()
+    if (now - _settings_time) < _SETTINGS_TTL:
+        return
+
+    try:
+        from argus.config_api import read_config_raw
+
+        cfg = read_config_raw()
+        kismet_cfg = cfg.get("kismet", {})
+
+        user = kismet_cfg.get("user", "").strip() or "kismet"
+        password = kismet_cfg.get("pass", "").strip() or "kismet"
+        port_raw = kismet_cfg.get("port", "2501").strip()
+
+        try:
+            port = int(port_raw)
+        except (TypeError, ValueError):
+            port = 2501
+            log.warning("Invalid kismet.port '%s' in config, defaulting to 2501", port_raw)
+
+        if port < 1 or port > 65535:
+            log.warning("Out-of-range kismet.port %s in config, defaulting to 2501", port)
+            port = 2501
+
+        KISMET_USER = user
+        KISMET_PASS = password
+        KISMET_URL = f"http://localhost:{port}"
+    except Exception as e:
+        log.debug("Could not refresh Kismet settings from config: %s", e)
+    finally:
+        _settings_time = now
+
+
 def session() -> requests.Session:
     """Get or create a cached Kismet HTTP session with auth cookies."""
-    global _session_cache, _session_time
+    global _session_cache, _session_time, _session_config_key
+    refresh_settings()
+    config_key = (KISMET_URL, KISMET_USER, KISMET_PASS)
+    if _session_config_key != config_key:
+        _session_cache = None
+        _session_config_key = config_key
     if _session_cache and (time.time() - _session_time) < 60:
         return _session_cache
     s = requests.Session()
