@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import time
 from typing import Any
@@ -70,9 +71,19 @@ def get(endpoint: str, params: dict | None = None, timeout: int = 8) -> Any:
         raise HTTPException(status_code=500, detail=str(e))
 
 
+def _cacheable_payload(data: dict | None) -> str:
+    """Build a stable string key for POST payloads."""
+    if not data:
+        return ""
+    try:
+        return json.dumps(data, sort_keys=True, separators=(",", ":"))
+    except Exception:
+        return str(data)
+
+
 def post(endpoint: str, data: dict | None = None, timeout: int = 15) -> Any:
     """POST to Kismet (form-encoded) with caching fallback on errors."""
-    cache_key = f"POST:{endpoint}"
+    cache_key = f"POST:{endpoint}:{_cacheable_payload(data)}"
     s = session()
     try:
         r = s.post(f"{KISMET_URL}{endpoint}", data=data, timeout=timeout)

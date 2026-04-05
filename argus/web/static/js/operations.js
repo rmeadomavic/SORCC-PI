@@ -597,6 +597,7 @@
         rssiHistory = [];
         prevSignal = -100;
         huntDeltaHistory = [];
+        btDeltaEma = null;
 
         // Clear any existing hunt interval to prevent parallel hunts
         if (huntInterval) clearInterval(huntInterval);
@@ -610,6 +611,7 @@
         huntInterval = null;
         huntPollInFlight = false;
         huntConsecutiveErrors = 0;
+        btDeltaEma = null;
 
         // Stop audio
         if (audioGain) audioGain.gain.value = 0;
@@ -630,6 +632,8 @@
     var huntPollInFlight = false;
     var huntConsecutiveErrors = 0;
     var huntDeltaHistory = [];
+    var btDeltaEma = null;
+    var BT_DELTA_EMA_ALPHA = 0.35;
 
     function pollTarget(ssid) {
         if (huntPollInFlight) return;  // prevent stacking over slow connections
@@ -739,13 +743,17 @@
             // BT hunt: packet delta rate as proximity indicator
             var pkts = data.packets || 0;
             var delta = data.packet_delta || 0;
-            var act = data.activity || 0;
             var mfr = data.manufacturer || "";
 
             // Track delta history for trend detection
             if (!huntDeltaHistory) huntDeltaHistory = [];
             huntDeltaHistory.push(delta);
             if (huntDeltaHistory.length > 10) huntDeltaHistory.shift();
+
+            // Smooth packet bursts (BLE adverts are naturally bursty)
+            btDeltaEma = btDeltaEma == null
+                ? delta
+                : (BT_DELTA_EMA_ALPHA * delta) + ((1 - BT_DELTA_EMA_ALPHA) * btDeltaEma);
 
             // Calculate trend: compare recent vs older deltas
             var recentAvg = 0, olderAvg = 0;
@@ -758,25 +766,27 @@
             }
             var trending = recentAvg - olderAvg;
 
-            // Map activity level to gauge percentage (more responsive)
-            var pct = act >= 3 ? 85 : act >= 2 ? 60 : act >= 1 ? 35 : (pkts > 0 ? 10 : 0);
+            // Map smoothed activity to gauge percentage to reduce needle jumpiness
+            var stableAct = btDeltaEma >= 20 ? 3 : btDeltaEma >= 5 ? 2 : btDeltaEma > 0.5 ? 1 : 0;
+            var pct = stableAct >= 3 ? 85 : stableAct >= 2 ? 60 : stableAct >= 1 ? 35 : (pkts > 0 ? 10 : 0);
             updateGaugeArc(pct);
-            sigValue.textContent = delta > 0 ? "+" + delta + " pkts/s" : pkts + " pkts";
+            var smoothDeltaText = Math.round((btDeltaEma || 0) * 10) / 10;
+            sigValue.textContent = smoothDeltaText > 0 ? "+" + smoothDeltaText + " pkts/s" : pkts + " pkts";
 
-            // Audio based on activity
-            if (act >= 2) playTone(-40);
-            else if (act >= 1) playTone(-65);
+            // Audio based on smoothed activity
+            if (stableAct >= 2) playTone(-40);
+            else if (stableAct >= 1) playTone(-65);
             else { if (audioGain) audioGain.gain.value = 0; }
 
             // Proximity hint with trend arrows
             var arrow = trending > 2 ? " \u2191\u2191" : trending > 0.5 ? " \u2191" : trending < -2 ? " \u2193\u2193" : trending < -0.5 ? " \u2193" : "";
-            if (act >= 3) {
+            if (stableAct >= 3) {
                 sigHint.textContent = "HIGH ACTIVITY — VERY CLOSE" + arrow;
                 sigHint.className = "signal-hint hot";
-            } else if (act >= 2) {
+            } else if (stableAct >= 2) {
                 sigHint.textContent = (trending > 0 ? "GETTING CLOSER" : "NEARBY") + arrow;
                 sigHint.className = "signal-hint hot";
-            } else if (act >= 1) {
+            } else if (stableAct >= 1) {
                 sigHint.textContent = (trending > 0 ? "WARMING UP" : "LOW ACTIVITY") + arrow;
                 sigHint.className = "signal-hint warm";
             } else {
@@ -786,7 +796,7 @@
 
             if (peak) peak.textContent = pkts.toLocaleString() + " total" + (mfr ? " | " + mfr : "");
             // Track activity level as chart value
-            rssiHistory.push(act >= 3 ? -30 : act >= 2 ? -50 : act >= 1 ? -70 : -100);
+            rssiHistory.push(stableAct >= 3 ? -30 : stableAct >= 2 ? -50 : stableAct >= 1 ? -70 : -100);
         } else {
             // WiFi hunt: use signal strength as before
             var pct = window.ARGUS.signalToPercent(sig);
