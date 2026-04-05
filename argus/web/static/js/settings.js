@@ -309,6 +309,24 @@
             });
     }
 
+    function extractImportError(data, fallback) {
+        if (!data) return fallback;
+        var detail = data.detail || data.error || data.message;
+        if (typeof detail === "string") return detail;
+        if (detail && typeof detail === "object") {
+            var parts = [];
+            if (detail.message) parts.push(detail.message);
+            if (Array.isArray(detail.errors) && detail.errors.length) {
+                parts.push(detail.errors.join("; "));
+            }
+            if (Array.isArray(detail.warnings) && detail.warnings.length) {
+                parts.push("Warnings: " + detail.warnings.join("; "));
+            }
+            if (parts.length) return parts.join(" ");
+        }
+        return fallback;
+    }
+
     function importConfig() {
         var input = document.createElement("input");
         input.type = "file";

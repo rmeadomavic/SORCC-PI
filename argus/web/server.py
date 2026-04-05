@@ -1595,10 +1595,58 @@ async def config_import(file: UploadFile = File(...)):
     try:
         raw = await file.read()
         updates = json.loads(raw)
-        write_config(updates)
-        return {"status": "ok", "detail": "Config imported successfully"}
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=400, detail="Invalid JSON file")
+    except json.JSONDecodeError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Invalid JSON in uploaded config file at "
+                f"line {exc.lineno}, column {exc.colno}: {exc.msg}"
+            ),
+        )
+
+    if not isinstance(updates, dict):
+        raise HTTPException(
+            status_code=422,
+            detail="Invalid config payload: top-level JSON value must be an object keyed by section name.",
+        )
+
+    try:
+        write_result = write_config(updates)
+        from argus.config_schema import validate
+        vr = validate(str(get_config_path()))
+
+        if vr.errors:
+            rollback_ok = restore_backup()
+            if not rollback_ok:
+                raise HTTPException(
+                    status_code=500,
+                    detail=(
+                        "Config import failed schema validation and rollback failed: "
+                        "no backup file available to restore previous config."
+                    ),
+                )
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "message": "Config import failed schema validation.",
+                    "errors": vr.errors,
+                    "warnings": vr.warnings,
+                    "skipped": write_result.get("skipped", []),
+                },
+            )
+
+        result: dict[str, Any] = {
+            "status": "ok",
+            "detail": "Config imported successfully",
+            "skipped": write_result.get("skipped", []),
+        }
+        if vr.warnings:
+            result["validation_warnings"] = vr.warnings
+        return result
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to import config: {exc}")
 
 
 def _run_check(name, category, fn):
