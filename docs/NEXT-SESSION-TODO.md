@@ -58,7 +58,7 @@
 ## Priority 7: Documentation
 
 - [ ] **Update README** — Reflect new endpoints, modules, CoT capability
-- [ ] **API docs** — Auto-generate from FastAPI OpenAPI schema
+- [x] **API docs** — Auto-generated from FastAPI OpenAPI schema (`docs/api/openapi.json`, 2026-04-05)
 - [ ] **CLAUDE.md** — Update with new module structure and endpoints
 
 ## Completed Since Last Session (Chunks 9-12, 2026-03-31)

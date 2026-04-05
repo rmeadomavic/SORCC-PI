@@ -1,0 +1,796 @@
+{
+  "components": {
+    "schemas": {
+      "Body_config_import_api_config_import_post": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_config_import_api_config_import_post",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "Argus RF Survey Dashboard",
+    "version": "2.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/": {
+      "get": {
+        "operationId": "index__get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Index"
+      }
+    },
+    "/api/activity": {
+      "get": {
+        "description": "Return recently discovered devices and activity metrics.",
+        "operationId": "get_activity_api_activity_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Activity"
+      }
+    },
+    "/api/config/export": {
+      "get": {
+        "operationId": "config_export_api_config_export_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Config Export"
+      }
+    },
+    "/api/config/factory-reset": {
+      "post": {
+        "operationId": "config_factory_reset_api_config_factory_reset_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Config Factory Reset"
+      }
+    },
+    "/api/config/full": {
+      "get": {
+        "operationId": "config_read_api_config_full_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Config Read"
+      },
+      "post": {
+        "operationId": "config_write_api_config_full_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Config Write"
+      }
+    },
+    "/api/config/import": {
+      "post": {
+        "operationId": "config_import_api_config_import_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_config_import_api_config_import_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Config Import"
+      }
+    },
+    "/api/config/restore-backup": {
+      "post": {
+        "operationId": "config_restore_backup_api_config_restore_backup_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Config Restore Backup"
+      }
+    },
+    "/api/config/schema": {
+      "get": {
+        "description": "Expose config schema metadata for UI mapping validation.",
+        "operationId": "config_schema_api_config_schema_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Config Schema"
+      }
+    },
+    "/api/config/validate": {
+      "get": {
+        "description": "Validate the current config and return plain-English errors/warnings.",
+        "operationId": "config_validate_api_config_validate_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Config Validate"
+      }
+    },
+    "/api/cot": {
+      "get": {
+        "description": "Export CoT XML for all located devices (ATAK integration).",
+        "operationId": "export_cot_all_api_cot_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Export Cot All"
+      }
+    },
+    "/api/cot/self": {
+      "get": {
+        "description": "Export CoT XML for the Pi's own position (sensor platform SA).\n\nStandard ATAK practice: the sensor platform broadcasts its own position\nso operators can see where the SIGINT payload is on the map.",
+        "operationId": "export_cot_self_api_cot_self_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Export Cot Self"
+      }
+    },
+    "/api/cot/{mac}": {
+      "get": {
+        "description": "Export CoT XML for a specific device by MAC address (ATAK integration).",
+        "operationId": "export_cot_device_api_cot__mac__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "mac",
+            "required": true,
+            "schema": {
+              "title": "Mac",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Cot Device"
+      }
+    },
+    "/api/devices": {
+      "get": {
+        "operationId": "get_devices_api_devices_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Devices"
+      }
+    },
+    "/api/devices/located": {
+      "get": {
+        "description": "Return devices that have GPS coordinates for map plotting.",
+        "operationId": "get_located_devices_api_devices_located_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Located Devices"
+      }
+    },
+    "/api/events": {
+      "get": {
+        "description": "Server-Sent Events stream for real-time dashboard updates.\n\nPushes device count changes, new discoveries, and status every 2s.\nClients connect with EventSource and get instant updates vs polling.",
+        "operationId": "event_stream_api_events_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Event Stream"
+      }
+    },
+    "/api/events/history": {
+      "get": {
+        "description": "Return recent operator events from today's event log (after-action review).",
+        "operationId": "get_events_history_api_events_history_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "n",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "title": "N",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Events History"
+      }
+    },
+    "/api/export/csv": {
+      "get": {
+        "operationId": "export_csv_api_export_csv_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Export Csv"
+      }
+    },
+    "/api/export/kml": {
+      "get": {
+        "operationId": "export_kml_api_export_kml_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Export Kml"
+      }
+    },
+    "/api/gps": {
+      "get": {
+        "operationId": "get_gps_api_gps_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Gps"
+      }
+    },
+    "/api/login": {
+      "post": {
+        "operationId": "api_login_api_login_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Login"
+      }
+    },
+    "/api/logout": {
+      "post": {
+        "operationId": "api_logout_api_logout_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Logout"
+      }
+    },
+    "/api/logs": {
+      "get": {
+        "description": "Return recent log entries from the in-memory ring buffer.",
+        "operationId": "get_logs_api_logs_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "n",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "title": "N",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "level",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Level"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Logs"
+      }
+    },
+    "/api/lte/restart": {
+      "post": {
+        "operationId": "restart_lte_api_lte_restart_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Restart Lte"
+      }
+    },
+    "/api/preflight": {
+      "get": {
+        "operationId": "preflight_api_preflight_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Preflight"
+      }
+    },
+    "/api/profiles": {
+      "get": {
+        "operationId": "list_profiles_api_profiles_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Profiles"
+      }
+    },
+    "/api/profiles/active": {
+      "get": {
+        "operationId": "get_active_profile_api_profiles_active_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Active Profile"
+      }
+    },
+    "/api/profiles/switch": {
+      "post": {
+        "operationId": "switch_profile_api_profiles_switch_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Switch Profile"
+      }
+    },
+    "/api/status": {
+      "get": {
+        "operationId": "get_status_api_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Status"
+      }
+    },
+    "/api/target/{query}": {
+      "get": {
+        "description": "Hunt a device by SSID name or MAC address. Supports both WiFi and BT.",
+        "operationId": "get_target_rssi_api_target__query__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "query",
+            "required": true,
+            "schema": {
+              "title": "Query",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Target Rssi"
+      }
+    },
+    "/api/waypoints": {
+      "get": {
+        "description": "Export GPS-located devices as QGC WPL 110 waypoint file (Mission Planner compatible).\n\nEach located device becomes a waypoint. Useful for autonomous hunt missions:\nfly to each device's last-known position for signal convergence.",
+        "operationId": "export_waypoints_api_waypoints_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Export Waypoints"
+      }
+    },
+    "/api/wifi-capture/status": {
+      "get": {
+        "operationId": "wifi_capture_status_api_wifi_capture_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Wifi Capture Status"
+      }
+    },
+    "/api/wifi-capture/toggle": {
+      "post": {
+        "description": "Toggle wlan0 between managed (WiFi connectivity) and monitor (Kismet capture).\n\nWhen enabling capture: disconnect WiFi, set monitor mode, add wlan0 to Kismet.\nWhen disabling capture: remove wlan0 from Kismet, restore managed mode, reconnect WiFi.\nLTE + Tailscale remain available throughout.\n\nRuns in a thread pool to avoid blocking the event loop during sleeps/subprocesses.",
+        "operationId": "wifi_capture_toggle_api_wifi_capture_toggle_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Wifi Capture Toggle"
+      }
+    },
+    "/api/wifi/apply": {
+      "post": {
+        "description": "Apply WiFi config to NetworkManager.",
+        "operationId": "apply_wifi_api_wifi_apply_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Apply Wifi"
+      }
+    },
+    "/instructor": {
+      "get": {
+        "operationId": "instructor_page_instructor_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Instructor Page"
+      }
+    },
+    "/login": {
+      "get": {
+        "operationId": "login_page_login_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Login Page"
+      }
+    }
+  }
+}

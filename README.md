@@ -247,6 +247,8 @@ sudo systemctl restart argus-dashboard
 
 Full OpenAPI schema available at `/docs` when running.
 
+A committed schema snapshot is also available at `docs/api/openapi.json` (regenerate with `python3 scripts/export-openapi.py`).
+
 ## Troubleshooting
 
 | Issue | Fix |
