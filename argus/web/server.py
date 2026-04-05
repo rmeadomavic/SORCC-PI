@@ -46,6 +46,19 @@ from argus.web.logging_config import setup_logging, ring_handler
 setup_logging()
 log = logging.getLogger(__name__)
 
+
+def _apply_config_path_from_env() -> None:
+    """Set config path from ARGUS_CONFIG_PATH before app initialization."""
+    if not _HAS_CONFIG_API:
+        return
+    env_path = os.environ.get("ARGUS_CONFIG_PATH", "").strip()
+    if env_path:
+        set_config_path(env_path)
+        log.info("Using config path from ARGUS_CONFIG_PATH: %s", env_path)
+
+
+_apply_config_path_from_env()
+
 _cached_modem_index: str | None = None
 _cached_modem_index_time: float = 0
 
@@ -212,7 +225,7 @@ _AUTH_OPEN_PREFIXES = {"/api/status", "/api/devices", "/api/activity", "/api/eve
 try:
     import configparser as _cp
     _cfg = _cp.ConfigParser()
-    _cfg.read("/opt/argus/config/argus.ini")
+    _cfg.read(get_config_path())
     _AUTH_TOKEN = _cfg.get("dashboard", "api_token", fallback="").strip() or None
 except Exception:
     pass
@@ -1536,7 +1549,7 @@ async def config_write(request: Request):
 
         # Validate after write and return any issues
         from argus.config_schema import validate
-        vr = validate("/opt/argus/config/argus.ini")
+        vr = validate(str(get_config_path()))
         result: dict[str, Any] = {
             "status": "ok",
             "restart_required": write_result.get("restart_required", []),
@@ -1573,7 +1586,7 @@ async def config_factory_reset():
 async def config_validate():
     """Validate the current config and return plain-English errors/warnings."""
     from argus.config_schema import validate
-    vr = validate("/opt/argus/config/argus.ini")
+    vr = validate(str(get_config_path()))
     return {"ok": vr.ok, "errors": vr.errors, "warnings": vr.warnings}
 
 

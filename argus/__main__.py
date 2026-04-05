@@ -2,7 +2,13 @@
 import os
 import uvicorn
 
+from argus.config_api import get_config_path, set_config_path
+
 if __name__ == "__main__":
+    env_config_path = os.environ.get("ARGUS_CONFIG_PATH", "").strip()
+    if env_config_path:
+        set_config_path(env_config_path)
+
     kwargs = {
         "host": "0.0.0.0",
         "port": 8080,
@@ -16,7 +22,7 @@ if __name__ == "__main__":
         try:
             import configparser
             cfg = configparser.ConfigParser()
-            cfg.read("/opt/argus/config/argus.ini")
+            cfg.read(get_config_path())
             tls_enabled = cfg.get("dashboard", "tls_enabled", fallback="false").lower() == "true"
         except Exception:
             pass
