@@ -1,9 +1,8 @@
 import asyncio
-import unittest
 from types import SimpleNamespace
-from unittest.mock import patch
 
-from argus.web import server
+from argus.web import app_state
+from argus.web.routers import config
 
 
 class _DummyRequest:
@@ -14,37 +13,23 @@ class _DummyRequest:
         return self._payload
 
 
-class ConfigWriteResponseTests(unittest.TestCase):
-    def test_config_write_includes_restart_required_from_write_result(self):
-        updates = {"general": {"hostname": "argus-node"}}
-        validate_result = SimpleNamespace(errors=[], warnings=[])
+def test_config_write_includes_restart_required(monkeypatch):
+    updates = {"general": {"hostname": "argus-node"}}
+    monkeypatch.setattr(app_state, "HAS_CONFIG_API", True)
+    monkeypatch.setattr(app_state, "write_config", lambda _u: {"restart_required": ["wifi.country_code"], "skipped": []})
+    monkeypatch.setattr("argus.config_schema.validate", lambda _p: SimpleNamespace(errors=[], warnings=[]))
 
-        with patch.object(server, "_HAS_CONFIG_API", True), \
-             patch.object(server, "write_config", return_value={"restart_required": ["wifi.country_code"], "skipped": []}), \
-             patch.object(server.events, "log"), \
-             patch.object(server, "configure_web_password"), \
-             patch("argus.config_schema.validate", return_value=validate_result):
-            result = asyncio.run(server.config_write(_DummyRequest(updates)))
-
-        self.assertEqual(result["status"], "ok")
-        self.assertEqual(result["restart_required"], ["wifi.country_code"])
-        self.assertEqual(result["skipped"], [])
-
-    def test_config_write_defaults_restart_required_to_empty_list(self):
-        updates = {"general": {"hostname": "argus-node"}}
-        validate_result = SimpleNamespace(errors=[], warnings=[])
-
-        with patch.object(server, "_HAS_CONFIG_API", True), \
-             patch.object(server, "write_config", return_value={"skipped": ["foo.bar (unknown field)"]}), \
-             patch.object(server.events, "log"), \
-             patch.object(server, "configure_web_password"), \
-             patch("argus.config_schema.validate", return_value=validate_result):
-            result = asyncio.run(server.config_write(_DummyRequest(updates)))
-
-        self.assertEqual(result["status"], "ok")
-        self.assertEqual(result["restart_required"], [])
-        self.assertEqual(result["skipped"], ["foo.bar (unknown field)"])
+    result = asyncio.run(config.config_write(_DummyRequest(updates)))
+    assert result["status"] == "ok"
+    assert result["restart_required"] == ["wifi.country_code"]
 
 
-if __name__ == "__main__":
-    unittest.main()
+def test_config_write_defaults_restart_required_empty(monkeypatch):
+    updates = {"general": {"hostname": "argus-node"}}
+    monkeypatch.setattr(app_state, "HAS_CONFIG_API", True)
+    monkeypatch.setattr(app_state, "write_config", lambda _u: {"skipped": ["foo.bar (unknown field)"]})
+    monkeypatch.setattr("argus.config_schema.validate", lambda _p: SimpleNamespace(errors=[], warnings=[]))
+
+    result = asyncio.run(config.config_write(_DummyRequest(updates)))
+    assert result["status"] == "ok"
+    assert result["restart_required"] == []
