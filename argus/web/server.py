@@ -1501,13 +1501,30 @@ async def config_read():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to read config: {e}")
 
+
+@app.get("/api/config/schema")
+async def config_schema():
+    """Expose config schema metadata for UI mapping validation."""
+    from argus.config_schema import SCHEMA
+
+    sections: dict[str, dict[str, dict[str, Any]]] = {}
+    for section, fields in SCHEMA.items():
+        sections[section] = {}
+        for key, spec in fields.items():
+            sections[section][key] = {
+                "type": spec.type.value,
+                "required": spec.required,
+            }
+    return {"sections": sections}
+
+
 @app.post("/api/config/full")
 async def config_write(request: Request):
     if not _HAS_CONFIG_API:
         raise HTTPException(status_code=501, detail="Config API module not available")
     try:
         updates = await request.json()
-        write_config(updates)
+        write_result = write_config(updates)
         events.log("config_updated", sections=list(updates.keys()) if isinstance(updates, dict) else [])
 
         # Reload web password if it was changed
@@ -1520,7 +1537,7 @@ async def config_write(request: Request):
         # Validate after write and return any issues
         from argus.config_schema import validate
         vr = validate("/opt/argus/config/argus.ini")
-        result: dict[str, Any] = {"status": "ok"}
+        result: dict[str, Any] = {"status": "ok", "skipped": write_result.get("skipped", [])}
         if vr.errors:
             result["validation_errors"] = vr.errors
             result["status"] = "warn"

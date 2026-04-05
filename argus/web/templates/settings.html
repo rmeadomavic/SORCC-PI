@@ -45,10 +45,6 @@
                 </datalist>
                 <div class="form-hint">Access Point Name for your SIM carrier</div>
             </div>
-            <div class="form-group">
-                <label for="cfg-sim-pin">SIM PIN</label>
-                <input type="password" id="cfg-sim-pin" placeholder="(leave blank if none)">
-            </div>
             <div class="inline-action">
                 <button id="btn-restart-lte" class="btn-danger">Restart LTE</button>
                 <span class="form-hint">Restarts ModemManager and reconnects cellular</span>
@@ -78,8 +74,8 @@
         <div id="settings-kismet" class="settings-section" role="tabpanel" aria-labelledby="settings-tab-btn-kismet">
             <h3>Kismet Configuration</h3>
             <div class="form-group">
-                <label for="cfg-kismet-url">Kismet API URL</label>
-                <input type="text" id="cfg-kismet-url" placeholder="http://localhost:2501">
+                <label for="cfg-kismet-port">Kismet Port</label>
+                <input type="number" id="cfg-kismet-port" placeholder="2501" min="1" max="65535">
             </div>
             <div class="form-group">
                 <label for="cfg-kismet-user">Kismet Username</label>
@@ -88,13 +84,6 @@
             <div class="form-group">
                 <label for="cfg-kismet-pass">Kismet Password</label>
                 <input type="password" id="cfg-kismet-pass" placeholder="kismet">
-            </div>
-            <div class="toggle-row">
-                <span class="toggle-label">Auto-start Kismet on boot</span>
-                <label class="toggle">
-                    <input type="checkbox" id="cfg-kismet-autostart" checked>
-                    <span class="toggle-slider"></span>
-                </label>
             </div>
         </div>
 
@@ -110,25 +99,6 @@
                 <input type="password" id="cfg-dash-password" placeholder="(empty = no login required)">
                 <div class="form-hint">Password for browser access. Leave empty to disable login requirement.</div>
             </div>
-            <div class="form-group">
-                <label for="cfg-poll-interval">Device Poll Interval (ms)</label>
-                <input type="number" id="cfg-poll-interval" value="5000" min="1000" max="30000" step="1000">
-                <div class="form-hint">How often to refresh the device list (1000-30000 ms)</div>
-            </div>
-            <div class="toggle-row">
-                <span class="toggle-label">Show Bluetooth devices</span>
-                <label class="toggle">
-                    <input type="checkbox" id="cfg-show-bt" checked>
-                    <span class="toggle-slider"></span>
-                </label>
-            </div>
-            <div class="toggle-row">
-                <span class="toggle-label">Show SDR/433MHz devices</span>
-                <label class="toggle">
-                    <input type="checkbox" id="cfg-show-sdr" checked>
-                    <span class="toggle-slider"></span>
-                </label>
-            </div>
             <div class="inline-action">
                 <button id="btn-logout" class="btn-secondary" onclick="window.ARGUS.logout()">Log Out</button>
                 <span class="form-hint">End your current session</span>
@@ -138,11 +108,6 @@
         <!-- Tailscale -->
         <div id="settings-tailscale" class="settings-section" role="tabpanel" aria-labelledby="settings-tab-btn-tailscale">
             <h3>Tailscale VPN</h3>
-            <div class="form-group">
-                <label for="cfg-ts-authkey">Auth Key</label>
-                <input type="password" id="cfg-ts-authkey" placeholder="tskey-auth-...">
-                <div class="form-hint">Tailscale auth key for headless enrollment</div>
-            </div>
             <div class="toggle-row">
                 <span class="toggle-label">Enable Tailscale</span>
                 <label class="toggle">
@@ -161,11 +126,6 @@
                     <input type="checkbox" id="cfg-pisugar-enabled" checked>
                     <span class="toggle-slider"></span>
                 </label>
-            </div>
-            <div class="form-group">
-                <label for="cfg-pisugar-warn">Low Battery Warning (%)</label>
-                <input type="number" id="cfg-pisugar-warn" value="20" min="5" max="50">
-                <div class="form-hint">Dashboard will warn when battery drops below this level</div>
             </div>
         </div>
 
@@ -203,3 +163,4 @@
         </div>
     </div>
 </div>
+<div id="settings-save-warnings" class="alert alert-warning" style="display:none; margin-top: 0.75rem;"></div>

@@ -4,6 +4,26 @@
     "use strict";
 
     var activeSection = "general";
+    var schema = null;
+
+    // Schema-driven settings map: one source of truth for form IDs <-> config keys.
+    var FIELD_MAP = [
+        { id: "cfg-hostname", section: "general", key: "hostname" },
+        { id: "cfg-callsign", section: "general", key: "callsign" },
+        { id: "cfg-apn", section: "lte", key: "apn" },
+        { id: "cfg-gps-port", section: "gps", key: "serial_port" },
+        { id: "cfg-gps-baud", section: "gps", key: "serial_baud" },
+        { id: "cfg-kismet-port", section: "kismet", key: "port" },
+        { id: "cfg-kismet-user", section: "kismet", key: "user" },
+        { id: "cfg-kismet-pass", section: "kismet", key: "pass" },
+        { id: "cfg-dash-port", section: "dashboard", key: "port" },
+        { id: "cfg-dash-password", section: "dashboard", key: "password" },
+        { id: "cfg-ts-enabled", section: "tailscale", key: "enabled" },
+        { id: "cfg-pisugar-enabled", section: "pisugar", key: "enabled" },
+        { id: "cfg-wifi-ssid", section: "wifi", key: "ssid" },
+        { id: "cfg-wifi-pass", section: "wifi", key: "password" },
+        { id: "cfg-wifi-country", section: "wifi", key: "country_code" }
+    ];
 
     // ── Section Navigation ──────────────────────────────────
 
@@ -66,15 +86,11 @@
 
     function loadConfig(retries) {
         retries = retries === undefined ? 2 : retries;
-        fetch("/api/config/full", {
-            signal: AbortSignal.timeout ? AbortSignal.timeout(10000) : undefined
-        })
-            .then(function (r) {
-                if (!r.ok) throw new Error("HTTP " + r.status);
-                return r.json();
-            })
-            .then(function (config) {
-                populateForm(config);
+        Promise.all([fetchSchema(), fetchConfig()])
+            .then(function (results) {
+                schema = results[0];
+                populateForm(results[1]);
+                validateFieldMap();
             })
             .catch(function (err) {
                 if (retries > 0) {
@@ -85,36 +101,58 @@
             });
     }
 
-    function populateForm(config) {
-        // Map config keys to form field IDs — must match all inputs in settings.html
-        var mapping = {
-            "cfg-hostname":         { section: "general", key: "hostname" },
-            "cfg-callsign":         { section: "general", key: "callsign" },
-            "cfg-apn":              { section: "lte", key: "apn" },
-            "cfg-sim-pin":          { section: "lte", key: "sim_pin" },
-            "cfg-gps-port":         { section: "gps", key: "serial_port" },
-            "cfg-gps-baud":         { section: "gps", key: "serial_baud" },
-            "cfg-kismet-url":       { section: "kismet", key: "port" },
-            "cfg-kismet-user":      { section: "kismet", key: "user" },
-            "cfg-kismet-pass":      { section: "kismet", key: "pass" },
-            "cfg-kismet-autostart": { section: "kismet", key: "autostart" },
-            "cfg-dash-port":        { section: "dashboard", key: "port" },
-            "cfg-dash-password":    { section: "dashboard", key: "password" },
-            "cfg-poll-interval":    { section: "dashboard", key: "poll_interval" },
-            "cfg-show-bt":          { section: "dashboard", key: "show_bluetooth" },
-            "cfg-show-sdr":         { section: "dashboard", key: "show_sdr" },
-            "cfg-ts-authkey":       { section: "tailscale", key: "authkey" },
-            "cfg-ts-enabled":       { section: "tailscale", key: "enabled" },
-            "cfg-pisugar-enabled":  { section: "pisugar", key: "enabled" },
-            "cfg-pisugar-warn":     { section: "pisugar", key: "low_battery_warn" },
-            "cfg-wifi-ssid":        { section: "wifi", key: "ssid" },
-            "cfg-wifi-pass":        { section: "wifi", key: "password" },
-            "cfg-wifi-country":     { section: "wifi", key: "country_code" },
-        };
+    function fetchConfig() {
+        return fetch("/api/config/full", {
+            signal: AbortSignal.timeout ? AbortSignal.timeout(10000) : undefined
+        })
+            .then(function (r) {
+                if (!r.ok) throw new Error("HTTP " + r.status);
+                return r.json();
+            });
+    }
 
-        Object.keys(mapping).forEach(function (fieldId) {
-            var m = mapping[fieldId];
-            var el = document.getElementById(fieldId);
+    function fetchSchema() {
+        return fetch("/api/config/schema", {
+            signal: AbortSignal.timeout ? AbortSignal.timeout(10000) : undefined
+        })
+            .then(function (r) {
+                if (!r.ok) throw new Error("HTTP " + r.status);
+                return r.json();
+            });
+    }
+
+    function showSaveWarnings(items) {
+        var box = document.getElementById("settings-save-warnings");
+        if (!box) return;
+        if (!items || !items.length) {
+            box.innerHTML = "";
+            box.style.display = "none";
+            return;
+        }
+
+        var html = "<strong>Saved with warnings:</strong><ul>" + items.map(function (item) {
+            return "<li>" + item + "</li>";
+        }).join("") + "</ul>";
+        box.innerHTML = html;
+        box.style.display = "block";
+    }
+
+    function validateFieldMap() {
+        if (!schema || !schema.sections) return;
+        var unknown = [];
+        FIELD_MAP.forEach(function (entry) {
+            if (!schema.sections[entry.section] || !schema.sections[entry.section][entry.key]) {
+                unknown.push(entry.section + "." + entry.key + " (mapped from #" + entry.id + ")");
+            }
+        });
+        if (unknown.length) {
+            showSaveWarnings(["UI mapping drift detected: " + unknown.join(", ")]);
+        }
+    }
+
+    function populateForm(config) {
+        FIELD_MAP.forEach(function (m) {
+            var el = document.getElementById(m.id);
             if (!el) return;
             var section = config[m.section];
             if (!section) return;
@@ -133,34 +171,8 @@
 
     function collectConfig() {
         var config = {};
-        var mapping = {
-            "cfg-hostname":         { section: "general", key: "hostname" },
-            "cfg-callsign":         { section: "general", key: "callsign" },
-            "cfg-apn":              { section: "lte", key: "apn" },
-            "cfg-sim-pin":          { section: "lte", key: "sim_pin" },
-            "cfg-gps-port":         { section: "gps", key: "serial_port" },
-            "cfg-gps-baud":         { section: "gps", key: "serial_baud" },
-            "cfg-kismet-url":       { section: "kismet", key: "port" },
-            "cfg-kismet-user":      { section: "kismet", key: "user" },
-            "cfg-kismet-pass":      { section: "kismet", key: "pass" },
-            "cfg-kismet-autostart": { section: "kismet", key: "autostart" },
-            "cfg-dash-port":        { section: "dashboard", key: "port" },
-            "cfg-dash-password":    { section: "dashboard", key: "password" },
-            "cfg-poll-interval":    { section: "dashboard", key: "poll_interval" },
-            "cfg-show-bt":          { section: "dashboard", key: "show_bluetooth" },
-            "cfg-show-sdr":         { section: "dashboard", key: "show_sdr" },
-            "cfg-ts-authkey":       { section: "tailscale", key: "authkey" },
-            "cfg-ts-enabled":       { section: "tailscale", key: "enabled" },
-            "cfg-pisugar-enabled":  { section: "pisugar", key: "enabled" },
-            "cfg-pisugar-warn":     { section: "pisugar", key: "low_battery_warn" },
-            "cfg-wifi-ssid":        { section: "wifi", key: "ssid" },
-            "cfg-wifi-pass":        { section: "wifi", key: "password" },
-            "cfg-wifi-country":     { section: "wifi", key: "country_code" },
-        };
-
-        Object.keys(mapping).forEach(function (fieldId) {
-            var m = mapping[fieldId];
-            var el = document.getElementById(fieldId);
+        FIELD_MAP.forEach(function (m) {
+            var el = document.getElementById(m.id);
             if (!el) return;
             if (!config[m.section]) config[m.section] = {};
 
@@ -186,6 +198,11 @@
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 if (data.status === "ok" || data.ok || data.success) {
+                    var warnings = []
+                        .concat(data.skipped || [])
+                        .concat(data.validation_warnings || [])
+                        .concat(data.validation_errors || []);
+                    showSaveWarnings(warnings);
                     window.ARGUS.showToast("Configuration saved", "success");
                 } else {
                     window.ARGUS.showToast("Failed to save: " + (data.detail || data.error || "Unknown error"), "error");
