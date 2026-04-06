@@ -241,6 +241,61 @@
         </select>
     </div>
     <div class="spectrum-grid">
+        <!-- RF Power Spectrum Sweep -->
+        <div class="spectrum-card spectrum-card-wide" id="rf-sweep-card">
+            <div class="spectrum-card-header">
+                <h3>RF Power Spectrum</h3>
+                <div class="sweep-controls">
+                    <span class="spectrum-card-badge" id="sweep-status-badge">STOPPED</span>
+                    <button class="btn-secondary sweep-btn" id="sweep-start-btn" title="Start spectrum sweep">Start Sweep</button>
+                    <button class="btn-danger sweep-btn" id="sweep-stop-btn" title="Stop spectrum sweep" style="display:none">Stop</button>
+                </div>
+            </div>
+            <div class="sweep-config" id="sweep-config">
+                <div class="sweep-config-row">
+                    <label>Range:</label>
+                    <select id="sweep-preset" class="spectrum-dropdown">
+                        <option value="915">915 MHz ISM (902-928 MHz)</option>
+                        <option value="433">433 MHz ISM (430-440 MHz)</option>
+                        <option value="868">868 MHz EU (863-870 MHz)</option>
+                        <option value="1090">ADS-B (1086-1092 MHz)</option>
+                        <option value="custom">Custom...</option>
+                    </select>
+                    <label>Threshold:</label>
+                    <input type="number" id="sweep-threshold" value="-40" min="-80" max="0" step="5" class="sweep-input" title="Alert threshold (dBm)">
+                    <span class="sweep-unit">dBm</span>
+                </div>
+                <div class="sweep-config-custom" id="sweep-custom-config" style="display:none">
+                    <input type="number" id="sweep-freq-start" placeholder="Start (MHz)" class="sweep-input">
+                    <span class="sweep-unit">to</span>
+                    <input type="number" id="sweep-freq-end" placeholder="End (MHz)" class="sweep-input">
+                    <span class="sweep-unit">MHz</span>
+                </div>
+            </div>
+            <div class="sweep-chart-wrap">
+                <canvas id="sweep-line-chart" width="720" height="180"></canvas>
+                <div class="sweep-chart-labels">
+                    <span id="sweep-freq-min">902 MHz</span>
+                    <span>Power vs Frequency</span>
+                    <span id="sweep-freq-max">928 MHz</span>
+                </div>
+            </div>
+            <div class="sweep-waterfall-wrap">
+                <div class="sweep-waterfall-label">WATERFALL (newest at top)</div>
+                <canvas id="sweep-waterfall" width="720" height="200"></canvas>
+            </div>
+            <div class="sweep-alert-bar" id="sweep-alert-bar" style="display:none">
+                <span class="sweep-alert-icon">&#9888;</span>
+                <span id="sweep-alert-text">Energy detected above threshold</span>
+            </div>
+            <div class="sweep-legend">
+                <span>Power:</span>
+                <div class="sweep-colorbar"></div>
+                <span class="sweep-legend-low">-80 dBm</span>
+                <span class="sweep-legend-high">-20 dBm</span>
+            </div>
+        </div>
+
         <!-- Channel Utilization Chart -->
         <div class="spectrum-card spectrum-card-wide">
             <div class="spectrum-card-header">

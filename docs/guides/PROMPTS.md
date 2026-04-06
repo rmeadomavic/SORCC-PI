@@ -6,13 +6,13 @@ If your environment crashes or you're starting fresh, paste these into the right
 
 ## Argus (Raspberry Pi)
 
-**Setup:** `ssh kali@100.71.115.45` → `cd ~/SORCC-PI` → `cc` → `/remote-control`
+**Setup:** `ssh kali@argus` → `cd ~/Argus` → `cc` → `/remote-control`
 
 ### Tab 1 — Claude Code
 ```
 Start a recursive dev session on Argus. Check memory for session context
 and docs/NEXT-SESSION-TODO.md for the task list. Deploy path is /opt/argus/,
-repo is /home/kali/SORCC-PI/. Work through the TODO priorities in order.
+repo is /home/kali/Argus/. Work through the TODO priorities in order.
 My browser instance is watching the UI live and will feed back visual issues.
 
 Quality bar: Palantir/Anduril grade — military functionality, civilian UX.

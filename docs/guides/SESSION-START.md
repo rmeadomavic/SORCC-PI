@@ -7,7 +7,7 @@ Quick reference for each development session. Assumes INIT-SETUP.md is complete.
 ## Option A: Solo CLI Session (SSH or local terminal)
 
 ```bash
-cd ~/SORCC-PI
+cd ~/Argus
 claude
 ```
 
@@ -24,7 +24,7 @@ Check memory and docs/NEXT-SESSION-TODO.md. Pick up where we left off.
 
 SSH into the Pi/Jetson (or use local terminal):
 ```bash
-cd ~/SORCC-PI
+cd ~/Argus
 claude --dangerously-skip-permissions
 ```
 
@@ -55,7 +55,7 @@ Your workflow:
 1. Go to Tab 2 and screenshot the UI
 2. Identify visual issues, broken elements, or UX problems
 3. Switch to Tab 1 and make code changes to fix them
-4. Run in Tab 1: rsync -av --exclude='__pycache__' ~/SORCC-PI/argus/ /opt/argus/argus/ && sudo systemctl restart argus-dashboard
+4. Run in Tab 1: rsync -av --exclude='__pycache__' ~/Argus/argus/ /opt/argus/argus/ && sudo systemctl restart argus-dashboard
 5. Switch back to Tab 2, wait 5 seconds, refresh, and verify
 6. Repeat until clean
 
@@ -110,7 +110,7 @@ curl -s http://localhost:8080/api/logs?n=3
 
 Before closing out:
 - [ ] Commit and push all changes: `git add -A && git commit -m "..." && git push`
-- [ ] Sync to deployment: `rsync -av --exclude='__pycache__' ~/SORCC-PI/argus/ /opt/argus/argus/`
+- [ ] Sync to deployment: `rsync -av --exclude='__pycache__' ~/Argus/argus/ /opt/argus/argus/`
 - [ ] Restart service: `sudo systemctl restart argus-dashboard`
 - [ ] Tell Claude Code: "wrap up, commit to memory, update NEXT-SESSION-TODO.md"
 - [ ] Review any cloud `--remote` task results at claude.ai/code

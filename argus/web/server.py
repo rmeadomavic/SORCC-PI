@@ -12,7 +12,7 @@ from fastapi.templating import Jinja2Templates
 from argus.web import app_state
 from argus.web.logging_config import setup_logging
 from argus.web.middleware import AuthMiddleware, InstructorCORSMiddleware, RequestLogMiddleware, TokenAuthMiddleware, has_token
-from argus.web.routers import auth, config, devices, exports, preflight, profiles, status
+from argus.web.routers import auth, config, devices, exports, preflight, profiles, spectrum, status
 
 setup_logging()
 log = logging.getLogger(__name__)
@@ -41,6 +41,7 @@ def create_app() -> FastAPI:
     app.include_router(exports.router)
     app.include_router(preflight.router)
     app.include_router(profiles.router)
+    app.include_router(spectrum.router)
 
     @app.on_event("startup")
     async def _startup_load_web_password():
@@ -50,6 +51,12 @@ def create_app() -> FastAPI:
     async def _startup():
         app_state.startup_events()
         log.info("Argus Dashboard v2.0.0 starting")
+
+    @app.on_event("shutdown")
+    async def _shutdown_spectrum():
+        from argus.web.services import spectrum_service
+        if spectrum_service._process:
+            await spectrum_service.stop_sweep()
 
     @app.exception_handler(Exception)
     async def _unhandled_exception_handler(request: Request, exc: Exception):

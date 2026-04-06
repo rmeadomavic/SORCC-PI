@@ -1357,6 +1357,139 @@
     }
 }
 
+/* ── RF Power Spectrum Sweep ── */
+.sweep-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.sweep-btn {
+    padding: 4px 12px;
+    font-size: var(--font-xs);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border: 1px solid var(--border);
+    background: var(--bg-input);
+    color: var(--text-primary);
+}
+.sweep-btn:hover { background: var(--argus-green-dark); }
+.btn-danger.sweep-btn { border-color: var(--danger); color: var(--signal-hot); }
+.btn-danger.sweep-btn:hover { background: rgba(239,83,80,0.15); }
+
+.sweep-config {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: var(--gap-md);
+    padding: var(--gap-sm) var(--gap-md);
+    background: rgba(0,0,0,0.2);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+}
+.sweep-config-locked {
+    opacity: 0.5;
+    pointer-events: none;
+}
+.sweep-config-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: var(--font-xs);
+    color: var(--text-secondary);
+}
+.sweep-input {
+    width: 80px;
+    background: var(--bg-input);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 3px 6px;
+    font-size: var(--font-xs);
+    font-family: var(--font-mono);
+}
+.sweep-unit {
+    font-size: var(--font-xs);
+    color: var(--text-dim);
+}
+.sweep-chart-wrap {
+    position: relative;
+    margin-bottom: var(--gap-sm);
+}
+.sweep-chart-wrap canvas,
+.sweep-waterfall-wrap canvas {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: #0c0c0c;
+}
+.sweep-chart-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--font-xs);
+    font-family: var(--font-mono);
+    color: var(--text-dim);
+    margin-top: 2px;
+}
+.sweep-waterfall-wrap {
+    position: relative;
+}
+.sweep-waterfall-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+}
+.sweep-alert-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    margin-top: var(--gap-sm);
+    background: rgba(239,83,80,0.08);
+    border: 1px solid rgba(239,83,80,0.3);
+    border-radius: var(--radius-sm);
+    color: var(--signal-hot);
+    font-size: var(--font-sm);
+    font-family: var(--font-mono);
+    animation: alert-pulse 2s ease-in-out infinite;
+}
+@keyframes alert-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+.sweep-legend {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: var(--gap-sm);
+    justify-content: center;
+    font-size: var(--font-xs);
+    color: var(--text-dim);
+}
+.sweep-colorbar {
+    width: 120px;
+    height: 8px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #1a1a2e, #42a5f5, #385723, #ff9800, #ef5350);
+}
+.sweep-legend-low, .sweep-legend-high {
+    font-family: var(--font-mono);
+}
+#sweep-status-badge.sweep-running {
+    background: rgba(56, 87, 35, 0.3);
+    color: var(--argus-green-light);
+}
+#sweep-status-badge.sweep-error {
+    background: rgba(239,83,80,0.15);
+    color: var(--signal-hot);
+}
+
 /* ── Log Viewer Tab ── */
 .log-panel {
     display: flex;

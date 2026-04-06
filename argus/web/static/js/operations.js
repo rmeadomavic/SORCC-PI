@@ -2121,6 +2121,266 @@
         if (countEl) countEl.textContent = entries.length + " entries";
     }
 
+    // ── RF Power Spectrum Sweep ────────────────────────────
+
+    var sweepPollTimer = null;
+    var sweepRunning = false;
+    var SWEEP_POWER_MIN = -80;
+    var SWEEP_POWER_MAX = -20;
+
+    var SWEEP_PRESETS = {
+        "915": [902e6, 928e6],
+        "433": [430e6, 440e6],
+        "868": [863e6, 870e6],
+        "1090": [1086e6, 1092e6]
+    };
+
+    function sweepColor(t) {
+        t = Math.max(0, Math.min(1, t));
+        var stops = [
+            [0.00, 26, 26, 46],
+            [0.25, 66, 165, 245],
+            [0.50, 56, 87, 35],
+            [0.75, 255, 152, 0],
+            [1.00, 239, 83, 80]
+        ];
+        for (var i = 0; i < stops.length - 1; i++) {
+            if (t >= stops[i][0] && t <= stops[i + 1][0]) {
+                var lt = (t - stops[i][0]) / (stops[i + 1][0] - stops[i][0]);
+                return [
+                    Math.round(stops[i][1] + (stops[i + 1][1] - stops[i][1]) * lt),
+                    Math.round(stops[i][2] + (stops[i + 1][2] - stops[i][2]) * lt),
+                    Math.round(stops[i][3] + (stops[i + 1][3] - stops[i][3]) * lt)
+                ];
+            }
+        }
+        return [239, 83, 80];
+    }
+
+    function renderSweepLine(sweep, config) {
+        var canvas = document.getElementById("sweep-line-chart");
+        if (!canvas || !sweep || !sweep.bins || !sweep.bins.length) return;
+        var ctx = canvas.getContext("2d");
+        var W = canvas.width, H = canvas.height;
+        var pad = { top: 10, right: 10, bottom: 20, left: 50 };
+        var cw = W - pad.left - pad.right;
+        var ch = H - pad.top - pad.bottom;
+        var fMin = config.freq_start, fMax = config.freq_end;
+        var pMin = SWEEP_POWER_MIN, pMax = SWEEP_POWER_MAX;
+        var threshold = config.threshold || -40;
+
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = "#0c0c0c";
+        ctx.fillRect(0, 0, W, H);
+
+        // Grid
+        ctx.strokeStyle = "rgba(56,87,35,0.2)";
+        ctx.lineWidth = 1;
+        ctx.font = "10px monospace";
+        ctx.fillStyle = "#555";
+        ctx.textAlign = "right";
+        for (var g = 0; g <= 4; g++) {
+            var y = pad.top + (g / 4) * ch;
+            var db = pMax - (g / 4) * (pMax - pMin);
+            ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
+            ctx.fillText(Math.round(db) + " dB", pad.left - 4, y + 4);
+        }
+
+        // Threshold line
+        var thY = pad.top + ((pMax - threshold) / (pMax - pMin)) * ch;
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = "rgba(239,83,80,0.5)";
+        ctx.beginPath(); ctx.moveTo(pad.left, thY); ctx.lineTo(W - pad.right, thY); ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Spectrum line
+        ctx.beginPath();
+        ctx.strokeStyle = "#4ade80";
+        ctx.lineWidth = 1.5;
+        var bins = sweep.bins;
+        for (var i = 0; i < bins.length; i++) {
+            var x = pad.left + ((bins[i][0] - fMin) / (fMax - fMin)) * cw;
+            var yy = pad.top + ((pMax - bins[i][1]) / (pMax - pMin)) * ch;
+            yy = Math.max(pad.top, Math.min(pad.top + ch, yy));
+            if (i === 0) ctx.moveTo(x, yy); else ctx.lineTo(x, yy);
+        }
+        ctx.stroke();
+
+        // Fill under
+        if (bins.length > 0) {
+            var lastX = pad.left + ((bins[bins.length - 1][0] - fMin) / (fMax - fMin)) * cw;
+            ctx.lineTo(lastX, pad.top + ch);
+            ctx.lineTo(pad.left, pad.top + ch);
+            ctx.closePath();
+            ctx.fillStyle = "rgba(74,222,128,0.06)";
+            ctx.fill();
+        }
+
+        // Freq labels
+        var minEl = document.getElementById("sweep-freq-min");
+        var maxEl = document.getElementById("sweep-freq-max");
+        if (minEl) minEl.textContent = (fMin / 1e6).toFixed(0) + " MHz";
+        if (maxEl) maxEl.textContent = (fMax / 1e6).toFixed(0) + " MHz";
+    }
+
+    function renderWaterfall(sweep, config) {
+        var canvas = document.getElementById("sweep-waterfall");
+        if (!canvas || !sweep || !sweep.bins || !sweep.bins.length) return;
+        var ctx = canvas.getContext("2d");
+        var W = canvas.width, H = canvas.height;
+        var rowH = 2;
+
+        // Scroll existing content down
+        var img = ctx.getImageData(0, 0, W, H - rowH);
+        ctx.putImageData(img, 0, rowH);
+
+        // Draw new row at top
+        var bins = sweep.bins;
+        var pMin = SWEEP_POWER_MIN, pMax = SWEEP_POWER_MAX;
+        var row = ctx.createImageData(W, rowH);
+        for (var px = 0; px < W; px++) {
+            var idx = Math.floor((px / W) * bins.length);
+            idx = Math.min(idx, bins.length - 1);
+            var t = (bins[idx][1] - pMin) / (pMax - pMin);
+            var c = sweepColor(t);
+            for (var ry = 0; ry < rowH; ry++) {
+                var off = (ry * W + px) * 4;
+                row.data[off] = c[0];
+                row.data[off + 1] = c[1];
+                row.data[off + 2] = c[2];
+                row.data[off + 3] = 255;
+            }
+        }
+        ctx.putImageData(row, 0, 0);
+    }
+
+    function updateSweepBadge(status) {
+        var badge = document.getElementById("sweep-status-badge");
+        if (!badge) return;
+        badge.textContent = status.toUpperCase();
+        badge.className = "spectrum-card-badge";
+        if (status === "running") badge.classList.add("sweep-running");
+        else if (status === "error") badge.classList.add("sweep-error");
+    }
+
+    var _lastSweepTs = 0;
+
+    function fetchSweepData() {
+        if (activeSubTab !== "spectrum" || !sweepRunning) return;
+        fetch("/api/spectrum/data?count=1")
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.sweeps && data.sweeps.length > 0) {
+                    var latest = data.sweeps[data.sweeps.length - 1];
+                    if (latest.ts !== _lastSweepTs) {
+                        _lastSweepTs = latest.ts;
+                        renderSweepLine(latest, data.config);
+                        renderWaterfall(latest, data.config);
+                    }
+                }
+                updateSweepBadge(data.status);
+
+                if (data.alerts && data.alerts.length > 0) {
+                    var a = data.alerts[data.alerts.length - 1];
+                    var bar = document.getElementById("sweep-alert-bar");
+                    var txt = document.getElementById("sweep-alert-text");
+                    if (bar && txt) {
+                        txt.textContent = a.message;
+                        bar.style.display = "";
+                    }
+                }
+                if (data.status !== "running") {
+                    sweepRunning = false;
+                    if (sweepPollTimer) { clearInterval(sweepPollTimer); sweepPollTimer = null; }
+                    document.getElementById("sweep-start-btn").style.display = "";
+                    document.getElementById("sweep-stop-btn").style.display = "none";
+                    document.getElementById("sweep-config").classList.remove("sweep-config-locked");
+                }
+            })
+            .catch(function () {});
+    }
+
+    function startSweep() {
+        var preset = document.getElementById("sweep-preset").value;
+        var threshold = parseFloat(document.getElementById("sweep-threshold").value) || -40;
+        var fStart, fEnd;
+        if (preset === "custom") {
+            fStart = parseFloat(document.getElementById("sweep-freq-start").value) * 1e6;
+            fEnd = parseFloat(document.getElementById("sweep-freq-end").value) * 1e6;
+            if (!fStart || !fEnd || fEnd <= fStart) {
+                ARGUS.showToast("Enter valid start and end frequencies", "error");
+                return;
+            }
+        } else {
+            fStart = SWEEP_PRESETS[preset][0];
+            fEnd = SWEEP_PRESETS[preset][1];
+        }
+        fetch("/api/spectrum/start", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ freq_start: fStart, freq_end: fEnd, threshold: threshold })
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (data.status === "running") {
+                sweepRunning = true;
+                ARGUS.showToast("Spectrum sweep started", "success");
+                document.getElementById("sweep-start-btn").style.display = "none";
+                document.getElementById("sweep-stop-btn").style.display = "";
+                document.getElementById("sweep-config").classList.add("sweep-config-locked");
+                var wf = document.getElementById("sweep-waterfall");
+                if (wf) wf.getContext("2d").clearRect(0, 0, wf.width, wf.height);
+                document.getElementById("sweep-alert-bar").style.display = "none";
+                _lastSweepTs = 0;
+                if (!sweepPollTimer) sweepPollTimer = setInterval(fetchSweepData, 2000);
+                setTimeout(fetchSweepData, 1000);
+            } else {
+                ARGUS.showToast(data.error || "Failed to start sweep", "error");
+            }
+        })
+        .catch(function (e) { ARGUS.showToast("Sweep error: " + e.message, "error"); });
+    }
+
+    function stopSweep() {
+        fetch("/api/spectrum/stop", { method: "POST" })
+        .then(function (r) { return r.json(); })
+        .then(function () {
+            sweepRunning = false;
+            ARGUS.showToast("Spectrum sweep stopped", "info");
+            document.getElementById("sweep-start-btn").style.display = "";
+            document.getElementById("sweep-stop-btn").style.display = "none";
+            document.getElementById("sweep-config").classList.remove("sweep-config-locked");
+            updateSweepBadge("stopped");
+            if (sweepPollTimer) { clearInterval(sweepPollTimer); sweepPollTimer = null; }
+        });
+    }
+
+    function initSweep() {
+        var startBtn = document.getElementById("sweep-start-btn");
+        var stopBtn = document.getElementById("sweep-stop-btn");
+        var presetSel = document.getElementById("sweep-preset");
+        if (startBtn) startBtn.addEventListener("click", startSweep);
+        if (stopBtn) stopBtn.addEventListener("click", stopSweep);
+        if (presetSel) presetSel.addEventListener("change", function () {
+            var custom = document.getElementById("sweep-custom-config");
+            if (custom) custom.style.display = this.value === "custom" ? "" : "none";
+        });
+        // Check if already running
+        fetch("/api/spectrum/status")
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.status === "running") {
+                    sweepRunning = true;
+                    document.getElementById("sweep-start-btn").style.display = "none";
+                    document.getElementById("sweep-stop-btn").style.display = "";
+                    document.getElementById("sweep-config").classList.add("sweep-config-locked");
+                    sweepPollTimer = setInterval(fetchSweepData, 2000);
+                }
+                updateSweepBadge(data.status);
+            })
+            .catch(function () {});
+    }
+
     // ── Init ────────────────────────────────────────────────
 
     document.addEventListener("DOMContentLoaded", function () {
@@ -2132,6 +2392,7 @@
         initExport();
         initWifiCapture();
         initLogViewer();
+        initSweep();
 
         // Spectrum view mode selector
         var specDropdown = document.getElementById("spectrum-mode");

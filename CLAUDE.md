@@ -293,15 +293,12 @@ exactly what to do next. Silent failures are unacceptable.
 
 ### Deployment Workflow
 
-The repo lives at `/home/kali/SORCC-PI/`. The live deployment is at `/opt/argus/`.
+The repo lives at `/home/kali/Argus/`. The live deployment is at `/opt/argus/`.
 The systemd service runs from `/opt/argus/`, NOT the repo directory.
-
-> **Note:** The local repo directory is still named `SORCC-PI/`. Renaming it to
-> `Argus/` is a manual step (update git remote, systemd paths, etc.).
 
 ```bash
 # Edit code in the repo, then sync to deployment:
-rsync -av --exclude='__pycache__' ~/SORCC-PI/argus/ /opt/argus/argus/
+rsync -av --exclude='__pycache__' ~/Argus/argus/ /opt/argus/argus/
 
 # Restart the dashboard after syncing:
 sudo systemctl restart argus-dashboard
@@ -324,7 +321,7 @@ For dual-tab browser sessions (Claude Code CLI + UI audit):
 **Tab 1 prompt (CLI backend):**
 > Start a recursive dev session on Argus. Check memory for session context
 > and docs/NEXT-SESSION-TODO.md for the task list. Deploy path is /opt/argus/,
-> repo is /home/kali/SORCC-PI/. Work through the TODO priorities in order.
+> repo is /home/kali/Argus/. Work through the TODO priorities in order.
 > My browser instance is watching the UI live and will feed back visual issues.
 
 **Tab 2 prompt (Visual QA):**
