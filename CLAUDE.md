@@ -1,7 +1,7 @@
 # Argus — Claude Code Guidelines
 
-## SORCC Ecosystem
-This project is part of the SORCC ecosystem alongside [Hydra/Argus].
+## Argus Ecosystem
+This project is part of the Argus ecosystem alongside [Hydra/Argus].
 - Use consistent terminology: [list key terms]
 - Documentation tone: technical but accessible
 - Shared config pattern: INI with .factory defaults
@@ -9,8 +9,8 @@ This project is part of the SORCC ecosystem alongside [Hydra/Argus].
 
 ## Project Context
 
-Argus is the software toolkit for the **Special Operations Robotics Capabilities
-Course (SORCC)** Module 4.3: Raspberry Pi Payload Integrator. It transforms a
+Argus is the software toolkit for the **Robotics Capabilities Course**
+Module 4.3: Raspberry Pi Payload Integrator. It transforms a
 Raspberry Pi 4 into a multi-capability RF survey payload that students mount on
 robotics platforms — including 10" FPV quadcopters — for wireless reconnaissance
 training exercises.

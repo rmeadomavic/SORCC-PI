@@ -5,7 +5,7 @@
 ![RF](https://img.shields.io/badge/RF-Kismet_+_RTL--SDR-4a7c3f?style=flat-square)
 ![Status](https://img.shields.io/badge/Status-Field_Ready-2ecc71?style=flat-square)
 
-Software toolkit for the **Special Operations Robotics Capabilities Course (SORCC)**
+Software toolkit for the **Robotics Capabilities Course**
 Module 4.3: Raspberry Pi Payload Integrator. Transforms a Raspberry Pi 4 into a
 deployable RF survey payload for robotics platforms.
 

@@ -1,6 +1,6 @@
 # Kismet REST API Reference
 
-> Offline reference for SORCC payload integration.
+> Offline reference for Argus payload integration.
 > Compiled from kismetwireless.net official docs + supplemental knowledge.
 
 Kismet uses a REST-like interface on its embedded webserver (default port **2501**).

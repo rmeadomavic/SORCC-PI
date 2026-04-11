@@ -42,7 +42,7 @@ Announces system presence and status. Must be sent at least 1 Hz by all MAVLink 
 | system_status | uint8_t | System health state (MAV_STATE enum) |
 | mavlink_version | uint8_t | Protocol version (3 for current) |
 
-**Key MAV_TYPE values for SORCC:**
+**Key MAV_TYPE values for Argus:**
 - 1 = MAV_TYPE_FIXED_WING
 - 2 = MAV_TYPE_QUADROTOR
 - 10 = MAV_TYPE_GROUND_ROVER

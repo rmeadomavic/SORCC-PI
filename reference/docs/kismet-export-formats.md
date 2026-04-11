@@ -1,6 +1,6 @@
 # Kismet Export Formats Reference
 
-> Offline reference for SORCC payload integration.
+> Offline reference for Argus payload integration.
 > Compiled from kismetwireless.net official docs + supplemental knowledge.
 
 Kismet supports multiple logging and export formats. The primary format is **KismetDB** (unified SQLite3), with conversion tools and live streaming for PCAP-NG, WigleCSV, KML, JSON, and more.
@@ -42,7 +42,7 @@ log_types=kismet,pcapng,wiglecsv
 
 ```
 # Log title (default: "Kismet")
-log_title=SORCC_Survey
+log_title=Argus_Survey
 
 # Output directory
 log_prefix=/opt/kismet/logs
@@ -486,15 +486,15 @@ GET /logging/by-uuid/{UUID}/stop.cmd
 
 ---
 
-## Recommended SORCC Payload Configuration
+## Recommended Argus Payload Configuration
 
 For an RF survey payload, a practical logging configuration:
 
 ```conf
-# kismet_logging.conf additions for SORCC payload
+# kismet_logging.conf additions for Argus payload
 
 # Log title with mission identifier
-log_title=SORCC_RF_Survey
+log_title=Argus_RF_Survey
 
 # Output to mounted storage
 log_prefix=/opt/kismet/logs
@@ -519,15 +519,15 @@ kis_log_packet_timeout=604800
 Post-mission export workflow:
 ```bash
 # Convert to WigleCSV for mapping upload
-kismetdb_to_wiglecsv --in SORCC_RF_Survey*.kismet --out survey_wigle.csv
+kismetdb_to_wiglecsv --in Argus_RF_Survey*.kismet --out survey_wigle.csv
 
 # Convert to KML for Google Earth overlay
-kismetdb_to_kml --in SORCC_RF_Survey*.kismet --out survey_map.kml
+kismetdb_to_kml --in Argus_RF_Survey*.kismet --out survey_map.kml
 
 # Export device inventory as JSON
-kismetdb_to_json --in SORCC_RF_Survey*.kismet --out devices.json
+kismetdb_to_json --in Argus_RF_Survey*.kismet --out devices.json
 
 # Strip packets for lightweight device-only archive
-cp SORCC_RF_Survey*.kismet archive_devices.kismet
+cp Argus_RF_Survey*.kismet archive_devices.kismet
 kismetdb_strip_packets --in archive_devices.kismet
 ```

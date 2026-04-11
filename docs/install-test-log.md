@@ -1,4 +1,4 @@
-# SORCC-PI Install Test Log
+# Argus Install Test Log
 
 ## Test Environment
 - **Date:** 2026-03-30
@@ -8,20 +8,20 @@
 - **Python:** 3.13.12
 - **Hardware connected:** SixFab LE910Cx LTE hat (5 serial ports detected), Bluetooth hci0. NO SDR dongle, NO PiSugar battery.
 - **Network:** WiFi + Tailscale (100.71.115.45)
-- **Branch:** claude/setup-sorcc-pi-qxVWN
+- **Branch:** claude/setup-argus-pi-qxVWN
 - **Goal:** Document every issue for one-click refinement
 
 ## Pre-Install State
-- No `/opt/sorcc` directory
+- No `/opt/argus` directory
 - Kismet already installed (Kali default repos: 2025.09.0-b5d5a2d04)
 - Tailscale already running
-- No sorcc systemd services
+- No argus systemd services
 
 ---
 
 ## Install Run #1
 
-**Command:** `yes | sudo bash scripts/sorcc-setup.sh 2>&1 | tee /tmp/sorcc-install-run1.log`
+**Command:** `yes | sudo bash scripts/argus-setup.sh 2>&1 | tee /tmp/argus-install-run1.log`
 **Result:** PARTIAL FAILURE — PiSugar whiptail dialog crashed, killing Steps 7+8
 
 ### Step 1/8: Preflight Checks — PASS
@@ -44,7 +44,7 @@
 ### Step 4/8: Kismet — PASS
 - Already installed from Kali repos (skipped download)
 - Credentials set (kismet/kismet)
-- kismet_site.conf generated from sorcc.ini
+- kismet_site.conf generated from argus.ini
 - User kali added to kismet group
 
 ### Step 5/8: LTE Modem & GPS — PASS (with bug)
@@ -53,7 +53,7 @@
 - LTE connection configured and activated
 - Internet connectivity verified (ping 8.8.8.8)
 - GPS enabled on modem
-- GPS script installed to /opt/sorcc/
+- GPS script installed to /opt/argus/
 
 ### Step 6/8: Tailscale & PiSugar — **FAILED**
 - Tailscale: Already running, PASS (100.71.115.45)
@@ -78,7 +78,7 @@ After the failed run, Steps 7+8 were executed manually:
 1. Fixed PiSugar: `sudo DEBIAN_FRONTEND=noninteractive dpkg --configure -a` — packages configured successfully
 2. Fixed APN: Cleared the "y" value back to empty string
 3. Copied service files and enabled services manually
-4. Installed dashboard to /opt/sorcc and installed Python deps
+4. Installed dashboard to /opt/argus and installed Python deps
 5. `pip3 install --break-system-packages fastapi` hit a `starlette` conflict — Kali ships starlette 0.50.0 as a system package, pip can't upgrade it. FastAPI 0.118.0 still works with it.
 6. Started and verified dashboard: HTTP 200 on port 8080
 7. Enabled and started avahi-daemon (wasn't enabled by default on this Kali install)
@@ -94,8 +94,8 @@ After the failed run, Steps 7+8 were executed manually:
 | PiSugar | PASS | Running (after manual fix) |
 | Dialout Group | PASS | kali in dialout |
 | Kismet Service | WARN | Enabled, not running (needs reboot) |
-| SORCC Boot Service | WARN | Enabled, not running (needs reboot) |
-| SORCC Dashboard | PASS | Responding on 8080 |
+| Argus Boot Service | WARN | Enabled, not running (needs reboot) |
+| Argus Dashboard | PASS | Responding on 8080 |
 | Avahi mDNS | PASS | Running (after manual fix) |
 | LTE Modem | PASS | Detected |
 | Internet | PASS | Connectivity OK |
@@ -103,7 +103,7 @@ After the failed run, Steps 7+8 were executed manually:
 | Kismet Config | PASS | Site config exists |
 | Kismet Credentials | PASS | Configured |
 | Kismet Web UI | WARN | Not responding (not started yet) |
-| sorcc.ini | PASS | Exists |
+| argus.ini | PASS | Exists |
 | GPS Script | PASS | Installed |
 
 **Final: PASS=13, WARN=4, FAIL=0** (after manual fixes)

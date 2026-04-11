@@ -330,7 +330,7 @@ mavproxy.py --master=/dev/serial0 --baudrate 921600
 | ROS/MAVROS | C++/Python | Robotics framework integration |
 | Rpanion-server | Node.js | Web-based config GUI |
 
-### For SORCC-PI (Recommended Stack)
+### For Argus-PI (Recommended Stack)
 
 1. **mavlink-router** for serial-to-UDP routing
 2. **pymavlink** for custom Python control logic
@@ -360,7 +360,7 @@ To create a WiFi hotspot on the Pi for field use (connecting tablets, laptops):
 
 ```bash
 # Using NetworkManager (Pi OS Bookworm)
-sudo nmcli device wifi hotspot ifname wlan0 ssid SORCC-PI password sorcc1234 band bg
+sudo nmcli device wifi hotspot ifname wlan0 ssid Argus-PI password argus1234 band bg
 
 # Or for persistent AP, configure in /etc/NetworkManager/system-connections/
 ```

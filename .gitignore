@@ -1,6 +1,6 @@
 # Runtime config (keep factory defaults only)
-config/sorcc.ini
-config/sorcc.ini.bak
+config/argus.ini
+config/argus.ini.bak
 
 # Python
 __pycache__/
