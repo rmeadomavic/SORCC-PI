@@ -1,6 +1,6 @@
 # Kismet Export Formats Reference
 
-> Offline reference for Argus payload integration.
+> Offline reference for Argus integration.
 > Compiled from kismetwireless.net official docs + supplemental knowledge.
 
 Kismet supports multiple logging and export formats. The primary format is **KismetDB** (unified SQLite3), with conversion tools and live streaming for PCAP-NG, WigleCSV, KML, JSON, and more.

@@ -1,6 +1,6 @@
 # Kismet Datasource Configuration Reference
 
-> Offline reference for Argus payload integration.
+> Offline reference for Argus integration.
 > Compiled from kismetwireless.net official docs + supplemental knowledge.
 
 Every source of packet/device data in Kismet is a **datasource**. A datasource is typically a network interface but can also be an SDR, serial capture device, or replay source.

@@ -1,13 +1,12 @@
-# Argus — RF Survey Payload Integrator
+# Argus — RF Survey Toolkit
 
 ![Platform](https://img.shields.io/badge/Platform-Raspberry_Pi_4-c51a4a?style=flat-square)
 ![OS](https://img.shields.io/badge/OS-Kali_Linux_ARM64-557C94?style=flat-square)
 ![RF](https://img.shields.io/badge/RF-Kismet_+_RTL--SDR-4a7c3f?style=flat-square)
 ![Status](https://img.shields.io/badge/Status-Field_Ready-2ecc71?style=flat-square)
 
-Software toolkit for the **Robotics Capabilities Course** Module 4.3:
-Raspberry Pi Payload Integrator. Transforms a Raspberry Pi 4 into a deployable
-RF survey payload for robotics platforms.
+Transforms a Raspberry Pi 4 into a deployable RF survey payload for
+robotics platforms.
 
 ## Architecture
 
@@ -276,5 +275,4 @@ bash scripts/argus-preflight.sh --json
 ## Course Materials
 
 Slides are in `courseware/`:
-- `4.3 Raspberry Pi Payload Integrator_v2 - Copy.pptx` — Full lesson plan
 - `Slide1.JPG` through `Slide29.JPG` — Individual slides for reference

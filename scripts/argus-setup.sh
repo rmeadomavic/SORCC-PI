@@ -59,8 +59,8 @@ SDR_FOUND=false
 
 echo ""
 echo "╔════════════════════════════════════════╗"
-echo "║  Argus — Raspberry Pi Payload Setup ║"
-echo "║  RF Survey Payload Integrator          ║"
+echo "║  Argus — Raspberry Pi RF Survey Setup   ║"
+echo "║                                        ║"
 echo "╚════════════════════════════════════════╝"
 echo ""
 info "Repo:     $REPO_DIR"

@@ -37,7 +37,7 @@ Your workflow:
 Audit from three personas:
 - A Green Beret using this on a mission from a phone
 - An instructor demoing to a classroom of soldiers
-- A general at Oak Grove deciding whether to fund this
+- A VIP deciding whether to fund this
 
 Be ruthless. Report everything.
 ```
