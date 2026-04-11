@@ -1,4 +1,4 @@
-# Runtime config (keep factory defaults only)
+# Runtime config (keep factory defaults only in repo)
 config/argus.ini
 config/argus.ini.bak
 

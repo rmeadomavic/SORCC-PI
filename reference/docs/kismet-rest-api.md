@@ -1,7 +1,7 @@
 # Kismet REST API Reference
 
 > Offline reference for Argus payload integration.
-> Compiled from kismetwireless.net official docs + supplemental knowledge.
+> Compiled from kismetwireless.net official documentation.
 
 Kismet uses a REST-like interface on its embedded webserver (default port **2501**).
 All endpoints support JSON serialization (`.json`, `.ekjson` for line-delimited, `.prettyjson` for human-readable).

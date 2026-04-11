@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Enable GPS NMEA output on the SixFab LTE modem via AT commands."""
+"""Enable GPS NMEA output on the SixFab LTE modem via AT commands.
+
+Standalone script — the dashboard calls this at boot via argus-boot.service.
+"""
 
 import glob
 import logging

@@ -1,7 +1,7 @@
 # Argus — Claude Code Guidelines
 
 ## Argus Ecosystem
-This project is part of the Argus ecosystem alongside [Hydra/Argus].
+This project is part of the Argus ecosystem alongside Hydra.
 - Use consistent terminology: [list key terms]
 - Documentation tone: technical but accessible
 - Shared config pattern: INI with .factory defaults

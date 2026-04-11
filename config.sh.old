@@ -1,4 +1,5 @@
-#! /bin/bash
+#!/bin/bash
+# Legacy setup script — superseded by scripts/argus-setup.sh
 
 read -p "What is your sim IP address? " ipaddy
 read -p "What is your sim subnet? " subnet
