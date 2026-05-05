@@ -70,7 +70,7 @@ SCHEMA: dict[str, dict[str, FieldSpec]] = {
             FieldType.STRING,
             required=True,
             default="ARGUS-01",
-            description="Identifier shown on the instructor overview screen",
+            description="Identifier shown on the multi-device overview console",
         ),
     },
     "lte": {

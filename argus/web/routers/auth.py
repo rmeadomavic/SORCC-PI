@@ -22,9 +22,9 @@ async def index(request: Request):
     return _templates.TemplateResponse("base.html", {"request": request})
 
 
-@router.get("/instructor", response_class=HTMLResponse)
-async def instructor_page(request: Request):
-    return _templates.TemplateResponse("instructor.html", {"request": request})
+@router.get("/overview", response_class=HTMLResponse)
+async def overview_page(request: Request):
+    return _templates.TemplateResponse("overview.html", {"request": request})
 
 
 @router.get("/login", response_class=HTMLResponse)

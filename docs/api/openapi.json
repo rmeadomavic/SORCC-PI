@@ -756,9 +756,9 @@
         "summary": "Apply Wifi"
       }
     },
-    "/instructor": {
+    "/overview": {
       "get": {
-        "operationId": "instructor_page_instructor_get",
+        "operationId": "overview_page_overview_get",
         "responses": {
           "200": {
             "content": {
@@ -771,7 +771,7 @@
             "description": "Successful Response"
           }
         },
-        "summary": "Instructor Page"
+        "summary": "Overview Page"
       }
     },
     "/login": {

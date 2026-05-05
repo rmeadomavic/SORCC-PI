@@ -12,7 +12,7 @@ Factory defaults are in `config/argus.ini.factory`.
 | Key | Default | Description |
 |-----|---------|-------------|
 | `hostname` | `argus-pi-01` | mDNS hostname (reachable as `<hostname>.local`) |
-| `callsign` | `ARGUS-01` | Identifier shown in instructor overview |
+| `callsign` | `ARGUS-01` | Identifier shown on the multi-device overview console |
 
 ### [lte]
 
@@ -112,7 +112,7 @@ Leave blank to allow open access (default).
 
 When a password is set:
 - All routes redirect to `/login` for unauthenticated users.
-- `/api/status` stays open for instructor polling.
+- `/api/status` stays open so the Overview Console can poll across devices.
 - Sessions use HMAC-signed cookies. They expire after `session_timeout_min` minutes.
 - Failed login attempts are rate-limited (10 failures = 5 minute lockout).
 

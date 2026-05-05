@@ -1,4 +1,4 @@
-# Getting Started — Instructor Setup Guide
+# Getting Started — Setup Guide
 
 ## Prerequisites
 
@@ -14,8 +14,6 @@
 | USB WiFi adapter | Optional | Required for WiFi monitor mode while staying connected |
 
 ## Step 1: Assemble Hardware
-
-Refer to course slides 8-11 for assembly photos.
 
 1. Attach PiSugar battery to GPIO (align pins carefully).
 2. Mount SixFab LTE hat with risers.
@@ -50,14 +48,14 @@ and configures all systemd services.
 ## Step 4: Configure for Headless Operation
 
 ```bash
-sudo bash scripts/argus-headless.sh --ssid "ClassroomWiFi" --password "s3cret"
+sudo bash scripts/argus-headless.sh --ssid "MyWiFi" --password "s3cret"
 ```
 
 After this, the Pi boots ready to fly — no monitor or keyboard needed.
 
 ## Step 5: Set a Dashboard Password
 
-If students will access the dashboard over a shared or public network,
+If users will access the dashboard over a shared or public network,
 set a password to prevent unauthorized access.
 
 1. Open the dashboard at `http://<pi-ip>:8080`.
@@ -93,7 +91,7 @@ Or open the dashboard and check the **Preflight** tab. All checks should show gr
 | Local network | `http://<pi-ip>:8080` |
 | mDNS | `http://argus-pi.local:8080` |
 | Tailscale | `http://<tailscale-ip>:8080` |
-| Instructor view | `http://<pi-ip>:8080/instructor` |
+| Multi-device overview | `http://<pi-ip>:8080/overview` |
 
 ![Dashboard operations tab](../images/dashboard-operations.png)
 <!-- TODO: capture screenshot of operations tab with device list -->

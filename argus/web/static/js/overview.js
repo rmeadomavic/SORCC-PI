@@ -1,10 +1,10 @@
-/* Argus Dashboard — Instructor Overview Controller (Standalone) */
+/* Argus Dashboard — Overview Console Controller (Standalone) */
 
 (function () {
     "use strict";
 
     // ── Constants ────────────────────────────────────────────
-    var STORAGE_KEY = "argus-instructor-devices";
+    var STORAGE_KEY = "argus-overview-devices";
     var POLL_INTERVAL = 2000;
     var FETCH_TIMEOUT = 3000;
     var DASHBOARD_PORT = 8080;
@@ -199,7 +199,7 @@
             var data = info.data || {};
             var offline = info.offline;
 
-            html += '<div class="instructor-card' + (offline ? " offline" : "") + '">';
+            html += '<div class="overview-card' + (offline ? " offline" : "") + '">';
 
             if (offline) {
                 html += '  <div class="offline-overlay">OFFLINE</div>';

@@ -4,7 +4,7 @@
 
 [general]
 hostname = argus-pi-01                  ; mDNS hostname (reachable as <hostname>.local)
-callsign = ARGUS-01                     ; identifier shown in instructor overview
+callsign = ARGUS-01                     ; identifier shown on the multi-device overview console
 
 [lte]
 apn =                                   ; carrier APN — leave blank for interactive prompt

@@ -10,7 +10,7 @@ RPi Imager, then run `sudo bash scripts/argus-setup.sh` for all customization.
 1. **Kali ARM images are official and well-maintained** — regular releases,
    security updates, tested on Pi 4 hardware
 2. **Custom pre-baked images add maintenance burden** — must rebuild for every
-   Kali release; difficult for students/instructors to flash with RPi Imager
+   Kali release; difficult for end users to flash with RPi Imager
 3. **The setup script handles all customization** — and is idempotent, so it can
    be re-run safely after OS updates
 4. **APN must be configurable per-SIM** — cannot bake a carrier-specific APN into
@@ -43,9 +43,9 @@ sudo bash scripts/argus-setup.sh
 ## Alternative: Pre-baked Image (Not Recommended)
 
 Using `kali-arm-build-scripts` to create a custom `.img`:
-- Pros: Zero setup time for students, everything pre-installed
+- Pros: Zero setup time for end users, everything pre-installed
 - Cons: Must rebuild per Kali release, hard to flash with RPi Imager,
   can't customize APN/hostname at flash time, large image files to distribute
 
-This approach may be revisited if the course needs to scale to many more devices
-where the 15-minute setup time becomes a bottleneck.
+This approach may be revisited if a deployment needs to scale to many more devices
+and the 15-minute setup time becomes a bottleneck.

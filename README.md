@@ -12,8 +12,8 @@ robotics platforms.
 
 ```mermaid
 graph TD
-    Browser["Student Browser<br/>phone / laptop"]
-    Instructor["Instructor Browser"]
+    Operator["Operator Browser<br/>phone / laptop"]
+    Overview["Overview Console<br/>multi-device"]
     Dashboard["Argus Dashboard<br/>FastAPI :8080"]
     Kismet["Kismet<br/>Wireless Monitor :2501"]
     WiFi["WiFi<br/>wlan0"]
@@ -23,8 +23,8 @@ graph TD
     GPS["GPS<br/>NMEA via modem"]
     Battery["PiSugar<br/>5000mAh"]
 
-    Browser -- ":8080" --> Dashboard
-    Instructor -- ":8080/instructor" --> Dashboard
+    Operator -- ":8080" --> Dashboard
+    Overview -- ":8080/overview" --> Dashboard
     Dashboard -- ":2501" --> Kismet
     Kismet --> WiFi
     Kismet --> BT
@@ -33,8 +33,8 @@ graph TD
     Dashboard --> GPS
     Dashboard --> Battery
 
-    style Browser fill:#3a4a3b,color:#b8ccb0,stroke:#5a7751
-    style Instructor fill:#3a4a3b,color:#b8ccb0,stroke:#5a7751
+    style Operator fill:#3a4a3b,color:#b8ccb0,stroke:#5a7751
+    style Overview fill:#3a4a3b,color:#b8ccb0,stroke:#5a7751
     style Dashboard fill:#2d3a2e,color:#c8d8c0,stroke:#4a6741
     style Kismet fill:#2d3a2e,color:#c8d8c0,stroke:#4a6741
     style WiFi fill:#404040,color:#c0c0c0,stroke:#606060
@@ -95,15 +95,15 @@ sudo bash scripts/argus-setup.sh
 - **Auto-refresh** — Continuous monitoring of system health
 - **18 checks** — Disk space, NTP sync, GPS fix, Kismet credentials, adapter conflicts, and more
 
-### Instructor Overview
+### Overview Console
 - **Multi-Device View** — Monitor all Pi payloads from a single browser tab
 - **Real-time Status** — Kismet, GPS, LTE, battery, device count per Pi
-- **Access:** `http://<any-pi-ip>:8080/instructor`
+- **Access:** `http://<any-pi-ip>:8080/overview`
 
 ### Password Protection
 
 Set `password` in `[dashboard]` of `argus.ini` to require login. Leave blank for open access.
-When set, all pages and APIs require authentication. `/api/status` stays open for instructor polling.
+When set, all pages and APIs require authentication. `/api/status` stays open so the Overview Console can poll across devices.
 Sessions expire after `session_timeout_min` minutes (default: 480 = 8 hours).
 
 ### Security
@@ -127,15 +127,15 @@ Sessions expire after `session_timeout_min` minutes (default: 480 = 8 hours).
 | ADS-B Aircraft | Bluetooth + ADS-B @ 1090MHz | Aircraft transponder tracking |
 | Full Spectrum | All sources | Complete RF survey |
 
-## Student Exercises
+## Reference Missions
 
-| # | Exercise | Objective | Expected Outcome |
-|---|----------|-----------|------------------|
+| # | Mission | Objective | Expected Outcome |
+|---|---------|-----------|------------------|
 | 1 | RF Survey | Fly the payload over an area, map all WiFi/BT devices | KML file opens in Google Earth showing device locations with signal data |
-| 2 | WiFi Hunt | Locate a hidden access point using Hunt Mode | Signal strength reaches > -50 dBm; student identifies the AP's physical location |
+| 2 | WiFi Hunt | Locate a hidden access point using Hunt Mode | Signal strength reaches > -50 dBm; operator identifies the AP's physical location |
 | 3 | RF Recording | Capture raw RF signals with GQRX and RTL-SDR | Saved `.raw` recording file viewable in GQRX waterfall display |
 | 4 | TPMS Monitoring | Detect vehicle tire pressure sensors at 433 MHz | TPMS device entries appear in the Live View device list |
-| 5 | Cellular Recon | Use gr-gsm and IMSI-catcher (instructor-led) | Cell tower list and subscriber data captured per instructor guidance |
+| 5 | Cellular Recon | Use gr-gsm and IMSI-catcher | Cell tower list and subscriber data captured |
 | 6 | KML Export | Export survey results to Google Earth | `.kml` file with placemarks rendered on the map at correct GPS coordinates |
 
 ## Configuration
@@ -177,7 +177,7 @@ Power on and the dashboard is ready — no monitor, no keyboard.
 
 ```bash
 # With WiFi
-sudo bash scripts/argus-headless.sh --ssid "ClassroomWiFi" --password "s3cret"
+sudo bash scripts/argus-headless.sh --ssid "MyWiFi" --password "s3cret"
 
 # LTE only
 sudo bash scripts/argus-headless.sh --ethernet-only
@@ -272,7 +272,3 @@ bash scripts/argus-preflight.sh
 bash scripts/argus-preflight.sh --json
 ```
 
-## Course Materials
-
-Slides are in `courseware/`:
-- `Slide1.JPG` through `Slide29.JPG` — Individual slides for reference

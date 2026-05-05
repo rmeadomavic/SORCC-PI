@@ -35,8 +35,8 @@ Your workflow:
 5. Repeat until clean
 
 Audit from three personas:
-- A Green Beret using this on a mission from a phone
-- An instructor demoing to a classroom of soldiers
+- A field operator using this on a mission from a phone
+- A technical lead demoing the system to a stakeholder group
 - A VIP deciding whether to fund this
 
 Be ruthless. Report everything.

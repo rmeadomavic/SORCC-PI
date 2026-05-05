@@ -10,12 +10,12 @@ This project is part of the Argus ecosystem alongside Hydra.
 ## Project Context
 
 Argus transforms a Raspberry Pi 4 into a multi-capability RF survey payload
-that students mount on robotics platforms — including 10" FPV quadcopters — for
-wireless reconnaissance training exercises.
+that mounts on robotics platforms — including 10" FPV quadcopters — for
+wireless reconnaissance.
 
-The primary training mission is an airborne WiFi hunt: students fly the payload
-over an area to locate a known WiFi SSID, track its signal strength in real time,
-and map the results in Google Earth after landing.
+The reference mission is an airborne WiFi hunt: fly the payload over an area
+to locate a known WiFi SSID, track its signal strength in real time, and map
+the results in Google Earth after landing.
 
 ### Hardware Stack
 
@@ -34,11 +34,11 @@ and map the results in Google Earth after landing.
 
 ```
                     ┌─────────────┐     ┌─────────────┐
-                    │  Student's  │     │ Instructor  │
-                    │   Browser   │     │   Browser   │
+                    │  Operator   │     │  Overview   │
+                    │   Browser   │     │   Console   │
                     │(phone/laptop)│    │  (laptop)   │
                     └──────┬──────┘     └──────┬──────┘
-                           │ :8080             │ :8080/instructor
+                           │ :8080             │ :8080/overview
                     ┌──────┴──────────────────┴──┐
                     │      Argus Dashboard       │
                     │      (FastAPI + SPA)        │
@@ -90,7 +90,7 @@ argus/
           operations.js          # Device list, Hunt Mode, profiles, export, log viewer, leaderboard, category donut
           settings.js            # Config editor
           preflight.js           # Preflight checks
-          instructor.js          # Multi-device polling (standalone)
+          overview.js            # Multi-device polling (standalone)
           map.js                 # Leaflet map, bubble markers, GPS breadcrumbs
         lib/
           leaflet/               # Vendored Leaflet (no CDN dependency)
@@ -99,7 +99,7 @@ argus/
         operations.html          # Operations tab content
         settings.html            # Settings tab content
         preflight.html           # Preflight tab content
-        instructor.html          # Standalone instructor overview
+        overview.html            # Standalone multi-device overview console
         login.html               # Password login page
   config/
     argus.ini.factory            # Factory defaults (all tunables documented)
@@ -115,7 +115,6 @@ argus/
     kismet.service               # Systemd: Kismet
     argus-boot.service           # Systemd: GPS init, Avahi
     argus-dashboard.service      # Systemd: Dashboard
-  courseware/                    # Presentation slides (29 slides + .pptx)
   docs/
     NEXT-SESSION-TODO.md         # Prioritized task backlog
     configuration.md             # Config system documentation
@@ -182,13 +181,13 @@ All tunables live in `config/argus.ini` (INI format). Sections:
 
 **Pages:**
 - `GET /` — Dashboard SPA
-- `GET /instructor` — Standalone instructor overview
+- `GET /overview` — Standalone multi-device overview console
 - `GET /login` — Login page (redirects to `/` if no password set or already authenticated)
 
 **Auth (open — no login required):**
 - `POST /api/login` — Verify password, set session cookie. Rate-limited.
 - `POST /api/logout` — Clear session cookie.
-- `GET /api/status` — System health (always open for instructor CORS polling)
+- `GET /api/status` — System health (always open for cross-device CORS polling from the Overview Console)
 
 **Status & Devices (protected when password is set):**
 - `GET /api/devices` — All WiFi/BT devices from Kismet
@@ -240,7 +239,7 @@ When blank, all routes are open (backwards compatible).
 
 - **Password storage:** Plaintext in config file (file is 0o600). Matches Hydra's `api_token` pattern.
 - **Session cookies:** HMAC-SHA256 signed (`nonce:expires:sig`), HttpOnly, SameSite=Lax.
-- **Session secret:** Random bytes, rotates on each boot. Soldiers re-enter password after reboot.
+- **Session secret:** Random bytes, rotates on each boot. Operators re-enter password after reboot.
 - **Session timeout:** Configurable via `[dashboard] session_timeout_min` (default 480 = 8 hours).
 - **Rate limiting:** 10 failed attempts per IP = 5 minute lockout.
 - **401 responses:** Include `X-Login-Required: true` header. JS intercepts and redirects to `/login`.
@@ -249,7 +248,7 @@ When blank, all routes are open (backwards compatible).
 ## Development Guidelines
 
 ### Audience
-The end users are soldiers — smart, motivated, but not Linux sysadmins. Every
+End users are field operators — smart, motivated, but not Linux sysadmins. Every
 script and UI must work without debugging. Error messages must tell the user
 exactly what to do next. Silent failures are unacceptable.
 
@@ -267,7 +266,7 @@ exactly what to do next. Silent failures are unacceptable.
 - Operations sub-tabs: Live View, Map, Spectrum, Hunt Mode, Logs, Export
 - Live View features: stat cards (animated), activity feed, leaderboard, device list + detail panel
 - Spectrum features: channel utilization chart, band donut, device type donut, signal heatmap
-- Standalone instructor page at `/instructor`
+- Standalone overview console at `/overview`
 - Argus branding: green (#4a7c3f) / black / white / dark theme
 - Design tokens in `variables.css` (follow Hydra's pattern)
 - Must work on phones and tablets (responsive, large touch targets)
@@ -314,20 +313,9 @@ cat /opt/argus/logs/dashboard.log
 
 ### Recursive Dev Session Setup
 
-For dual-tab browser sessions (Claude Code CLI + UI audit):
-
-**Tab 1 prompt (CLI backend):**
-> Start a recursive dev session on Argus. Check memory for session context
-> and docs/NEXT-SESSION-TODO.md for the task list. Deploy path is /opt/argus/,
-> repo is /home/kali/Argus/. Work through the TODO priorities in order.
-> My browser instance is watching the UI live and will feed back visual issues.
-
-**Tab 2 prompt (Visual QA):**
-> You are a visual QA auditor for the Argus dashboard at 100.71.115.45:8080.
-> Audit the UI from three personas: 1) A soldier using it in the field on a phone,
-> 2) An instructor demoing to a classroom, 3) A VIP deciding whether to fund this.
-> Report every visual bug, UX issue, broken feature, and polish opportunity.
-> The CLI session is fixing things live — re-check after each fix. Be ruthless.
+For dual-tab browser sessions (Claude Code CLI + UI audit), see the
+`recursive-browser-improve` skill, or paste the `docs/guides/PROMPTS.md`
+prompts into the appropriate tab.
 
 ### Known Hardware State (Test Pi)
 
@@ -369,6 +357,3 @@ sudo mmcli -m 0
 sudo mmcli -m 0 --location-get
 ```
 
-## Course Documents
-
-The `courseware/` directory contains reference slide images (Slide1.JPG through Slide29.JPG).
